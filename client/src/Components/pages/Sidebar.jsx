@@ -1,4 +1,3 @@
-import { name } from "ejs";
 import { useState } from "react";
 
 const initialNavigation = [
