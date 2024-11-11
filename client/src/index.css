@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #fff;
+  --background-color: #0f0f0f;
+  --menu-dark: #171717;
+  --focus-color: #262626;
+  --menu-color: #292929;
+  --hover-color: #303030;
+  --outline-color: #5f5f5f;
+  --red: #a10000;
+}
+
+.product .search input,
+.sales .search input {
+  background: transparent;
+  border: 1px solid var(--outline-color);
+  &:focus {
+    outline: none;
+  }
+}
+
+.product .search button,
+.sales .search button {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid var(--outline-color);
+  border-left: none;
+  background-color: var(--focus-color);
+
+  &:hover {
+    background-color: var(--primary-color);
+    color: var(--hover-color);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+/* .table-head {
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+} */
+
+.product table th,
+.supplier table th {
+  border: 1px solid var(--outline-color);
+  background-color: var(--background-color);
+  @apply py-2;
+}
+
+.product table td,
+.supplier table td {
+  border-bottom: 1px solid var(--outline-color);
+  border-left: 1px solid var(--outline-color);
+  @apply text-center py-2;
+
+  &:last-child {
+    border-right: 1px solid var(--outline-color);
+  }
+}
+
+#product-table-body i.edit,
+#supplier-table-body i.edit {
+  @apply cursor-pointer rounded-lg px-1;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: var(--hover-color);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+#product-table-body i.delete,
+#supplier-table-body i.delete {
+  @apply cursor-pointer rounded-lg px-1;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: var(--red);
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+.category-button {
+  @apply rounded-lg;
+
+  &:hover {
+    background-color: var(--menu-dark);
+  }
+}
+
+.category-button .menu-drop {
+  background-color: var(--focus-color);
+  color: var(--primary-color);
+
+  @apply rounded-xl;
+}
+
+.menu-drop a {
+  @apply p-2 block rounded-lg;
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+}
+
+.product-list td {
+  &:hover {
+    background-color: var(--focus-color);
+  }
+  cursor: pointer;
+  @apply p-1 rounded-lg;
+}
+
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+}
