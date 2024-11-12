@@ -3,18 +3,13 @@ import React, { useEffect, useState } from "react";
 const Sales = () => {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-
   const [subTotal, setSubTotal] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
-
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
-
   const [editingIndex, setEditingIndex] = useState(null);
   const [newPrice, setNewPrice] = useState("");
-
-  // New state to store product details for the table
   const [productList, setProductList] = useState([]);
 
   const handleSearchChange = (event) => {
@@ -25,7 +20,6 @@ const Sales = () => {
     setQuantity(Number(event.target.value));
   };
 
-  // Function to handle editing price
   const handleEditPrice = (index) => {
     setEditingIndex(index);
     setNewPrice(productList[index].sellingPrice);
@@ -37,7 +31,6 @@ const Sales = () => {
         if (idx === index) {
           const updatedPrice = parseFloat(newPrice) || item.sellingPrice;
           const isDiscounted = updatedPrice < item.sellingPrice;
-
           return {
             ...item,
             discountedPrice: updatedPrice,
@@ -64,19 +57,11 @@ const Sales = () => {
         supplier: product.supplier,
       }));
 
-      const response = await fetch(
-        "https://wg-backend-production.up.railway.app/sales",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            grandTotal: grandTotal,
-            products: saleData,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:3000/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
+      });
 
       const data = await response.json();
       console.log("Sales created:", data);
@@ -86,26 +71,21 @@ const Sales = () => {
   };
 
   const deleteProduct = (id) => {
-    try {
-      setProductList((prevList) =>
-        prevList.filter((item) => item.productId !== id)
+    setProductList((prevList) =>
+      prevList.filter((item) => item.productId !== id)
+    );
+
+    const deletedProduct = productList.find((item) => item.productId === id);
+    if (deletedProduct) {
+      const productTotal =
+        deletedProduct.sellingPrice * deletedProduct.quantity;
+      const discountAmount = deletedProduct.discount || 0;
+
+      setSubTotal((prevSubTotal) => prevSubTotal - productTotal);
+      setDiscount((prevDiscount) => prevDiscount - discountAmount);
+      setGrandTotal(
+        (prevGrandTotal) => prevGrandTotal - (productTotal - discountAmount)
       );
-
-      // Update subtotal, discount, and grand total after deletion
-      const deletedProduct = productList.find((item) => item.productId === id);
-      if (deletedProduct) {
-        const productTotal =
-          deletedProduct.sellingPrice * deletedProduct.quantity;
-        const discountAmount = productTotal * 0.07;
-
-        setSubTotal((prevSubTotal) => prevSubTotal - productTotal);
-        setDiscount((prevDiscount) => prevDiscount - discountAmount);
-        setGrandTotal(
-          (prevGrandTotal) => prevGrandTotal - (productTotal - discountAmount)
-        );
-      }
-    } catch (error) {
-      console.error("Error deleting product:", error);
     }
   };
 
@@ -121,7 +101,9 @@ const Sales = () => {
       const productTotal = item.sellingPrice * item.quantity;
       newSubTotal += productTotal;
       newDiscount +=
-        item.sellingPrice > priceToUse ? (item.sellingPrice - priceToUse) * item.quantity : 0;
+        item.sellingPrice > priceToUse
+          ? (item.sellingPrice - priceToUse) * item.quantity
+          : 0;
     });
 
     setSubTotal(newSubTotal);
@@ -173,22 +155,25 @@ const Sales = () => {
       },
     ]);
 
-    document.getElementById("search-results").style.display = "none";
+    if (document.getElementById("search-results"))
+      document.getElementById("search-results").style.display = "none";
     setSearchQuery("");
+    setQuantity(1); // Reset quantity to avoid accidental repeat additions
   };
 
   const fetchProducts = async () => {
     if (!searchQuery) {
-      document.getElementById("search-results").style.display = "none";
+      if (document.getElementById("search-results"))
+        document.getElementById("search-results").style.display = "none";
       return;
-    } else {
+    } else if (document.getElementById("search-results")) {
       document.getElementById("search-results").style.display = "block";
     }
 
     setLoading(true);
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/products?search=${searchQuery}`
+        `http://localhost:3000/products?search=${searchQuery}`
       );
       const data = await response.json();
       setProducts(data);
@@ -261,7 +246,7 @@ const Sales = () => {
         </div>
 
         <div
-          className="bg-[#171717] h-[60vh] w-[40vw] top-[30vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
+          className="bg-[#171717] h-[60vh] w-[45vw] top-[30vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
           id="product-list"
         >
           <table className="w-full text-left">
