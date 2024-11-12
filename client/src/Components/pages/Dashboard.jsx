@@ -26,7 +26,7 @@ const Dashboard = () => {
   const fetchSupplierCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/suppliers/count?search=${timeframe}`
+        `https://wg-backend-production.up.railway.app/suppliers/count?search=${timeframe}`
       );
       const data = await response.json();
       setSupplierCount(data.count);
@@ -41,7 +41,7 @@ const Dashboard = () => {
   const fetchProductCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/products/count?search=${timeframe}`
+        `https://wg-backend-production.up.railway.app/products/count?search=${timeframe}`
       );
       const data = await response.json();
       setProductCount(data.count);

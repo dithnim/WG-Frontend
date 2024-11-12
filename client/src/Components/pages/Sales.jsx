@@ -57,11 +57,14 @@ const Sales = () => {
         supplier: product.supplier,
       }));
 
-      const response = await fetch("http://localhost:3000/sales", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
-      });
+      const response = await fetch(
+        "https://wg-backend-production.up.railway.app/sales",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
+        }
+      );
 
       const data = await response.json();
       console.log("Sales created:", data);
@@ -173,7 +176,7 @@ const Sales = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/products?search=${searchQuery}`
+        `https://wg-backend-production.up.railway.app/products?search=${searchQuery}`
       );
       const data = await response.json();
       setProducts(data);
