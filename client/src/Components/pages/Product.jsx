@@ -379,7 +379,7 @@ const Product = () => {
               />
               <label
                 htmlFor="floating-product-name"
-                className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
+                className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 z-10 origin-[0]
                           ${nameValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
                           ${nameValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}

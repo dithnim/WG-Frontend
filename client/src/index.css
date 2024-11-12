@@ -13,6 +13,46 @@
   --red: #a10000;
 }
 
+.login-card {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:hover{
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+.login-circle1 {
+  background: linear-gradient(60deg, #530061 0%, #0d0a30 100%);
+  animation: spin 30s linear infinite;
+}
+
+.login-circle2 {
+  background: linear-gradient(45deg, #530061 0%, #0d0a30 100%);
+  animation: scale 20s linear infinite;
+}
+
+.login-circle3 {
+  background: linear-gradient(60deg, #190061 0%, #0a1b30 100%);
+  animation: spin 30s linear infinite;
+}
+
+.login-circle4 {
+  background: linear-gradient(45deg, #190061 0%, #0a1b30 100%);
+  animation: scale 20s linear infinite;
+}
+
+
+.login-btn{
+  background: linear-gradient(90deg, #628eff 0%, #8740cd 100%);
+}
+
+.reset-btn{
+  background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
+}
+
 .product .search input,
 .sales .search input {
   background: transparent;
@@ -112,6 +152,27 @@
   @apply p-1 rounded-lg;
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  } 50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scale {
+  0% {
+    transform: scale(1)
+  } 50% {
+    transform: scale(1.1)
+  }
+  100% {
+    transform: scale(1)
+  }
+}
 
 ::-webkit-scrollbar {
   width: 5px;

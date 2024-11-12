@@ -22,12 +22,15 @@ const router = createBrowserRouter([
     path: "/sales",
     element: <Sales />,
   },
+  {
+    path: "*",
+    element: <Dashboard />,
+  }
 ]);
 
 const Router = (props) => {
   const currentURL = window.location.href;
   console.log(currentURL);
-  //comment
   return (
     <>
       <RouterProvider router={router} />
