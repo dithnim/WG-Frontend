@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 
 import Otpinput from "../Otpinput";
+import Progressmenu from "../Progressmenu";
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState("");
@@ -76,6 +77,10 @@ const Login = ({ onLogin }) => {
       console.error(error);
       alert("Error resetting password");
     }
+  };
+
+  const showProgressMenu = (message) => {
+    return <Progressmenu message={message} />;
   };
 
   return (
@@ -162,28 +167,6 @@ const Login = ({ onLogin }) => {
                 </button>
               </div>
             )}
-
-            {/* <h2 className="text-2xl font-semibold text-white mb-1">
-              Forgot Password ?
-            </h2>
-            <h2 className="text-xs font-semibold text-white mb-4">
-              No need to worry..!
-            </h2>
-            <input
-              type="email"
-              id="email"
-              class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-              placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <button
-              type="submit"
-              className="w-full reset-btn text-white p-2 rounded"
-            >
-              Reset password
-            </button> */}
             <p
               className="text-center text-gray-200 text-xs mt-2 cursor-pointer"
               onClick={() => setIsForgotMode(false)}

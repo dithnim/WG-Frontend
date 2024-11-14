@@ -104,7 +104,8 @@
 }
 
 #product-table-body i.edit,
-#supplier-table-body i.edit {
+#supplier-table-body i.edit,
+#sales-table i.edit {
   @apply cursor-pointer rounded-lg px-1;
   transition: all 0.2s ease-in-out;
 
@@ -115,7 +116,8 @@
 }
 
 #product-table-body i.delete,
-#supplier-table-body i.delete {
+#supplier-table-body i.delete,
+#sales-table i.delete{
   @apply cursor-pointer rounded-lg px-1;
   transition: all 0.2s ease-in-out;
 

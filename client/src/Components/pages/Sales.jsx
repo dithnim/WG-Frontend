@@ -3,26 +3,37 @@ import React, { useEffect, useState } from "react";
 const Sales = () => {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+
   const [subTotal, setSubTotal] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
+
+  const [totalCost, setTotalCost] = useState(0);
+
+  const [cashIn, setCashIn] = useState(0);
+  const [change, setChange] = useState(0);
+  const [profit, setProfit] = useState(0);
+
   const [quantity, setQuantity] = useState(1);
+
   const [loading, setLoading] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
+
   const [newPrice, setNewPrice] = useState("");
+  const [newDiscount, setNewDiscount] = useState(""); // New state for editing discount
   const [productList, setProductList] = useState([]);
+
+  const [showCashinModel, setShowCashinModel] = useState(false);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
   };
 
-  const handleQuantityChange = (event) => {
-    setQuantity(Number(event.target.value));
-  };
 
   const handleEditPrice = (index) => {
     setEditingIndex(index);
     setNewPrice(productList[index].sellingPrice);
+    setNewDiscount(productList[index].discount || 0); // Load discount for editing
   };
 
   const saveNewPrice = (index) => {
@@ -30,11 +41,12 @@ const Sales = () => {
       const updatedList = prevList.map((item, idx) => {
         if (idx === index) {
           const updatedPrice = parseFloat(newPrice) || item.sellingPrice;
-          const isDiscounted = updatedPrice < item.sellingPrice;
+          const updatedDiscount = parseFloat(newDiscount) || 0;
+          const finalPrice = updatedPrice - updatedDiscount;
           return {
             ...item,
-            discountedPrice: updatedPrice,
-            discount: isDiscounted ? item.sellingPrice - updatedPrice : 0,
+            discountedPrice: finalPrice,
+            discount: updatedDiscount,
           };
         }
         return item;
@@ -44,6 +56,7 @@ const Sales = () => {
     });
     setEditingIndex(null);
     setNewPrice("");
+    setNewDiscount("");
   };
 
   const submitSale = async () => {
@@ -55,6 +68,7 @@ const Sales = () => {
         discountedPrice: product.discountedPrice,
         quantity: product.quantity,
         supplier: product.supplier,
+        costPrice: product.costPrice,
       }));
 
       const response = await fetch("http://localhost:3000/sales", {
@@ -94,16 +108,9 @@ const Sales = () => {
     let newDiscount = 0;
 
     updatedList.forEach((item) => {
-      const priceToUse =
-        item.discountedPrice !== undefined
-          ? item.discountedPrice
-          : item.sellingPrice;
       const productTotal = item.sellingPrice * item.quantity;
       newSubTotal += productTotal;
-      newDiscount +=
-        item.sellingPrice > priceToUse
-          ? (item.sellingPrice - priceToUse) * item.quantity
-          : 0;
+      newDiscount += item.discount || 0;
     });
 
     setSubTotal(newSubTotal);
@@ -135,7 +142,7 @@ const Sales = () => {
 
   const handleProductClick = (product) => {
     const productTotal = product.sellingPrice * quantity;
-    const discountAmount = productTotal * 0.07;
+    const discountAmount = 0; // Default discount set to 0
 
     setSubTotal((prevSubTotal) => prevSubTotal + productTotal);
     setDiscount((prevDiscount) => prevDiscount + discountAmount);
@@ -150,8 +157,10 @@ const Sales = () => {
         productId: product.productId,
         sellingPrice: product.sellingPrice,
         discountedPrice: product.sellingPrice,
+        discount: discountAmount,
         quantity,
         supplier: product.supplier,
+        costPrice: product.costPrice,
       },
     ]);
 
@@ -189,7 +198,39 @@ const Sales = () => {
   }, [searchQuery]);
 
   return (
+    // Cash In popup
+
     <div className="sales h-screen flex items-start justify-between p-12">
+      {showCashinModel && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-[#171717] rounded-lg p-6 w-1/3">
+            <h2 className="text-lg font-semibold mb-4">Cash In</h2>
+            <input
+              type="number"
+              id="cashin"
+              class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+              placeholder="Enter cash ammount"
+              onChange={(event) => {
+                const val = parseFloat(event.target.value) || 0;
+                setCashIn(val);
+                const change = val - grandTotal;
+                if (change > 0) {
+                  setChange(change);
+                }
+              }}
+            />
+            <div className="mt-6 flex justify-end">
+              <button
+                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-[#5f5f5f] transition-colors border border-neutral-500/50 font-semibold"
+                onClick={() => setShowCashinModel(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col mt-5 search">
         <div className="flex">
           <input
@@ -206,18 +247,6 @@ const Sales = () => {
           >
             <i className="bx bx-search-alt-2 text-xl"></i>
           </button>
-
-          <div className="flex ms-4 items-center">
-            <label htmlFor="Quantity">Quantity</label>
-            <input
-              type="number"
-              className="rounded-xl px-2 py-2 w-14 font-semibold ms-2"
-              value={quantity}
-              name="quantity"
-              onChange={handleQuantityChange}
-              min={0}
-            />
-          </div>
         </div>
 
         <div
@@ -246,68 +275,94 @@ const Sales = () => {
         </div>
 
         <div
-          className="bg-[#171717] h-[60vh] w-[45vw] top-[30vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
+          className="bg-[#171717] h-[60vh] w-[55vw] top-[30vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
           id="product-list"
         >
-          <table className="w-full text-left">
+          <table className="w-full text-left" id="sales-table">
             <thead className="sticky top-0 bg-[#171717]">
-              <tr className="">
+              <tr className=" ">
                 <th className="px-1 py-4 text-center">#</th>
                 <th className="px-1 py-4 text-center">Product Name</th>
                 <th className="px-1 py-4 text-center">Product ID</th>
                 <th className="px-1 py-4 text-center">Quantity</th>
-                <th className="px-1 py-4 text-center">Selling Price</th>
+                <th className="px-1 py-4 text-center">Discount</th>
                 <th className="px-1 py-4 text-center">Supplier</th>
-                <th className="px-1 py-4 text-center">Delete</th>
+                <th className="px-1 py-4 text-center">cost</th>
+                <th className="px-1 py-4 text-center">Selling Price</th>
+                <th className="px-1 py-4 text-center">Actions</th>
               </tr>
             </thead>
-
             <tbody>
-              {productList.map((item, index) => (
-                <tr key={index} className="product-list">
-                  <td className="text-center border-b">{index + 1}</td>
-                  <td className="text-center border-b">{item.productName}</td>
-                  <td className="text-center border-b">{item.productId}</td>
-                  <td className="text-center border-b">
+              {productList.map((product, index) => (
+                <tr key={product.productId}>
+                  <td className="px-1 py-4 text-center">{index + 1}</td>
+                  <td className="px-1 py-4 text-center">
+                    {product.productName}
+                  </td>
+                  <td className="px-1 py-4 text-center">{product.productId}</td>
+                  <td className="px-1 py-4 text-center">
                     <i
-                      className="bx bx-minus-circle text-lg me-2"
+                      className="bx bx-minus-circle text-md cursor-pointer"
                       onClick={() => decreaseQuantity(index)}
                     ></i>
-                    {item.quantity}
+                    <span className="mx-2 text-center">{product.quantity}</span>
                     <i
-                      className="bx bx-plus-circle text-lg ms-2"
+                      className="bx bx-plus-circle text-md cursor-pointer"
                       onClick={() => increaseQuantity(index)}
                     ></i>
                   </td>
-                  <td className="text-center border-b">
+                  <td className="px-1 py-4 text-center">
                     {editingIndex === index ? (
                       <input
                         type="number"
-                        onChange={(e) => setNewPrice(e.target.value)}
-                        onBlur={() => saveNewPrice(index)}
-                        className="w-20 text-center"
-                        value={newPrice}
-                        autoFocus
+                        value={newDiscount}
+                        onChange={(e) => setNewDiscount(e.target.value)}
+                        className="w-16 text-center"
                       />
                     ) : (
+                      product.discount
+                    )}
+                  </td>
+                  <td className="px-1 py-4 text-center">{product.supplier}</td>
+                  <td className="px-1 py-4 text-center">{product.costPrice}</td>
+                  <td className="px-1 py-4 text-center">
+                    {editingIndex === index ? (
+                      <input
+                        type="number"
+                        value={newPrice}
+                        onChange={(e) => setNewPrice(e.target.value)}
+                        className="w-16 text-center"
+                      />
+                    ) : (
+                      product.sellingPrice
+                    )}
+                  </td>
+                  <td className="px-1 py-4 text-center">
+                    {editingIndex === index ? (
                       <>
-                        Rs.
-                        {item.discountedPrice !== undefined
-                          ? item.discountedPrice
-                          : item.sellingPrice}
                         <i
+                          className="bx bx-save text-lg ms-5 edit"
+                          onClick={() => saveNewPrice(index)}
+                        ></i>
+
+                        <i
+                          className="bx bx-x text-lg  ms-1 edit"
+                          onClick={() => setEditingIndex(null)}
+                        ></i>
+                      </>
+                    ) : (
+                      <>
+                        <i
+                          className="bx bxs-pencil text-lg ms-5 edit"
                           onClick={() => handleEditPrice(index)}
-                          className="bx bxs-pencil ms-2 cursor-pointer"
+                        ></i>
+
+                        <i
+                          className="bx bxs-trash text-lg ms-1 delete"
+                          onClick={() => deleteProduct(product.productId)}
                         ></i>
                       </>
                     )}
-                  </td>
-                  <td className="text-center border-b">{item.supplier}</td>
-                  <td className="text-center border-b">
-                    <i
-                      className="bx bxs-trash text-lg ms-2 delete"
-                      onClick={() => deleteProduct(item.productId)}
-                    ></i>
                   </td>
                 </tr>
               ))}
@@ -316,28 +371,62 @@ const Sales = () => {
         </div>
       </div>
 
-      <div className="w-[30vw] ms-5 font-semibold ">
-        <div className="cal-display w-full bg-[#171717] h-[25vh] rounded-lg p-3">
-          <h1 className="mb-4">Sub Total: Rs.{subTotal.toFixed(2)}</h1>
-          <h1 className="mb-10">Discount: Rs.{discount.toFixed(2)}</h1>
-          <h1 className="text-2xl">Grand total: Rs.{grandTotal.toFixed(2)}</h1>
-        </div>
-        <div className="sale-manager w-full h-[53vh] mt-10 bg-[#171717] rounded-lg p-3">
-          <div className="flex w-full justify-center">
-            <button
-              type="button"
-              className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-10 py-2.5 me-2 mb-2 dark:bg-[#303030] dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
-            >
-              Recall
-            </button>
-            <button
-              type="button"
-              className="text-black bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-10 py-2.5 me-2 mb-2 dark:bg-white dark:hover:bg-[#dfdfdf] dark:focus:ring-gray-700 dark:border-gray-700"
-              onClick={submitSale}
-            >
-              Generate Invoice
-            </button>
+      <div className=" w-[20vw] mt-5">
+        <div className="checkout bg-[#171717] w-full p-8 rounded-md">
+          <div className="flex items-center justify-between">
+            <p className="text-white text-md font-semibold">Sub Total</p>
+            <span className="text-white text-md font-semibold">
+              {subTotal.toFixed(2)}
+            </span>
           </div>
+          <div className="flex items-center justify-between my-5">
+            <p className="text-white text-md font-semibold">Discount</p>
+            <span className="text-white text-md font-semibold">
+              {discount.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-white text-md font-semibold">Grand Total</p>
+            <span className="text-white text-md font-semibold">
+              {grandTotal.toFixed(2)}
+            </span>
+          </div>
+          <button
+            className="bg-white w-full text-black font-bold py-3 rounded-xl mt-5 cursor-pointer"
+            onClick={() => {
+              submitSale();
+              setShowCashinModel(true);
+            }}
+          >
+            Pay Now
+          </button>
+        </div>
+
+        <div className="bg-[#171717] w-full rounded-md mt-5 p-8">
+          <div className="flex items-center justify-between">
+            <p className="text-white text-md font-semibold">Cash In</p>
+            <span className="text-white text-md font-semibold">
+              {cashIn.toFixed(2)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mt-5">
+            <p className="text-white text-md font-semibold">Change</p>
+            <span className="text-white text-md font-semibold">
+              {change.toFixed(2)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mt-5">
+            <p className="text-white text-md font-semibold">Profit</p>
+            <span className="text-white text-md font-semibold">
+              {profit.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-[#171717] w-full rounded-md mt-5 px-8 py-2">
+          <h2 className="text-white text-xl font-semibold">Bill browser</h2>
         </div>
       </div>
     </div>

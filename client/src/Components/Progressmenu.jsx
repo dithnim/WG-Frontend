@@ -1,10 +1,10 @@
 import React from 'react'
 
-const Progressmenu = ({topic}) => {
+const Progressmenu = ({message}) => {
   return (
-    <div>
-      <h2 class="mb-2 text-lg font-semibold text-white">
-        {topic}
+    <div className="absolute bottom-4 right-8 rounded-xl bg-[#262626] p-4 flex items-center">
+      <h2 className="mb-2 text-lg font-semibold text-white">
+        {message}
       </h2>
     </div>
   );

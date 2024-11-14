@@ -8,6 +8,7 @@ import Product from "./Components/pages/Product.jsx";
 import Dashboard from "./Components/pages/Dashboard.jsx";
 import Suppliers from "./Components/pages/Suppliers.jsx";
 import Sales from "./Components/pages/Sales.jsx";
+import Stats from "./Components/pages/Stats.jsx";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -37,6 +38,7 @@ function App() {
                   <Route path="/products" element={<Product />} />
                   <Route path="/suppliers" element={<Suppliers />} />
                   <Route path="/sales" element={<Sales />} />
+                  <Route path="/stats" element={<Stats />} />
                 </Routes>
               </div>
             </Router>
