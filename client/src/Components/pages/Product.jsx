@@ -73,7 +73,7 @@ const Product = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/products?search=${searchQuery}`
+        `http://localhost:3000/products?search=${searchQuery}`
       );
       const data = await response.json();
       setProducts(data);
@@ -88,7 +88,7 @@ const Product = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/suppliers?search=${searchQuery}`
+        `http://localhost:3000/suppliers?search=${searchQuery}`
       );
       const data = await response.json();
       setSuppliers(data);
@@ -113,7 +113,7 @@ const Product = () => {
     if (productIdToDelete) {
       try {
         const response = await fetch(
-          `https://wg-backend-production.up.railway.app/products/${productIdToDelete}`,
+          `http://localhost:3000/products/${productIdToDelete}`,
           {
             method: "DELETE",
           }
@@ -171,8 +171,8 @@ const Product = () => {
     try {
       const method = edittingProduct ? "PUT" : "POST";
       const url = edittingProduct
-        ? `https://wg-backend-production.up.railway.app/products/${edittingProduct._id}`
-        : "https://wg-backend-production.up.railway.app/products";
+        ? `http://localhost:3000/products/${edittingProduct._id}`
+        : "http://localhost:3000/products";
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },

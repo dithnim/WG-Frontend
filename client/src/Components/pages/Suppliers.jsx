@@ -20,7 +20,7 @@ const Suppliers = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/suppliers?search=${searchQuery}`
+        `http://localhost:3000/suppliers?search=${searchQuery}`
       );
       const data = await response.json();
       setSuppliers(data);
@@ -49,8 +49,8 @@ const Suppliers = () => {
     try {
       const method = edittingSupplier ? "PUT" : "POST";
       const url = edittingSupplier
-        ? `https://wg-backend-production.up.railway.app/suppliers/${edittingSupplier._id}`
-        : "https://wg-backend-production.up.railway.app/suppliers";
+        ? `http://localhost:3000/suppliers/${edittingSupplier._id}`
+        : "http://localhost:3000/suppliers";
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -73,7 +73,7 @@ const Suppliers = () => {
     if (supplierIdToDelete) {
       try {
         const response = await fetch(
-          `https://wg-backend-production.up.railway.app/suppliers/${supplierIdToDelete}`,
+          `http://localhost:3000/suppliers/${supplierIdToDelete}`,
           {
             method: "DELETE",
           }

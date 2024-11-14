@@ -53,6 +53,10 @@
   background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
 }
 
+.verify-btn{
+  background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
+}
+
 .product .search input,
 .sales .search input {
   background: transparent;
