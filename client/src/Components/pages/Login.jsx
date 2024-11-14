@@ -37,11 +37,11 @@ const Login = ({ onLogin }) => {
 
   const handleRequestOtp = async () => {
     try {
-      const response = axios.post("http://localhost:3000/request-otp", {
+      const response = await axios.post("http://localhost:3000/request-otp", {
         email,
       });
       setOtpSent(true);
-      setOtp((await response).data.otp);
+      setOtp(response.data.otp);
       alert("OTP sent successfully");
     } catch (error) {
       console.error(error);

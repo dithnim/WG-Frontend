@@ -10,6 +10,9 @@ const Dashboard = () => {
   const [productCount, setProductCount] = useState(() => {
     return localStorage.getItem("localProductCount") || 0;
   });
+  const [saleCount, setSaleCount] = useState(() => {
+    return localStorage.getItem("localSaleCount") || 0;
+  });
 
   const [prevSupplierCount, setPrevSupplierCount] = useState(() => {
     return localStorage.getItem("localPrevSupplierCount") || 0;
@@ -17,16 +20,20 @@ const Dashboard = () => {
   const [prevProductCount, setPrevProductCount] = useState(() => {
     return localStorage.getItem("localPrevProductCount") || 0;
   });
+  const [prevSaleCount, setPrevSaleCount] = useState(() => {
+    return localStorage.getItem("localPrevSaleCount") || 0;
+  });
 
   const [productPercentage, setProductPercentage] = useState(0);
   const [supplierPercentage, setSupplierPercentage] = useState(0);
+  const [salePercentage, setSalePercentage] = useState(0);
 
   const [timeframe, setTimeframe] = useState("month");
 
   const fetchSupplierCount = async () => {
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/suppliers/count?search=${timeframe}`
+        `http://localhost:3000/suppliers/count?search=${timeframe}`
       );
       const data = await response.json();
       setSupplierCount(data.count);
@@ -41,7 +48,7 @@ const Dashboard = () => {
   const fetchProductCount = async () => {
     try {
       const response = await fetch(
-        `https://wg-backend-production.up.railway.app/products/count?search=${timeframe}`
+        `http://localhost:3000/products/count?search=${timeframe}`
       );
       const data = await response.json();
       setProductCount(data.count);
@@ -53,33 +60,68 @@ const Dashboard = () => {
     }
   };
 
-  const caculateProductPercentage = () => {
-    const percentage = prevProductCount
-      ? ((productCount - prevProductCount) / prevProductCount) * 100
-      : 0;
+  const fetchSaleCount = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/sales/count?search=${timeframe}`
+      );
+      const data = await response.json();
+      setSaleCount(data.count);
+      setPrevSaleCount(data.prevCount);
+      localStorage.setItem("localSaleCount", data.count);
+      localStorage.setItem("localPrevSaleCount", data.prevCount);
+    } catch (error) {
+      console.error("Error fetching sale count:", error);
+    }
+  };
+
+  const calculateSalePercentage = () => {
+    const percentage =
+      prevSaleCount === 0
+        ? saleCount * 100
+        : prevSaleCount > 0
+          ? ((saleCount - prevSaleCount) / prevSaleCount) * 100
+          : 0;
+    setSalePercentage(percentage.toFixed(2));
+  };
+
+  const calculateProductPercentage = () => {
+    const percentage =
+      prevProductCount === 0
+        ? productCount * 100
+        : prevProductCount > 0
+          ? ((productCount - prevProductCount) / prevProductCount) * 100
+          : 0;
     setProductPercentage(percentage.toFixed(2));
   };
 
-  const caculateSupplierPercentage = () => {
-    const percentage = prevSupplierCount
-      ? ((supplierCount - prevSupplierCount) / prevSupplierCount) * 100
-      : 0;
+  const calculateSupplierPercentage = () => {
+    const percentage =
+      prevSupplierCount === 0
+        ? supplierCount * 100
+        : prevSupplierCount > 0
+          ? ((supplierCount - prevSupplierCount) / prevSupplierCount) * 100
+          : 0;
     setSupplierPercentage(percentage.toFixed(2));
   };
 
   useEffect(() => {
     fetchSupplierCount();
     fetchProductCount();
+    fetchSaleCount();
   }, [timeframe]);
 
   useEffect(() => {
-    caculateProductPercentage();
-    caculateSupplierPercentage();
+    calculateProductPercentage();
+    calculateSupplierPercentage();
+    calculateSalePercentage();
   }, [
     prevProductCount,
     prevSupplierCount,
+    prevSaleCount,
     productCount,
     supplierCount,
+    saleCount,
     timeframe,
   ]);
 
@@ -107,8 +149,8 @@ const Dashboard = () => {
           color={"#f7005f"}
           chart_data={[5, 4, 6, 7, 9, 6]}
           Title={"Sales"}
-          count={65}
-          growth={12}
+          count={saleCount}
+          growth={salePercentage}
         />
         <Smalltile
           color={"#ff5e00"}

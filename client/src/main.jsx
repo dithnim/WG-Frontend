@@ -11,7 +11,7 @@ import Sales from "./Components/pages/Sales.jsx";
 import Stats from "./Components/pages/Stats.jsx";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   // Check if token is present in localStorage on initial load
   useEffect(() => {

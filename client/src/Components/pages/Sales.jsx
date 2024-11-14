@@ -75,11 +75,14 @@ const Sales = () => {
         costPrice: product.costPrice,
       }));
 
-      const response = await fetch("http://localhost:3000/sales", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
-      });
+      const response = await fetch(
+        "http://localhost:3000/sales",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
+        }
+      );
 
       const data = await response.json();
       console.log("Sales created:", data);
