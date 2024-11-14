@@ -1,3 +1,4 @@
+import { set } from "mongoose";
 import React, { useEffect, useState } from "react";
 
 const Sales = () => {
@@ -20,7 +21,7 @@ const Sales = () => {
   const [editingIndex, setEditingIndex] = useState(null);
 
   const [newPrice, setNewPrice] = useState("");
-  const [newDiscount, setNewDiscount] = useState(""); // New state for editing discount
+  const [newDiscount, setNewDiscount] = useState("");
   const [productList, setProductList] = useState([]);
 
   const [showCashinModel, setShowCashinModel] = useState(false);
@@ -29,11 +30,14 @@ const Sales = () => {
     setSearchQuery(event.target.value);
   };
 
-
   const handleEditPrice = (index) => {
     setEditingIndex(index);
     setNewPrice(productList[index].sellingPrice);
-    setNewDiscount(productList[index].discount || 0); // Load discount for editing
+
+    const newDiscount = productList[index].discount || 0;
+    setNewDiscount(newDiscount);
+
+    setProfit(newDiscount > 0 ? productList[index].costPrice - newDiscount : profit);
   };
 
   const saveNewPrice = (index) => {
@@ -94,11 +98,20 @@ const Sales = () => {
       const productTotal =
         deletedProduct.sellingPrice * deletedProduct.quantity;
       const discountAmount = deletedProduct.discount || 0;
+      const deletedCost = deletedProduct.costPrice * deletedProduct.quantity;
 
       setSubTotal((prevSubTotal) => prevSubTotal - productTotal);
       setDiscount((prevDiscount) => prevDiscount - discountAmount);
       setGrandTotal(
         (prevGrandTotal) => prevGrandTotal - (productTotal - discountAmount)
+      );
+      setTotalCost((prevCost) => prevCost - deletedCost);
+
+      setProfit(
+        (prevProfit) =>
+          prevProfit -
+          (deletedProduct.sellingPrice - deletedProduct.costPrice) *
+            deletedProduct.quantity
       );
     }
   };
@@ -106,16 +119,23 @@ const Sales = () => {
   const updateTotals = (updatedList) => {
     let newSubTotal = 0;
     let newDiscount = 0;
+    let newProfit = 0;
 
     updatedList.forEach((item) => {
       const productTotal = item.sellingPrice * item.quantity;
+      const costTotal = item.costPrice * item.quantity;
       newSubTotal += productTotal;
       newDiscount += item.discount || 0;
+      newProfit += (item.sellingPrice - item.costPrice) * item.quantity;
     });
 
     setSubTotal(newSubTotal);
     setDiscount(newDiscount);
     setGrandTotal(newSubTotal - newDiscount);
+    setTotalCost((prevCost) =>
+      updatedList.reduce((acc, item) => acc + item.costPrice * item.quantity, 0)
+    );
+    setProfit(newProfit);
   };
 
   const increaseQuantity = (index) => {
@@ -142,12 +162,18 @@ const Sales = () => {
 
   const handleProductClick = (product) => {
     const productTotal = product.sellingPrice * quantity;
-    const discountAmount = 0; // Default discount set to 0
+    const discountAmount = 0;
 
     setSubTotal((prevSubTotal) => prevSubTotal + productTotal);
     setDiscount((prevDiscount) => prevDiscount + discountAmount);
     setGrandTotal(
       (prevGrandTotal) => prevGrandTotal + productTotal - discountAmount
+    );
+    setTotalCost((prevCost) => prevCost + product.costPrice * quantity);
+
+    setProfit(
+      (prevProfit) =>
+        prevProfit + (product.sellingPrice - product.costPrice) * quantity
     );
 
     setProductList((prevList) => [
@@ -167,7 +193,7 @@ const Sales = () => {
     if (document.getElementById("search-results"))
       document.getElementById("search-results").style.display = "none";
     setSearchQuery("");
-    setQuantity(1); // Reset quantity to avoid accidental repeat additions
+    setQuantity(1);
   };
 
   const fetchProducts = async () => {
@@ -199,7 +225,6 @@ const Sales = () => {
 
   return (
     // Cash In popup
-
     <div className="sales h-screen flex items-start justify-between p-12">
       {showCashinModel && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
