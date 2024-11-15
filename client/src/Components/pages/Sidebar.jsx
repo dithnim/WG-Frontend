@@ -91,7 +91,7 @@ export default function Sidebar() {
         <div className="flex flex-col w-full pt-5 pb-4 top-0 sticky h-screen justify-between">
           <div>
             <div className="flex items-center justify-center mb-5">
-              <h1 className="text-white text-2xl font-bold hidden xl:block">WIJESINGHE GENUINE</h1>
+              <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">WIJESINGHE<br/>GENUINE</h1>
             </div>
             <nav className="flex-1 px-2 space-y-1 sidebar-icons">
               {navigation.map((item, index) => (

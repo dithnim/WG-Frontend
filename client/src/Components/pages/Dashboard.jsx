@@ -13,6 +13,9 @@ const Dashboard = () => {
   const [saleCount, setSaleCount] = useState(() => {
     return localStorage.getItem("localSaleCount") || 0;
   });
+  const [revenueCount, setRevenueCount] = useState(() => {
+    return localStorage.getItem("localRevenueCount") || 0;
+  });
 
   const [prevSupplierCount, setPrevSupplierCount] = useState(() => {
     return localStorage.getItem("localPrevSupplierCount") || 0;
@@ -23,10 +26,14 @@ const Dashboard = () => {
   const [prevSaleCount, setPrevSaleCount] = useState(() => {
     return localStorage.getItem("localPrevSaleCount") || 0;
   });
+  const [prevRevenueCount, setPrevRevenueCount] = useState(() => {
+    return localStorage.getItem("localPrevRevenueCount") || 0;
+  });
 
   const [productPercentage, setProductPercentage] = useState(0);
   const [supplierPercentage, setSupplierPercentage] = useState(0);
   const [salePercentage, setSalePercentage] = useState(0);
+  const [revenuePercentage, setRevenuePercentage] = useState(0);
 
   const [timeframe, setTimeframe] = useState("month");
 
@@ -42,6 +49,21 @@ const Dashboard = () => {
       localStorage.setItem("localPrevSupplierCount", data.prevCount);
     } catch (error) {
       console.error("Error fetching supplier count:", error);
+    }
+  };
+
+  const fetchRevenueCount = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/sales/revenue?search=${timeframe}`
+      );
+      const data = await response.json();
+      setRevenueCount(data.totalRevenue);
+      setPrevRevenueCount(data.prevTotalRevenue);
+      localStorage.setItem("localRevenueCount", data.totalRevenue);
+      localStorage.setItem("localPrevRevenueCount", data.prevTotalRevenue);
+    } catch (error) {
+      console.error("Error fetching revenue:", error);
     }
   };
 
@@ -105,28 +127,42 @@ const Dashboard = () => {
     setSupplierPercentage(percentage.toFixed(2));
   };
 
+  const calculateRevenuePercentage = () => {
+    const percentage =
+      prevRevenueCount === 0
+        ? revenueCount * 100
+        : prevRevenueCount > 0
+          ? ((revenueCount - prevRevenueCount) / prevRevenueCount) * 100
+          : 0;
+    setRevenuePercentage(percentage.toFixed(2));
+  };
+
   useEffect(() => {
     fetchSupplierCount();
     fetchProductCount();
     fetchSaleCount();
+    fetchRevenueCount();
   }, [timeframe]);
 
   useEffect(() => {
     calculateProductPercentage();
     calculateSupplierPercentage();
     calculateSalePercentage();
+    calculateRevenuePercentage();
   }, [
     prevProductCount,
     prevSupplierCount,
     prevSaleCount,
+    prevRevenueCount,
     productCount,
     supplierCount,
     saleCount,
+    revenueCount,
     timeframe,
   ]);
 
   return (
-    <div className="p-12">
+    <div className="p-12 xl:px-8 md:px-6 sm:px-4">
       <div className="flex justify-between">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
 
@@ -144,7 +180,7 @@ const Dashboard = () => {
           <option value="year">Last year</option>
         </select>
       </div>
-      <div className="row1 grid grid-cols-4 mt-8">
+      <div className="row1 grid xl:grid-cols-4 md:grid-cols-2 mt-8">
         <Smalltile
           color={"#f7005f"}
           chart_data={[5, 4, 6, 7, 9, 6]}
@@ -170,11 +206,11 @@ const Dashboard = () => {
           color={"#bbff00"}
           chart_data={[50126, 49356, 51264, 54629, 53426]}
           Title={"Total revenue"}
-          count={53426}
-          growth={9}
+          count={revenueCount}
+          growth={revenuePercentage}
         />
       </div>
-      <div className="flex mt-10 h-[40vh]">
+      <div className="flex mt-6 h-[40vh]">
         <Largetile />
         <Piechart />
       </div>

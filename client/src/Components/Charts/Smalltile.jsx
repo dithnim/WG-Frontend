@@ -82,7 +82,7 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
   }, []);
 
   return (
-    <div className="rounded-xl bg-[#171717] p-2 w-[250px] h-[120px]">
+    <div className="rounded-xl bg-[#171717] p-2 w-[250px] h-[120px] mb-4">
       <div className="flex justify-between">
         <div className="p-1">
           <h1 className="font-semibold">{Title}</h1>

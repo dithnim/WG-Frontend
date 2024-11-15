@@ -37,7 +37,9 @@ const Sales = () => {
     const newDiscount = productList[index].discount || 0;
     setNewDiscount(newDiscount);
 
-    setProfit(newDiscount > 0 ? productList[index].costPrice - newDiscount : profit);
+    setProfit(
+      newDiscount > 0 ? productList[index].costPrice - newDiscount : profit
+    );
   };
 
   const saveNewPrice = (index) => {
@@ -75,14 +77,11 @@ const Sales = () => {
         costPrice: product.costPrice,
       }));
 
-      const response = await fetch(
-        "http://localhost:3000/sales",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
-        }
-      );
+      const response = await fetch("http://localhost:3000/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
+      });
 
       const data = await response.json();
       console.log("Sales created:", data);
@@ -141,11 +140,16 @@ const Sales = () => {
     setProfit(newProfit);
   };
 
-  const increaseQuantity = (index) => {
+  const increaseQuantity = (index, maxQuantity) => {
     setProductList((prevList) => {
-      const updatedList = prevList.map((item, idx) =>
-        idx === index ? { ...item, quantity: item.quantity + 1 } : item
-      );
+      const updatedList = prevList.map((item, idx) => {
+        if (idx === index) {
+          return item.quantity < maxQuantity
+            ? { ...item, quantity: item.quantity + 1 }
+            : item;
+        }
+        return item;
+      });
       updateTotals(updatedList);
       return updatedList;
     });
@@ -190,6 +194,7 @@ const Sales = () => {
         quantity,
         supplier: product.supplier,
         costPrice: product.costPrice,
+        stock: product.stock,
       },
     ]);
 
@@ -279,7 +284,7 @@ const Sales = () => {
 
         <div
           id="search-results"
-          className="bg-[#171717] h-auto w-[40vw] mt-1 z-50 p-2 rounded-lg"
+          className="bg-[#171717] h-[15vh] w-[40vw] mt-1 z-50 p-2 rounded-lg overflow-y-auto"
         >
           {loading ? (
             <p>Loading...</p>
@@ -291,7 +296,13 @@ const Sales = () => {
                 onClick={() => handleProductClick(product)}
               >
                 <label htmlFor="pname">
-                  {product.productName} {"(" + product.productId + ")"}
+                  {product.productId}
+                  {" - "}
+                  {product.productName}
+                  {" - "}
+                  {product.supplier}
+                  {" - "}
+                  {"[" + product.createdAt.slice(0, 10) + "]"}
                 </label>
               </div>
             ))
@@ -303,7 +314,7 @@ const Sales = () => {
         </div>
 
         <div
-          className="bg-[#171717] h-[60vh] w-[55vw] top-[30vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
+          className="bg-[#171717] h-[60vh] w-[55vw] top-[32vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
           id="product-list"
         >
           <table className="w-full text-left" id="sales-table">
@@ -333,10 +344,15 @@ const Sales = () => {
                       className="bx bx-minus-circle text-md cursor-pointer"
                       onClick={() => decreaseQuantity(index)}
                     ></i>
-                    <span className="mx-2 text-center">{product.quantity}</span>
+                    <span className="mx-2 text-center" max={product.stock}>
+                      {product.quantity}
+                    </span>
                     <i
                       className="bx bx-plus-circle text-md cursor-pointer"
-                      onClick={() => increaseQuantity(index)}
+                      onClick={() => {
+                        const max = productList[index].stock;
+                        increaseQuantity(index, max);
+                      }}
                     ></i>
                   </td>
                   <td className="px-1 py-4 text-center">

@@ -19,7 +19,7 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
-  &:hover{
+  &:hover {
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
@@ -44,16 +44,15 @@
   animation: scale 20s linear infinite;
 }
 
-
-.login-btn{
+.login-btn {
   background: linear-gradient(90deg, #628eff 0%, #8740cd 100%);
 }
 
-.reset-btn{
+.reset-btn {
   background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
 }
 
-.verify-btn{
+.verify-btn {
   background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
 }
 
@@ -103,6 +102,7 @@
   }
 }
 
+
 #product-table-body i.edit,
 #supplier-table-body i.edit,
 #sales-table i.edit {
@@ -117,7 +117,7 @@
 
 #product-table-body i.delete,
 #supplier-table-body i.delete,
-#sales-table i.delete{
+#sales-table i.delete {
   @apply cursor-pointer rounded-lg px-1;
   transition: all 0.2s ease-in-out;
 
@@ -161,7 +161,8 @@
 @keyframes spin {
   0% {
     transform: rotate(0deg);
-  } 50% {
+  }
+  50% {
     transform: rotate(180deg);
   }
   100% {
@@ -171,12 +172,13 @@
 
 @keyframes scale {
   0% {
-    transform: scale(1)
-  } 50% {
-    transform: scale(1.1)
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
   100% {
-    transform: scale(1)
+    transform: scale(1);
   }
 }
 
