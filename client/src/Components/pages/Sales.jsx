@@ -1,4 +1,3 @@
-import { set } from "mongoose";
 import React, { useEffect, useState } from "react";
 
 const Sales = () => {
@@ -25,6 +24,26 @@ const Sales = () => {
   const [productList, setProductList] = useState([]);
 
   const [showCashinModel, setShowCashinModel] = useState(false);
+
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const printBill = async () => {
+    setIsPrinting(true);
+    try{
+      const response = await fetch("http://localhost:3000/print", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bill: billData }),
+      });
+
+      const result = await response.json();
+      console.log(result);
+    } catch (error) {
+      console.error("Error printing bill:", error);
+    }
+  }
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -85,6 +104,7 @@ const Sales = () => {
 
       const data = await response.json();
       console.log("Sales created:", data);
+      setIsPrinting(false);
     } catch (error) {
       console.error("Error creating sales:", error);
     }
@@ -254,10 +274,18 @@ const Sales = () => {
             />
             <div className="mt-6 flex justify-end">
               <button
-                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-[#5f5f5f] transition-colors border border-neutral-500/50 font-semibold"
+                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-[#5f5f5f]  border border-neutral-500/50 font-semibold cursor-pointer"
                 onClick={() => setShowCashinModel(false)}
               >
                 Close
+              </button>
+              <button className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-red-600 bg-[#a10000]  border border-neutral-500/50 font-semibold cursor-pointer"
+              onClick={() => {
+                printBill();
+                setShowCashinModel(false);
+              }}
+              >
+                {isPrinting ? "Printing..." : "Print bill"}
               </button>
             </div>
           </div>
@@ -438,11 +466,10 @@ const Sales = () => {
           <button
             className="bg-white w-full text-black font-bold py-3 rounded-xl mt-5 cursor-pointer"
             onClick={() => {
-              submitSale();
               setShowCashinModel(true);
             }}
           >
-            Pay Now
+            Checkout
           </button>
         </div>
 
@@ -455,17 +482,13 @@ const Sales = () => {
           </div>
 
           <div className="flex items-center justify-between mt-5">
-            <p className="text-white text-md font-semibold">Change</p>
-            <span className="text-white text-md font-semibold">
-              {change.toFixed(2)}
-            </span>
+            <p className="text-white text-md font-semibold ">Change</p>
+            <span className="text-md font-semibold">{change.toFixed(2)}</span>
           </div>
 
           <div className="flex items-center justify-between mt-5">
             <p className="text-white text-md font-semibold">Profit</p>
-            <span className="text-white text-md font-semibold">
-              {profit.toFixed(2)}
-            </span>
+            <span className="text-md font-semibold">{profit.toFixed(2)}</span>
           </div>
         </div>
 

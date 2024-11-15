@@ -71,7 +71,6 @@ export default function Sidebar() {
   const location = useLocation();
   const [navigation, setNavigation] = useState(initialNavigation);
   const [bottomNav, setBottomNav] = useState(bottomNavigation);
-
   const [menu, setMenu] = useState(false);
 
   const handleMenuClick = (index, isBottom = false) => {
@@ -84,14 +83,41 @@ export default function Sidebar() {
       : setNavigation(updatedNavigation);
   };
 
+
   return (
-    <div className="flex border-e-2 border-neutral-900/50">
-      {menu ? (<></>) : (<></>)}
-      <div className="xl:w-64 md:w-52 bg-[#0f0f0f]">
-        <div className="flex flex-col w-full pt-5 pb-4 top-0 sticky h-screen justify-between">
+    <div className="flex">
+      {/* Menu Button for Small Screens */}
+      <button
+        onClick={() => setMenu(!menu)}
+        className={`fixed top-4 left-4 z-50 text-white bg-[#262626] p-1 rounded-full md:hidden w-10 h-10 flex items-center transition-transform duration-300 justify-center ${
+          menu ? "translate-x-[180px]" : "translate-x-0"
+        }`}
+      >
+        <i className={`bx ${menu ? "bx-x" : "bx-menu"} text-xl`}></i>
+      </button>
+
+      {/* Overlay for Sidebar */}
+      {menu && (
+        <div
+          onClick={() => setMenu(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-transform duration-300 z-50 w-44 border-e border-[#262626] ${
+          menu ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 md:relative md:w-52 xl:w-64`}
+      >
+        <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between">
           <div>
             <div className="flex items-center justify-center mb-5">
-              <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">WIJESINGHE<br/>GENUINE</h1>
+              <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">
+                WIJESINGHE
+                <br />
+                GENUINE
+              </h1>
             </div>
             <nav className="flex-1 px-2 space-y-1 sidebar-icons">
               {navigation.map((item, index) => (
@@ -102,7 +128,7 @@ export default function Sidebar() {
                   onClick={() => handleMenuClick(index)}
                   className={classNames(
                     location.pathname === item.href
-                      ? "bg-[#262626] text-white text hover:bg-[#303030] border-s-4"
+                      ? "bg-[#262626] text-white hover:bg-[#303030] border-s-4"
                       : "text-gray-300 hover:bg-[#262626] hover:text-white",
                     "group flex items-center px-2 py-2 text-sm font-medium rounded-e-md"
                   )}
@@ -125,7 +151,7 @@ export default function Sidebar() {
                 onClick={() => handleMenuClick(index, true)}
                 className={classNames(
                   location.pathname === item.href
-                    ? "bg-[#262626] text-white text hover:bg-[#303030]"
+                    ? "bg-[#262626] text-white hover:bg-[#303030]"
                     : "text-gray-300 hover:bg-[#262626] hover:text-white",
                   "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                 )}

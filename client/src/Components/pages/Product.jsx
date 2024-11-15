@@ -223,7 +223,7 @@ const Product = () => {
   }, [loading]);
 
   return (
-    <div className="product h-auto p-12">
+    <div className="product h-auto xl:p-12 p-8">
       {/* Delete confirmation popup */}
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -249,86 +249,105 @@ const Product = () => {
       )}
 
       {/* Searchbar */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Products browser</h1>
+      <div className="flex items-center justify-end md:justify-between ">
+        <h1 className="text-3xl font-bold hidden md:flex xl:flex">Products browser</h1>
 
         <div className="flex justify-end items-center mt-5 search">
           <input
             type="text"
             placeholder="Search products..."
-            className="rounded-s-xl px-6 py-2 font-semibold"
+            className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="flex items-center justify-center px-4  bg-transparent text-white rounded-e-xl py-[6px]">
+          <button className="hidden lg:flex items-center justify-center px-4  bg-transparent text-white rounded-e-xl py-[6px]">
             <i className="bx bx-search-alt-2 text-xl"></i>
           </button>
         </div>
       </div>
 
-      <div className=" mt-10 h-[40vh] overflow-y-auto">
-        <table className="table-auto w-full">
-          <thead className="sticky top-0 bg-transparent table-head">
-            <tr>
-              <th>Product name</th>
-              <th>Product ID</th>
-              <th>Brand</th>
-              <th>Rack number</th>
-              <th>Purchased date</th>
-              <th>Cost</th>
-              <th>Selling price</th>
-              <th>In Stock</th>
-              <th>Supplier</th>
-              <th>Edit</th>
-            </tr>
-          </thead>
-
-          <tbody id="product-table-body">
-            {products.map((product) => (
-              <tr key={product._id}>
-                <td className="px-4 py-2">
-                  {product.productName}
-                  {product.description && (
-                    <div
-                      className="relative inline-block"
-                      onMouseEnter={() => setHoveredProductId(product._id)}
-                      onMouseLeave={() => setHoveredProductId(null)}
-                    >
-                      <i className="bx bx-help-circle text-xs text-[#5f5f5f] align-text-top cursor-pointer"></i>
-                      <div
-                        className={`absolute left-0 bg-[#303030] text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
-                          hoveredProductId === product._id
-                            ? "scale-100 opacity-100"
-                            : "scale-0 opacity-0"
-                        }`}
-                      >
-                        {product.description}
-                      </div>
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-2">{product.productId}</td>
-                <td className="px-4 py-2">{product.brand}</td>
-                <td className="px-4 py-2">{product.rackNumber}</td>
-                <td className="px-4 py-2">{product.updatedAt.slice(0, 10)}</td>
-                <td className="px-4 py-2">{product.costPrice}</td>
-                <td className="px-4 py-2">{product.sellingPrice}</td>
-                <td className="px-4 py-2">{product.stock}</td>
-                <td className="px-4 py-2">{product.supplier} </td>
-                <td className="px-1 py-2">
-                  <i
-                    className="bx bxs-pencil text-lg ms-5 edit"
-                    onClick={() => handleEdit(product)}
-                  ></i>
-                  <i
-                    className="bx bxs-trash text-lg ms-1 delete"
-                    onClick={() => openDeleteModal(product._id)}
-                  ></i>
-                </td>
+      <div className="mt-10 h-[40vh] overflow-y-auto overflow-x-auto">
+        <div className="overflow-x-auto">
+          <table className="table-auto min-w-[600px] w-full">
+            <thead className="sticky top-0 bg-gray-100 table-head">
+              <tr>
+                <th className="px-4 py-2">Product name</th>
+                <th className="px-4 py-2 hidden sm:table-cell">Product ID</th>
+                <th className="px-4 py-2 hidden md:table-cell">Brand</th>
+                <th className="px-4 py-2 hidden xl:table-cell">Rack number</th>
+                <th className="px-4 py-2 hidden xl:table-cell">
+                  Purchased date
+                </th>
+                <th className="px-4 py-2">Cost</th>
+                <th className="px-4 py-2 hidden md:table-cell">
+                  Selling price
+                </th>
+                <th className="px-4 py-2">In Stock</th>
+                <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
+                <th className="px-4 py-2">Edit</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="product-table-body">
+              {products.map((product) => (
+                <tr key={product._id} className="border-t">
+                  <td className="px-4 py-2">
+                    {product.productName}
+                    {product.description && (
+                      <div
+                        className="relative inline-block"
+                        onMouseEnter={() => setHoveredProductId(product._id)}
+                        onMouseLeave={() => setHoveredProductId(null)}
+                      >
+                        <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
+                        <div
+                          className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
+                            hoveredProductId === product._id
+                              ? "scale-100 opacity-100"
+                              : "scale-0 opacity-0"
+                          }`}
+                        >
+                          {product.description}
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 hidden sm:table-cell">
+                    {product.productId}
+                  </td>
+                  <td className="px-4 py-2 hidden md:table-cell">
+                    {product.brand}
+                  </td>
+                  <td className="px-4 py-2 hidden xl:table-cell">
+                    {product.rackNumber}
+                  </td>
+                  <td className="px-4 py-2 hidden xl:table-cell">
+                    {product.updatedAt.slice(0, 10)}
+                  </td>
+                  <td className="px-4 py-2">
+                    {product.costPrice}
+                  </td>
+                  <td className="px-4 py-2 hidden md:table-cell">
+                    {product.sellingPrice}
+                  </td>
+                  <td className="px-4 py-2">{product.stock}</td>
+                  <td className="px-4 py-2 hidden md:table-cell">
+                    {product.supplier}
+                  </td>
+                  <td className="px-1 py-2">
+                    <i
+                      className="bx bxs-pencil text-lg ms-5 edit"
+                      onClick={() => handleEdit(product)}
+                    ></i>
+                    <i
+                      className="bx bxs-trash text-lg ms-1 delete"
+                      onClick={() => openDeleteModal(product._id)}
+                    ></i>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Loading animation */}
@@ -517,7 +536,7 @@ const Product = () => {
               <div className="grid md:grid-cols-2 md:gap-2">
                 <select
                   id="categories"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white"
+                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                   value={formData.category}
                   onChange={(e) =>
                     setFormData((prevFormData) => ({
@@ -534,7 +553,7 @@ const Product = () => {
 
                 <select
                   id="categories"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white"
+                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                   value={formData.supplier}
                   onChange={(e) =>
                     setFormData((prevFormData) => ({
@@ -576,7 +595,7 @@ const Product = () => {
               <select
                 id="rackNumbers"
                 name="rackNumber"
-                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white"
+                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                 value={rack}
                 onChange={handleRackChange}
               >
@@ -592,7 +611,7 @@ const Product = () => {
               <select
                 id="categories"
                 name="rackNumber"
-                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white"
+                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                 value={row}
                 onChange={handleRowChange}
               >
@@ -607,7 +626,7 @@ const Product = () => {
               <select
                 id="categories"
                 name="rackNumber"
-                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white"
+                className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                 value={column}
                 onChange={handleColumnChange}
               >
