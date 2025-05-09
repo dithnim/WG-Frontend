@@ -162,14 +162,14 @@ const Dashboard = () => {
   ]);
 
   return (
-    <div className="p-12 xl:px-8 md:px-6 sm:px-4">
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <div className="p-4 md:p-8 lg:p-12">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+        <h1 className="text-xl md:text-2xl font-semibold mb-4 md:mb-0">Dashboard</h1>
 
         <select
           id="categories"
           name="rackNumber"
-          className="text-sm rounded-lg block w-[20vw] p-2.5 bg-[#171717] dark:text-white"
+          className="text-sm rounded-lg block w-full md:w-[20vw] p-2.5 bg-[#171717] dark:text-white mb-4 md:mb-0"
           value={timeframe}
           onChange={(e) => setTimeframe(e.target.value)}
         >
@@ -180,7 +180,8 @@ const Dashboard = () => {
           <option value="year">Last year</option>
         </select>
       </div>
-      <div className="row1 grid xl:grid-cols-4 md:grid-cols-2 mt-8">
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}
           chart_data={[5, 4, 6, 7, 9, 6]}
@@ -210,9 +211,14 @@ const Dashboard = () => {
           growth={revenuePercentage}
         />
       </div>
-      <div className="flex mt-6 h-[40vh]">
-        <Largetile />
-        <Piechart />
+      
+      <div className="flex flex-col lg:flex-row mt-6 h-auto lg:h-[40vh] gap-4">
+        <div className="w-full lg:w-2/3">
+          <Largetile />
+        </div>
+        <div className="w-full lg:w-1/3">
+          <Piechart />
+        </div>
       </div>
     </div>
   );

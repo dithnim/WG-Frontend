@@ -8,14 +8,14 @@ const DonutChart = () => {
         type: "donut",
         height: 280,
       },
-      series: [43, 11, 15, 31], // Data values for each category
+      series: [43, 11, 15, 31],
       labels: ["Genuine", "Local", "Helmets", "Others"],
-      colors: ["#f7005f", "#29eaff", "#ff5e00","#bbff00"], // Colors for each segment
+      colors: ["#f7005f", "#29eaff", "#ff5e00","#bbff00"],
       dataLabels: {
         enabled: true,
         style: {
           fontSize: "12px",
-          colors: ["#fff"], // Text color inside the chart
+          colors: ["#fff"],
         },
         dropShadow: {
           enabled: true,
@@ -31,7 +31,7 @@ const DonutChart = () => {
       legend: {
         position: "bottom",
         markers: {
-          radius: 10, // Rounded markers in the legend
+          radius: 10,
         },
         itemMargin: {
           horizontal: 8,
@@ -43,14 +43,14 @@ const DonutChart = () => {
         theme: "dark",
         y: {
           formatter: function (val) {
-            return val + "%"; // Show percentage in the tooltip
+            return val + "%";
           },
         },
       },
       plotOptions: {
         pie: {
           donut: {
-            size: "70%", // Inner hole size
+            size: "70%",
             labels: {
               show: true,
             },
@@ -61,6 +61,17 @@ const DonutChart = () => {
         show: false,
         width: 0,
       },
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          chart: {
+            height: 200
+          },
+          legend: {
+            position: "bottom"
+          }
+        }
+      }]
     };
 
     const chart = new ApexCharts(
@@ -69,13 +80,13 @@ const DonutChart = () => {
     );
     chart.render();
 
-    return () => chart.destroy(); // Clean up chart on unmount
+    return () => chart.destroy();
   }, []);
 
   return (
     <div
       id="donut-chart"
-      className="w-[15vw] rounded-lg ms-10 bg-[#171717]"
+      className="w-full lg:w-[15vw] rounded-lg lg:ms-10 bg-[#171717]"
     ></div>
   );
 };

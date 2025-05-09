@@ -83,7 +83,7 @@ const Largetile = () => {
   };
 
   return (
-    <div className=" w-[55vw] rounded-xl bg-[#171717] pt-5 pe-4 pb-3">
+    <div className="w-full lg:w-[55vw] rounded-xl bg-[#171717] pt-5 pe-4 pb-3">
       <div id="line-chart"></div>
     </div>
   );
