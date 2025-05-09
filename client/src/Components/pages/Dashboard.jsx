@@ -4,6 +4,8 @@ import Largetile from "../Charts/Largetile";
 import Piechart from "../Charts/Piechart";
 
 const Dashboard = () => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  
   const [supplierCount, setSupplierCount] = useState(() => {
     return localStorage.getItem("localSupplierCount") || 0;
   });
@@ -40,8 +42,11 @@ const Dashboard = () => {
   const fetchSupplierCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/suppliers/count?search=${timeframe}`
+        `${API_URL}/suppliers/count?search=${timeframe}`
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setSupplierCount(data.count);
       setPrevSupplierCount(data.prevCount);
@@ -55,8 +60,11 @@ const Dashboard = () => {
   const fetchRevenueCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/sales/revenue?search=${timeframe}`
+        `${API_URL}/sales/revenue?search=${timeframe}`
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setRevenueCount(data.totalRevenue);
       setPrevRevenueCount(data.prevTotalRevenue);
@@ -70,8 +78,11 @@ const Dashboard = () => {
   const fetchProductCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/products/count?search=${timeframe}`
+        `${API_URL}/products/count?search=${timeframe}`
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setProductCount(data.count);
       setPrevProductCount(data.prevCount);
@@ -85,8 +96,11 @@ const Dashboard = () => {
   const fetchSaleCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/sales/count?search=${timeframe}`
+        `${API_URL}/sales/count?search=${timeframe}`
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setSaleCount(data.count);
       setPrevSaleCount(data.prevCount);
