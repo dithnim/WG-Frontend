@@ -82,20 +82,20 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
   }, []);
 
   return (
-    <div className="rounded-xl bg-[#171717] p-2 w-[250px] h-[120px] mb-4">
+    <div className="rounded-xl bg-[#171717] p-2 w-full h-[120px] mb-4">
       <div className="flex justify-between">
         <div className="p-1">
           <h1 className="font-semibold">{Title}</h1>
-          <div className="mt-1 text-3xl" style={{ color: color }}>
+          <div className="mt-1 text-2xl md:text-3xl" style={{ color: color }}>
             {count}
           </div>
           <div
             className={
               growth > 0
-                ? `text-[#00f271] mt-2 flex items-center percentage-sign`
+                ? `text-[#00f271] mt-2 flex items-center percentage-sign text-sm md:text-base`
                 : growth != 0
-                  ? `text-[#f33b3b] mt-2 flex items-center percentage-sign`
-                  : `text-white mt-2 flex items-center percentage-sign`
+                  ? `text-[#f33b3b] mt-2 flex items-center percentage-sign text-sm md:text-base`
+                  : `text-white mt-2 flex items-center percentage-sign text-sm md:text-base`
             }
           >
             <i
@@ -114,7 +114,7 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
         <div
           ref={chartRef}
           id="area-chart"
-          className="h-24 w-24 flex items-center text-black"
+          className="h-20 w-20 md:h-24 md:w-24 flex items-center text-black"
         ></div>
       </div>
     </div>
