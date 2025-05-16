@@ -40,7 +40,7 @@ const Dashboard = () => {
   const fetchSupplierCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/suppliers/count?search=${timeframe}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers/count?search=${timeframe}`
       );
       const data = await response.json();
       setSupplierCount(data.count);
@@ -55,7 +55,7 @@ const Dashboard = () => {
   const fetchRevenueCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/sales/revenue?search=${timeframe}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales/revenue?search=${timeframe}`
       );
       const data = await response.json();
       setRevenueCount(data.totalRevenue);
@@ -70,7 +70,7 @@ const Dashboard = () => {
   const fetchProductCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/products/count?search=${timeframe}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/count?search=${timeframe}`
       );
       const data = await response.json();
       setProductCount(data.count);
@@ -85,7 +85,7 @@ const Dashboard = () => {
   const fetchSaleCount = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/sales/count?search=${timeframe}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales/count?search=${timeframe}`
       );
       const data = await response.json();
       setSaleCount(data.count);

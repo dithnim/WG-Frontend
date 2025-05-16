@@ -1,81 +1,196 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
 import Otpinput from "../Otpinput";
 import Progressmenu from "../Progressmenu";
 
-const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+// API base URL configuration
+const API_BASE_URL = "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod";
 
-  //reset states
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+// Input validation utilities
+const validateEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const validatePassword = (password) => {
+  // Minimum 8 characters, at least one uppercase letter, one lowercase letter, and one number
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(password);
+};
+
+const Login = ({ onLogin }) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    email: "",
+    otp: "",
+    newPassword: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
-
   const [isForgotMode, setIsForgotMode] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.post("http://localhost:3000/login", {
-        username,
-        password,
-      });
-      onLogin(res.data.token);
-    } catch {
-      setError("Invalid username or password");
+  // Check if user is already authenticated
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      console.log('User already has token, redirecting to home');
+      navigate("/");
+    }
+  }, [navigate]);
+
+  // Clear form data when switching modes
+  useEffect(() => {
+    if (!isForgotMode) {
+      setFormData(prev => ({ ...prev, email: "", otp: "", newPassword: "" }));
+      setOtpSent(false);
+      setOtpVerified(false);
+    }
+  }, [isForgotMode]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
 
-  const handleForgotPassword = () => {
-    setIsForgotMode(true);
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (isForgotMode) {
+      if (!formData.email) {
+        newErrors.email = "Email is required";
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = "Invalid email format";
+      }
+      
+      if (otpSent && !otpVerified && !formData.otp) {
+        newErrors.otp = "OTP is required";
+      }
+      
+      if (otpVerified && !formData.newPassword) {
+        newErrors.newPassword = "New password is required";
+      } else if (otpVerified && !validatePassword(formData.newPassword)) {
+        newErrors.newPassword = "Password must be at least 8 characters with one uppercase, one lowercase, and one number";
+      }
+    } else {
+      if (!formData.username) {
+        newErrors.username = "Username is required";
+      }
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Attempting login...');
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        username: formData.username,
+        password: formData.password,
+      });
+      
+      console.log('Login response:', response.data);
+      
+      if (response.data.token) {
+        console.log('Login successful, setting token');
+        // Store token in sessionStorage
+        sessionStorage.setItem('token', response.data.token);
+        // Set token in axios headers
+        axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+        // Call onLogin to update app state
+        onLogin(response.data.token);
+        // Navigate to home
+        navigate("/");
+      } else {
+        console.error('No token in response');
+        setErrors({
+          general: "Invalid response from server"
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({
+        general: error.response?.data?.message || "Invalid username or password"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRequestOtp = async () => {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/request-otp", {
-        email,
+      const response = await axios.post(`${API_BASE_URL}/request-otp`, {
+        email: formData.email,
       });
       setOtpSent(true);
-      setOtp(response.data.otp);
-      alert("OTP sent successfully");
+      setFormData(prev => ({ ...prev, otp: response.data.otp }));
     } catch (error) {
-      console.error(error);
-      alert("Error sending OTP");
+      setErrors({
+        general: error.response?.data?.message || "Error sending OTP"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/verify-otp", {
-        email,
-        otp,
+      const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+        email: formData.email,
+        otp: formData.otp,
       });
       if (response.data.success) {
         setOtpVerified(true);
-        alert("OTP verified");
       }
     } catch (error) {
-      console.error(error);
-      alert("Invalid OTP");
+      setErrors({
+        general: error.response?.data?.message || "Invalid OTP"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
     try {
-      await axios.post(
-        "http://localhost:3000/reset-password",
-        { email, otp, newPassword }
-      );
-      alert("Password reset successful");
+      await axios.post(`${API_BASE_URL}/reset-password`, {
+        email: formData.email,
+        otp: formData.otp,
+        newPassword: formData.newPassword
+      });
       setIsForgotMode(false);
+      setFormData(prev => ({ ...prev, email: "", otp: "", newPassword: "" }));
+      setOtpSent(false);
+      setOtpVerified(false);
     } catch (error) {
-      console.error(error);
-      alert("Error resetting password");
+      setErrors({
+        general: error.response?.data?.message || "Error resetting password"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,121 +223,119 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
       {isForgotMode ? (
-        <>
-          <div className="w-[350px] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center">
-            {!otpSent ? (
-              <div>
-                <h2 className="text-2xl font-semibold text-white mb-1">
-                  Forgot Password ?
-                </h2>
-                <h2 className="text-xs font-semibold text-white mb-4">
-                  No need to worry..!
-                </h2>
-                <input
-                  type="email"
-                  id="email"
-                  class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-                  placeholder="Email"
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-
-                <button
-                  onClick={handleRequestOtp}
-                  className="w-full reset-btn text-white p-2 rounded"
-                >
-                  Reset password
-                </button>
-              </div>
-            ) : otpSent && !otpVerified ? (
-              <div>
-                <h2 className="text-2xl font-semibold text-white mb-4">
-                  Verify OTP
-                </h2>
-                <Otpinput />
-                <button
-                  onClick={handleVerifyOtp}
-                  className="verify-btn text-white p-2 rounded w-full mt-4"
-                >
-                  Verify
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h2 className="text-2xl font-semibold text-white mb-4">
-                  Reset Password
-                </h2>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New Password"
-                  className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-                />
-                <button
-                  onClick={handleResetPassword}
-                  className="verify-btn text-white p-2 rounded w-full"
-                >
-                  Reset Password
-                </button>
-              </div>
-            )}
-            <p
-              className="text-center text-gray-200 text-xs mt-2 cursor-pointer"
-              onClick={() => setIsForgotMode(false)}
-            >
-              <i className="bx bx-left-arrow-alt"></i> Go back
-            </p>
-          </div>
-        </>
-      ) : (
-        <>
-          <form
-            onSubmit={handleLogin}
-            className="w-[350px] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
-          >
-            <h2 className="text-2xl font-semibold text-white mb-1">Login</h2>
-            <h2 className="text-xs font-semibold text-white mb-4">
-              Glad you're back..!
-            </h2>
-            {error && <p className="text-red-500">{error}</p>}
-            <input
-              type="text"
-              id="username"
-              class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-              placeholder="Username"
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              id="password"
-              class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-3"
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <div className="flex items-center mb-3 text-white text-xs">
-              <input type="checkbox" />
-              <label htmlFor="checkbox" className="ms-1">
-                Remember me
-              </label>
+        <div className="w-[350px] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center">
+          {!otpSent ? (
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-1">Forgot Password ?</h2>
+              <h2 className="text-xs font-semibold text-white mb-4">No need to worry..!</h2>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+                placeholder="Email"
+                required
+              />
+              {errors.email && <p className="text-red-500 text-sm mb-2">{errors.email}</p>}
+              <button
+                onClick={handleRequestOtp}
+                disabled={isLoading}
+                className="w-full reset-btn text-white p-2 rounded disabled:opacity-50"
+              >
+                {isLoading ? "Sending..." : "Reset password"}
+              </button>
             </div>
-            <button
-              type="submit"
-              className="w-full login-btn text-white p-2 rounded"
-            >
-              Login
-            </button>
-            <p
-              className="text-center text-gray-200 text-xs mt-2 cursor-pointer"
-              onClick={handleForgotPassword}
-            >
-              forgot password ?
-            </p>
-          </form>
-        </>
+          ) : otpSent && !otpVerified ? (
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-4">Verify OTP</h2>
+              <Otpinput value={formData.otp} onChange={handleInputChange} />
+              {errors.otp && <p className="text-red-500 text-sm mb-2">{errors.otp}</p>}
+              <button
+                onClick={handleVerifyOtp}
+                disabled={isLoading}
+                className="verify-btn text-white p-2 rounded w-full mt-4 disabled:opacity-50"
+              >
+                {isLoading ? "Verifying..." : "Verify"}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-4">Reset Password</h2>
+              <input
+                type="password"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleInputChange}
+                placeholder="New Password"
+                className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+              />
+              {errors.newPassword && <p className="text-red-500 text-sm mb-2">{errors.newPassword}</p>}
+              <button
+                onClick={handleResetPassword}
+                disabled={isLoading}
+                className="verify-btn text-white p-2 rounded w-full disabled:opacity-50"
+              >
+                {isLoading ? "Resetting..." : "Reset Password"}
+              </button>
+            </div>
+          )}
+          {errors.general && <p className="text-red-500 text-sm mt-2">{errors.general}</p>}
+          <p
+            className="text-center text-gray-200 text-xs mt-2 cursor-pointer"
+            onClick={() => setIsForgotMode(false)}
+          >
+            <i className="bx bx-left-arrow-alt"></i> Go back
+          </p>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleLogin}
+          className="w-[350px] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
+        >
+          <h2 className="text-2xl font-semibold text-white mb-1">Login</h2>
+          <h2 className="text-xs font-semibold text-white mb-4">Glad you're back..!</h2>
+          {errors.general && <p className="text-red-500 text-sm mb-2">{errors.general}</p>}
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
+            className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+            placeholder="Username"
+            required
+          />
+          {errors.username && <p className="text-red-500 text-sm mb-2">{errors.username}</p>}
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-3"
+            placeholder="Password"
+            required
+          />
+          {errors.password && <p className="text-red-500 text-sm mb-2">{errors.password}</p>}
+          <div className="flex items-center mb-3 text-white text-xs">
+            <input type="checkbox" />
+            <label htmlFor="checkbox" className="ms-1">
+              Remember me
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full login-btn text-white p-2 rounded disabled:opacity-50"
+          >
+            {isLoading ? "Logging in..." : "Login"}
+          </button>
+          <p
+            className="text-center text-gray-200 text-xs mt-2 cursor-pointer"
+            onClick={() => setIsForgotMode(true)}
+          >
+            forgot password ?
+          </p>
+        </form>
       )}
     </div>
   );

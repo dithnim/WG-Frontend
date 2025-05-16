@@ -30,7 +30,7 @@ const Sales = () => {
   const printBill = async () => {
     setIsPrinting(true);
     try{
-      const response = await fetch("http://localhost:3000/print", {
+      const response = await fetch("https://wg-backend-production-ad41.up.railway.app/print", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ const Sales = () => {
         costPrice: product.costPrice,
       }));
 
-      const response = await fetch("http://localhost:3000/sales", {
+      const response = await fetch("https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
@@ -236,7 +236,7 @@ const Sales = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/products?search=${searchQuery}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products?search=${searchQuery}`
       );
       const data = await response.json();
       setProducts(data);

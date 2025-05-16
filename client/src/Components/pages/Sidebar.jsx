@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Link, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const API_BASE_URL = "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod";
 
 const initialNavigation = [
   {
@@ -57,7 +60,7 @@ const bottomNavigation = [
   {
     name: "Logout",
     id: "logout",
-    href: "/logout",
+    href: "#",
     current: false,
     icon: "bx bx-log-out me-2 text-xl",
   },
@@ -67,8 +70,9 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [navigation, setNavigation] = useState(initialNavigation);
   const [bottomNav, setBottomNav] = useState(bottomNavigation);
   const [menu, setMenu] = useState(false);
@@ -83,6 +87,27 @@ export default function Sidebar() {
       : setNavigation(updatedNavigation);
   };
 
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      const token = sessionStorage.getItem('token');
+      if (token) {
+        // Call the logout endpoint with the token
+        await axios.post(`${API_BASE_URL}/logout`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always call onLogout to clear the local state
+      if (onLogout) {
+        onLogout();
+      }
+    }
+  };
 
   return (
     <div className="flex">
@@ -144,21 +169,35 @@ export default function Sidebar() {
           </div>
           <div className="px-2 space-y-1 pb-4">
             {bottomNav.map((item, index) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                id={item.id}
-                onClick={() => handleMenuClick(index, true)}
-                className={classNames(
-                  location.pathname === item.href
-                    ? "bg-[#262626] text-white hover:bg-[#303030]"
-                    : "text-gray-300 hover:bg-[#262626] hover:text-white",
-                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                )}
-              >
-                <i className={item.icon}></i>
-                {item.name}
-              </Link>
+              item.id === "logout" ? (
+                <button
+                  key={item.name}
+                  onClick={handleLogout}
+                  className={classNames(
+                    "text-gray-300 hover:bg-[#262626] hover:text-white",
+                    "group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md"
+                  )}
+                >
+                  <i className={item.icon}></i>
+                  {item.name}
+                </button>
+              ) : (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  id={item.id}
+                  onClick={() => handleMenuClick(index, true)}
+                  className={classNames(
+                    location.pathname === item.href
+                      ? "bg-[#262626] text-white hover:bg-[#303030]"
+                      : "text-gray-300 hover:bg-[#262626] hover:text-white",
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                  )}
+                >
+                  <i className={item.icon}></i>
+                  {item.name}
+                </Link>
+              )
             ))}
           </div>
         </div>

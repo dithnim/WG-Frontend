@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.js",
-    "net": "netlify deplloy --prod"
+    "net": "netlify deploy --prod"
   },
   "dependencies": {
     "apexcharts": "^3.54.1",

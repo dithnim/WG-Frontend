@@ -2,12 +2,19 @@ import React from "react";
 import { useEffect, useState } from "react";
 import Piechart from "../Charts/Piechart";
 import Linechart from "../Charts/Linechart";
+import axios from "axios";
 
 const Product = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => {
+    // Initialize from localStorage if available
+    const savedProducts = localStorage.getItem('products');
+    return savedProducts ? JSON.parse(savedProducts) : [];
+  });
   const [suppliers, setSuppliers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [tempProductId, setTempProductId] = useState(null);
 
   // States for rack selection
   const [rack, setRack] = useState("");
@@ -38,6 +45,11 @@ const Product = () => {
     brand: "",
     supplier: "",
   });
+
+  // Update localStorage whenever products change
+  useEffect(() => {
+    localStorage.setItem('products', JSON.stringify(products));
+  }, [products]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -72,12 +84,14 @@ const Product = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/products?search=${searchQuery}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products?search=${searchQuery}`
       );
       const data = await response.json();
       setProducts(data);
+      setError(null);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setError("Failed to fetch products. Using cached data.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +101,7 @@ const Product = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/suppliers?search=${searchQuery}`
+        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers?search=${searchQuery}`
       );
       const data = await response.json();
       setSuppliers(data);
@@ -110,20 +124,21 @@ const Product = () => {
 
   const confirmDeleteProduct = async () => {
     if (productIdToDelete) {
+      // Optimistically remove the product from the UI
+      setProducts(prevProducts => prevProducts.filter(p => p._id !== productIdToDelete));
+      
       try {
-        const response = await fetch(
-          `http://localhost:3000/products/${productIdToDelete}`,
-          {
-            method: "DELETE",
-          }
+        const response = await axios.delete(
+          `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/${productIdToDelete}`
         );
-        const data = await response.json();
-        console.log(data);
-        fetchProducts();
+        if (response.status === 200) {
+          closeDeleteModal();
+        }
       } catch (error) {
         console.error("Error deleting product:", error);
-      } finally {
-        closeDeleteModal();
+        // Revert the optimistic update if the server request fails
+        fetchProducts();
+        setError("Failed to delete product. Please try again.");
       }
     }
   };
@@ -166,18 +181,54 @@ const Product = () => {
     }
   };
 
+  const updateProductWithServerId = (tempId, serverId) => {
+    setProducts(prevProducts => 
+      prevProducts.map(p => 
+        p._id === tempId ? { ...p, _id: serverId } : p
+      )
+    );
+  };
+
   const handleSubmit = async () => {
     try {
-      const method = edittingProduct ? "PUT" : "POST";
       const url = edittingProduct
-        ? `http://localhost:3000/products/${edittingProduct._id}`
-        : "http://localhost:3000/products";
-      await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      fetchProducts();
+        ? `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/${edittingProduct._id}`
+        : "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products";
+      
+      // Optimistically update the UI
+      if (edittingProduct) {
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p._id === edittingProduct._id ? { ...formData, _id: edittingProduct._id } : p
+          )
+        );
+      } else {
+        // For new products, we'll add a temporary ID that will be replaced by the server
+        const newTempId = 'temp_' + Date.now();
+        setTempProductId(newTempId);
+        setProducts(prevProducts => [...prevProducts, { ...formData, _id: newTempId }]);
+
+        // Make the server request for new product
+        const response = await axios.post(url, formData, {
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        // Update the temporary ID with the real one from the server
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p._id === tempProductId ? { ...p, _id: response.data._id } : p
+          )
+        );
+        setTempProductId(null);
+      }
+
+      // Handle edit case
+      if (edittingProduct) {
+        await axios.put(url, formData, {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      
       setEdittingProduct(null);
       setFormData({
         productName: "",
@@ -194,8 +245,13 @@ const Product = () => {
       setRack("");
       setRow("");
       setColumn("");
+      setError(null);
     } catch (error) {
       console.error("Error updating/adding product:", error);
+      // Revert the optimistic update if the server request fails
+      fetchProducts();
+      setError("Failed to save product. Please try again.");
+      setTempProductId(null);
     }
   };
 
@@ -321,7 +377,7 @@ const Product = () => {
                     {product.rackNumber}
                   </td>
                   <td className="px-4 py-2 hidden xl:table-cell">
-                    {product.updatedAt.slice(0, 10)}
+                    {product.updatedAt ? product.updatedAt.slice(0, 10) : 'N/A'}
                   </td>
                   <td className="px-4 py-2">
                     {product.costPrice}
