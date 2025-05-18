@@ -246,6 +246,7 @@ const Product = () => {
       setRow("");
       setColumn("");
       setError(null);
+      
     } catch (error) {
       console.error("Error updating/adding product:", error);
       // Revert the optimistic update if the server request fails
@@ -460,7 +461,7 @@ const Product = () => {
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Product name
+                Product name*
               </label>
               {nameValidationError && (
                 <p className="text-sm text-red-600 dark:text-red-500 mt-1">
@@ -477,12 +478,13 @@ const Product = () => {
                   placeholder=" "
                   onChange={handleInputChange}
                   value={formData.productId}
+                  required
                 />
                 <label
                   htmlFor="floating-description"
                   className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
                 >
-                  Product ID
+                  Product ID*
                 </label>
               </div>
               <div className="relative z-0 mb-5 group">
@@ -528,7 +530,7 @@ const Product = () => {
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Cost
+                Cost*
               </label>
               {costValidationError && (
                 <p className="text-sm text-red-600 dark:text-red-500 mt-1">
@@ -559,7 +561,7 @@ const Product = () => {
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Selling price
+                Selling price*
               </label>
               {sellingPriceValidationError && (
                 <p className="text-sm text-red-600 dark:text-red-500 mt-1">
@@ -585,7 +587,7 @@ const Product = () => {
                 htmlFor="floating-stock"
                 className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
-                Stocks
+                Stocks*
               </label>
             </div>
             <div className="relative z-0 w-full mb-5 group">
@@ -677,6 +679,9 @@ const Product = () => {
                 <option value="C">Bank C</option>
                 <option value="D">Bank D</option>
                 <option value="E">Bank E</option>
+                <option value="F">Bank F</option>
+                <option value="G">Bank G</option>
+                <option value="H">Bank H</option>
               </select>
 
               <select
@@ -693,6 +698,20 @@ const Product = () => {
                 <option value="4">4</option>
                 <option value="5">5</option>
                 <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
               </select>
             </div>
           </div>
