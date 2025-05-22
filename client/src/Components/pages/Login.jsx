@@ -218,13 +218,13 @@ const Login = ({ onLogin }) => {
       )}
 
       <div className="text-white">
-        <h1 className="text-6xl font-bold mb-4">Welcome Back..!</h1>
+        <h1 className="xl:text-6xl lg:text-5xl md:text-4xl sm:text-3xl font-bold mb-4">Welcome Back..!</h1>
         <div className="flex items-center">
-          <h3 className="text-2xl font-bold border w-[250px] flex items-center justify-center py-1">
+          <h3 className="xl:text-2xl lg:text-xl md:text-lg sm:text-base text-sm font-bold border w-[250px] flex items-center justify-center py-1">
             Wijesinghe Genuine
           </h3>
-          <div className="bg-white w-[400px] h-[1px] ms-2"></div>
-          <i className="bx bxs-chevron-right text-4xl"></i>
+          <div className="bg-white xl:w-[400px] lg:w-[300px] md:w-[150px] sm:w-[100px] w-[100px] h-[1px] ms-2"></div>
+          <i className="bx bxs-chevron-right xl:text-4xl lg:text-3xl md:text-2xl sm:text-xl text-lg"></i>
         </div>
       </div>
       {isForgotMode ? (
