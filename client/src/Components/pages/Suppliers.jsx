@@ -1,12 +1,12 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import apiService from "../../services/api";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [edittingSupplier, setEdittingSupplier] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // New state for form submission
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     supplierName: "",
@@ -14,31 +14,19 @@ const Suppliers = () => {
     contactNumbers: "",
     email: "",
   });
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [supplierIdToDelete, setSupplierIdToDelete] = useState(null);
+  const [tempSupplierId, setTempSupplierId] = useState(null); // Added for temporary IDs
 
   const fetchSuppliers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers?search=${searchQuery}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch suppliers');
-      }
-      const data = await response.json();
+      const data = await apiService.get('/suppliers', { search: searchQuery });
       setSuppliers(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
-      setError(error.message);
+      setError(error.message || "Failed to fetch suppliers");
     } finally {
       setLoading(false);
     }
@@ -59,32 +47,24 @@ const Suppliers = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+
     try {
-      const token = sessionStorage.getItem('token');
-
-      const method = edittingSupplier ? "PUT" : "POST";
-      const url = edittingSupplier
-        ? `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers/${edittingSupplier._id}`
-        : "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers";
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      if (edittingSupplier) {
+        const data = await apiService.put(`/suppliers`, formData, { id: edittingSupplier._id });
+        setSuppliers(prevSuppliers => 
+          prevSuppliers.map(s => 
+            s._id === edittingSupplier._id ? { ...s, ...formData } : s
+          )
+        );
+      } else {
+        const data = await apiService.post('/suppliers', formData);
+        setSuppliers(prevSuppliers => [...prevSuppliers, { ...formData, _id: data._id, updatedAt: data.data?.updatedAt }]);
       }
 
-      const data = await response.json();
-      console.log('Server response:', data);
-      
-      fetchSuppliers();
+      // Reset form after success
       setEdittingSupplier(null);
       setFormData({
         supplierName: "",
@@ -92,58 +72,38 @@ const Suppliers = () => {
         contactNumbers: "",
         email: "",
       });
+      setTempSupplierId(null);
     } catch (error) {
       console.error("Error updating/adding Supplier:", error);
-      setError(error.message || 'Failed to update/add supplier');
+      setError(error.message || "Failed to save supplier. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const confirmDeleteProduct = async () => {
-    if (supplierIdToDelete) {
-      try {
-        const token = sessionStorage.getItem('token');
-        if (!token) {
-          setError('No authentication token found. Please log in again.');
-          return;
-        }
-
-        console.log('Deleting supplier:', supplierIdToDelete);
-        
-        const response = await axios.delete(
-          `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers/${supplierIdToDelete}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
-
-        console.log('Delete response:', response.data);
-        
-        // Only update UI if delete was successful
-        if (response.status === 200 || response.status === 204) {
-          setSuppliers(prevSuppliers => prevSuppliers.filter(supplier => supplier._id !== supplierIdToDelete));
-          fetchSuppliers();
-        } else {
-          throw new Error('Failed to delete supplier');
-        }
-      } catch (error) {
-        console.error("Error deleting supplier:", error);
-        setError(error.response?.data?.message || error.message || 'Failed to delete supplier');
-      } finally {
-        closeDeleteModal();
-      }
+    try {
+      await apiService.delete('/suppliers', { id: supplierIdToDelete });
+      setSuppliers((prevSuppliers) =>
+        prevSuppliers.filter((supplier) => supplier._id !== supplierIdToDelete)
+      );
+      await fetchSuppliers(); // Ensure sync with server
+    } catch (error) {
+      console.error("Error deleting supplier:", error);
+      setError(error.response?.data?.message || error.message || "Failed to delete supplier");
+    } finally {
+      closeDeleteModal();
     }
   };
 
   const handleEdit = (supplier) => {
-    console.log('Editing supplier:', supplier);
+    console.log("Editing supplier:", supplier);
     setEdittingSupplier(supplier);
     setFormData({
-      supplierName: supplier.supplierName || '',
-      description: supplier.description || '',
-      contactNumbers: supplier.contactNumbers || '',
-      email: supplier.email || '',
+      supplierName: supplier.supplierName || "",
+      description: supplier.description || "",
+      contactNumbers: supplier.contactNumbers || "",
+      email: supplier.email || "",
     });
   };
 
@@ -215,7 +175,6 @@ const Suppliers = () => {
                 <th>Edit</th>
               </tr>
             </thead>
-
             <tbody id="supplier-table-body">
               {suppliers.map((supplier) => (
                 <tr key={supplier._id}>
@@ -223,7 +182,9 @@ const Suppliers = () => {
                   <td className="px-4 py-2">{supplier.description}</td>
                   <td className="px-4 py-2">{supplier.contactNumbers}</td>
                   <td className="px-4 py-2">{supplier.email}</td>
-                  <td className="px-4 py-2">{supplier.updatedAt ? supplier.updatedAt.slice(0, 10) : 'N/A'}</td>
+                  <td className="px-4 py-2">
+                    {supplier.updatedAt ? supplier.updatedAt.slice(0, 10) : "N/A"}
+                  </td>
                   <td className="px-1 py-2">
                     <i
                       className="bx bxs-pencil text-lg ms-5 edit"
@@ -231,7 +192,10 @@ const Suppliers = () => {
                     ></i>
                     <i
                       className="bx bxs-trash text-lg ms-1 delete"
-                      onClick={() => openDeleteModal(supplier._id)}
+                      onClick={() => {
+                        console.log(supplier._id);
+                        openDeleteModal(supplier._id)
+                      }}
                     ></i>
                   </td>
                 </tr>
@@ -243,8 +207,8 @@ const Suppliers = () => {
 
       <div className="mx-auto px-2 py-2 mt-5">
         <div className="relative z-0 w-full mb-5 group">
-          <div class="grid md:grid-cols-2 md:gap-6">
-            <div class="relative z-0 w-full mb-5 group">
+          <div className="grid md:grid-cols-2 md:gap-6">
+            <div className="relative z-0 w-full mb-5 group">
               <input
                 type="text"
                 name="supplierName"
@@ -285,9 +249,9 @@ const Suppliers = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <div className="relative z-0 w-full mb-5 group">
               <input
-                type="number"
+                type="text"
                 name="contactNumbers"
-                id="floating-cost"
+                id="floating-contact-numbers"
                 className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                 placeholder=" "
                 onChange={handleInputChange}
@@ -295,7 +259,7 @@ const Suppliers = () => {
                 required
               />
               <label
-                htmlFor="floating-cost"
+                htmlFor="floating-contact-numbers"
                 className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Contact numbers
@@ -305,7 +269,7 @@ const Suppliers = () => {
               <input
                 type="email"
                 name="email"
-                id="floating-selling-price"
+                id="floating-email"
                 className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                 placeholder=" "
                 onChange={handleInputChange}
@@ -313,7 +277,7 @@ const Suppliers = () => {
                 required
               />
               <label
-                htmlFor="floating-selling-price"
+                htmlFor="floating-email"
                 className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Email
@@ -324,7 +288,7 @@ const Suppliers = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626]  focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2   focus:outline-none dark:focus:ring-blue-800"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800"
               onClick={() => {
                 setEdittingSupplier(null);
                 setFormData({
@@ -334,6 +298,7 @@ const Suppliers = () => {
                   email: "",
                 });
               }}
+              disabled={submitting}
             >
               Cancel
             </button>
@@ -341,9 +306,14 @@ const Suppliers = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white  focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2   focus:outline-none dark:focus:ring-blue-800"
+              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800"
+              disabled={submitting}
             >
-              {edittingSupplier ? "Update supplier" : "Add supplier"}
+              {submitting
+                ? "Processing..."
+                : edittingSupplier
+                ? "Update supplier"
+                : "Add supplier"}
             </button>
           </div>
         </div>

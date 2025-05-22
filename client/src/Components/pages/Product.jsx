@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import Piechart from "../Charts/Piechart";
 import Linechart from "../Charts/Linechart";
-import axios from "axios";
+import apiService from "../../services/api";
 
 const Product = () => {
   const [products, setProducts] = useState(() => {
@@ -83,10 +83,7 @@ const Product = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products?search=${searchQuery}`
-      );
-      const data = await response.json();
+      const data = await apiService.get('/products', { search: searchQuery });
       setProducts(data);
       setError(null);
     } catch (error) {
@@ -100,10 +97,7 @@ const Product = () => {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers?search=${searchQuery}`
-      );
-      const data = await response.json();
+      const data = await apiService.get('/suppliers', { search: searchQuery });
       setSuppliers(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -128,12 +122,8 @@ const Product = () => {
       setProducts(prevProducts => prevProducts.filter(p => p._id !== productIdToDelete));
       
       try {
-        const response = await axios.delete(
-          `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/${productIdToDelete}`
-        );
-        if (response.status === 200) {
-          closeDeleteModal();
-        }
+        await apiService.delete('/products', { id: productIdToDelete });
+        closeDeleteModal();
       } catch (error) {
         console.error("Error deleting product:", error);
         // Revert the optimistic update if the server request fails
@@ -191,10 +181,6 @@ const Product = () => {
 
   const handleSubmit = async () => {
     try {
-      const url = edittingProduct
-        ? `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/${edittingProduct._id}`
-        : "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products";
-      
       // Optimistically update the UI
       if (edittingProduct) {
         setProducts(prevProducts => 
@@ -207,26 +193,20 @@ const Product = () => {
         const newTempId = 'temp_' + Date.now();
         setTempProductId(newTempId);
         setProducts(prevProducts => [...prevProducts, { ...formData, _id: newTempId }]);
+      }
 
-        // Make the server request for new product
-        const response = await axios.post(url, formData, {
-          headers: { "Content-Type": "application/json" },
-        });
-        
+      // Make the server request
+      if (edittingProduct) {
+        await apiService.put('/products', formData, { id: edittingProduct._id });
+      } else {
+        const data = await apiService.post('/products', formData);
         // Update the temporary ID with the real one from the server
         setProducts(prevProducts => 
           prevProducts.map(p => 
-            p._id === tempProductId ? { ...p, _id: response.data._id } : p
+            p._id === tempProductId ? { ...p, _id: data._id } : p
           )
         );
         setTempProductId(null);
-      }
-
-      // Handle edit case
-      if (edittingProduct) {
-        await axios.put(url, formData, {
-          headers: { "Content-Type": "application/json" },
-        });
       }
       
       setEdittingProduct(null);

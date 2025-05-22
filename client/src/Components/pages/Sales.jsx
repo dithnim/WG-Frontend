@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import apiService from "../../services/api";
 
 const Sales = () => {
   const [products, setProducts] = useState([]);
@@ -29,21 +30,13 @@ const Sales = () => {
 
   const printBill = async () => {
     setIsPrinting(true);
-    try{
-      const response = await fetch("https://wg-backend-production-ad41.up.railway.app/print", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ bill: billData }),
-      });
-
-      const result = await response.json();
+    try {
+      const result = await apiService.post('/print', { bill: billData });
       console.log(result);
     } catch (error) {
       console.error("Error printing bill:", error);
     }
-  }
+  };
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -96,13 +89,11 @@ const Sales = () => {
         costPrice: product.costPrice,
       }));
 
-      const response = await fetch("https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grandTotal: grandTotal, products: saleData }),
+      const data = await apiService.post('/sales', { 
+        grandTotal: grandTotal, 
+        products: saleData 
       });
-
-      const data = await response.json();
+      
       console.log("Sales created:", data);
       setIsPrinting(false);
     } catch (error) {
@@ -235,10 +226,7 @@ const Sales = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products?search=${searchQuery}`
-      );
-      const data = await response.json();
+      const data = await apiService.get('/products', { search: searchQuery });
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);

@@ -1,7 +1,7 @@
 import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import axios from "axios";
+import apiService from "./services/api";
 import Sidebar from "./Components/pages/Sidebar.jsx";
 import "./index.css";
 import Login from "./Components/pages/Login.jsx";
@@ -11,23 +11,16 @@ import Suppliers from "./Components/pages/Suppliers.jsx";
 import Sales from "./Components/pages/Sales.jsx";
 import Stats from "./Components/pages/Stats.jsx";
 
-// API base URL configuration
-const API_BASE_URL = "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod";
-
 // Secure token storage utility
 const secureStorage = {
   setToken: (token) => {
     sessionStorage.setItem("token", token);
-    // Set default authorization header for future requests
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   },
   getToken: () => {
     return sessionStorage.getItem("token");
   },
   removeToken: () => {
     sessionStorage.removeItem("token");
-    // Remove authorization header
-    delete axios.defaults.headers.common["Authorization"];
   }
 };
 
@@ -46,22 +39,14 @@ function App() {
       }
 
       try {
-        // Set the token in axios headers before making the request
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        
-        // Try to make a request to a protected endpoint instead of validate-token
-        const response = await axios.get(`${API_BASE_URL}/products`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
+        // Try to make a request to a protected endpoint
+        await apiService.get('/products');
         // If we get here, the token is valid
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Token validation error:', error);
-        // Remove token if it's an authentication error or if the endpoint is not found
-        if (error.response?.status === 401 || error.response?.status === 404) {
+        // Remove token if it's an authentication error
+        if (error.response?.status === 401) {
           secureStorage.removeToken();
         }
         setIsAuthenticated(false);
@@ -82,7 +67,7 @@ function App() {
   // Function to handle logout
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/logout`);
+      await apiService.post('/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

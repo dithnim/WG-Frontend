@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import Smalltile from "../Charts/Smalltile";
 import Largetile from "../Charts/Largetile";
 import Piechart from "../Charts/Piechart";
+import apiService from "../../services/api";
 
 const Dashboard = () => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  
+ 
   const [supplierCount, setSupplierCount] = useState(() => {
     return localStorage.getItem("localSupplierCount") || 0;
   });
@@ -41,13 +41,7 @@ const Dashboard = () => {
 
   const fetchSupplierCount = async () => {
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/suppliers/count?search=${timeframe}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiService.get(`/suppliers/count`, { search: timeframe });
       setSupplierCount(data.count);
       setPrevSupplierCount(data.prevCount);
       localStorage.setItem("localSupplierCount", data.count);
@@ -59,13 +53,7 @@ const Dashboard = () => {
 
   const fetchRevenueCount = async () => {
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales/revenue?search=${timeframe}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiService.get(`/sales/revenue`, { search: timeframe });
       setRevenueCount(data.totalRevenue);
       setPrevRevenueCount(data.prevTotalRevenue);
       localStorage.setItem("localRevenueCount", data.totalRevenue);
@@ -77,13 +65,7 @@ const Dashboard = () => {
 
   const fetchProductCount = async () => {
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/products/count?search=${timeframe}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiService.get(`/products/count`, { search: timeframe });
       setProductCount(data.count);
       setPrevProductCount(data.prevCount);
       localStorage.setItem("localProductCount", data.count);
@@ -95,13 +77,7 @@ const Dashboard = () => {
 
   const fetchSaleCount = async () => {
     try {
-      const response = await fetch(
-        `https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod/sales/count?search=${timeframe}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiService.get(`/sales/count`, { search: timeframe });
       setSaleCount(data.count);
       setPrevSaleCount(data.prevCount);
       localStorage.setItem("localSaleCount", data.count);

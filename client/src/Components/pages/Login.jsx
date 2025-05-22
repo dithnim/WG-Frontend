@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiService from "../../services/api";
 import Otpinput from "../Otpinput";
 import Progressmenu from "../Progressmenu";
 
 // API base URL configuration
-const API_BASE_URL = "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod";
 
 // Input validation utilities
 const validateEmail = (email) => {
@@ -95,24 +94,30 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     if (!validateForm()) return;
     
+    // Add additional validation
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setErrors({
+        general: "Username and password are required"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      console.log('Attempting login...');
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        username: formData.username,
-        password: formData.password,
+      console.log('Login attempt with:', { username: formData.username, password: '***' });
+      const data = await apiService.post('/login', {
+        username: formData.username.trim(),
+        password: formData.password.trim(),
       });
       
-      console.log('Login response:', response.data);
+      console.log('Login response:', data);
       
-      if (response.data.token) {
+      if (data.token) {
         console.log('Login successful, setting token');
         // Store token in sessionStorage
-        sessionStorage.setItem('token', response.data.token);
-        // Set token in axios headers
-        axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+        sessionStorage.setItem('token', data.token);
         // Call onLogin to update app state
-        onLogin(response.data.token);
+        onLogin(data.token);
         // Navigate to home
         navigate("/");
       } else {
@@ -136,11 +141,11 @@ const Login = ({ onLogin }) => {
     
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/request-otp`, {
+      const data = await apiService.post('/request-otp', {
         email: formData.email,
       });
       setOtpSent(true);
-      setFormData(prev => ({ ...prev, otp: response.data.otp }));
+      setFormData(prev => ({ ...prev, otp: data.otp }));
     } catch (error) {
       setErrors({
         general: error.response?.data?.message || "Error sending OTP"
@@ -155,11 +160,11 @@ const Login = ({ onLogin }) => {
     
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+      const data = await apiService.post('/verify-otp', {
         email: formData.email,
         otp: formData.otp,
       });
-      if (response.data.success) {
+      if (data.success) {
         setOtpVerified(true);
       }
     } catch (error) {
@@ -176,7 +181,7 @@ const Login = ({ onLogin }) => {
     
     setIsLoading(true);
     try {
-      await axios.post(`${API_BASE_URL}/reset-password`, {
+      await apiService.post('/reset-password', {
         email: formData.email,
         otp: formData.otp,
         newPassword: formData.newPassword

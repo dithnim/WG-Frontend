@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiService from "../../services/api";
 
-const API_BASE_URL = "https://jlilvd91v5.execute-api.us-east-1.amazonaws.com/prod";
 
 const initialNavigation = [
   {
@@ -90,15 +89,7 @@ export default function Sidebar({ onLogout }) {
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      const token = sessionStorage.getItem('token');
-      if (token) {
-        // Call the logout endpoint with the token
-        await axios.post(`${API_BASE_URL}/logout`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-      }
+      await apiService.post('/logout');
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
