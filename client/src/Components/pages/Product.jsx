@@ -358,12 +358,14 @@ const Product = () => {
         setTempProductId(newTempId);
         setProducts((prevProducts) => [
           ...prevProducts,
-          { ...formData, _id: newTempId },
+          { ...formData, _id: newTempId, updatedAt: new Date().toISOString() },
         ]);
         const data = await apiService.post("/products", formData);
         setProducts((prevProducts) =>
           prevProducts.map((p) =>
-            p._id === newTempId ? { ...p, _id: data._id } : p
+            p._id === newTempId
+              ? { ...p, _id: data._id, updatedAt: data.data.updatedAt }
+              : p
           )
         );
         setTempProductId(null);
