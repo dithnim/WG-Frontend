@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5173/api', // You can set this in your .env file
+  baseURL: import.meta.env.VITE_API_URL, // Added fallback URL
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

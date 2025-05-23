@@ -217,7 +217,7 @@ const Login = ({ onLogin }) => {
         </>
       )}
 
-      <div className="text-white">
+      <div className="text-white w-[65%]">
         <h1 className="xl:text-6xl lg:text-5xl md:text-4xl sm:text-3xl font-bold mb-4">Welcome Back..!</h1>
         <div className="flex items-center">
           <h3 className="xl:text-2xl lg:text-xl md:text-lg sm:text-base text-sm font-bold border w-[250px] flex items-center justify-center py-1">
@@ -296,7 +296,7 @@ const Login = ({ onLogin }) => {
       ) : (
         <form
           onSubmit={handleLogin}
-          className="w-[350px] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
+          className="w-[30%] h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
         >
           <h2 className="text-2xl font-semibold text-white mb-1">Login</h2>
           <h2 className="text-xs font-semibold text-white mb-4">Glad you're back..!</h2>
