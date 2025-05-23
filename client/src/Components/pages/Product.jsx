@@ -3,7 +3,7 @@ import apiService from "../../services/api";
 
 const Product = () => {
   const [products, setProducts] = useState(() => {
-    const savedProducts = localStorage.getItem('products');
+    const savedProducts = localStorage.getItem("products");
     return savedProducts ? JSON.parse(savedProducts) : [];
   });
   const [suppliers, setSuppliers] = useState([]);
@@ -19,7 +19,8 @@ const Product = () => {
   const [nameValidationError, setNameValidationError] = useState("");
   const [productIdValidationError, setProductIdValidationError] = useState("");
   const [costValidationError, setCostValidationError] = useState("");
-  const [sellingPriceValidationError, setSellingPriceValidationError] = useState("");
+  const [sellingPriceValidationError, setSellingPriceValidationError] =
+    useState("");
   const [stockValidationError, setStockValidationError] = useState("");
   const [supplierValidationError, setSupplierValidationError] = useState("");
   const [hoveredProductId, setHoveredProductId] = useState(null);
@@ -47,7 +48,7 @@ const Product = () => {
 
   // Update localStorage whenever products change
   useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
+    localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
 
   // Fetch suppliers on mount
@@ -75,20 +76,23 @@ const Product = () => {
   };
 
   const updateRackNumber = (newRack, newRow, newColumn) => {
-    const newRackNumber = newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
+    const newRackNumber =
+      newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
     setFormData({ ...formData, rackNumber: newRackNumber });
   };
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const data = await apiService.get('/products', { search: searchQuery });
+      const data = await apiService.get("/products", { search: searchQuery });
       setProducts(data);
       setError(null);
     } catch (error) {
       console.error("Error fetching products:", error);
       if (error.response?.status === 403) {
-        setError("CORS error: Server rejected the request. Check API Gateway CORS configuration.");
+        setError(
+          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+        );
       } else {
         setError("Failed to fetch products. Using cached data.");
       }
@@ -100,13 +104,15 @@ const Product = () => {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-      const data = await apiService.get('/suppliers', { search: searchQuery });
+      const data = await apiService.get("/suppliers", { search: searchQuery });
       setSuppliers(data);
       setError(null);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
       if (error.response?.status === 403) {
-        setError("CORS error: Server rejected the request. Check API Gateway CORS configuration.");
+        setError(
+          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+        );
       } else {
         setError("Failed to fetch suppliers.");
       }
@@ -127,18 +133,22 @@ const Product = () => {
 
   const confirmDeleteProduct = async () => {
     if (productIdToDelete) {
-      const deletedProduct = products.find(p => p._id === productIdToDelete);
-      setProducts(prevProducts => prevProducts.filter(p => p._id !== productIdToDelete));
-      
+      const deletedProduct = products.find((p) => p._id === productIdToDelete);
+      setProducts((prevProducts) =>
+        prevProducts.filter((p) => p._id !== productIdToDelete)
+      );
+
       try {
         await apiService.delete(`/products?id=${productIdToDelete}`);
         closeDeleteModal();
         setError(null);
       } catch (error) {
         console.error("Error deleting product:", error);
-        setProducts(prevProducts => [...prevProducts, deletedProduct]);
+        setProducts((prevProducts) => [...prevProducts, deletedProduct]);
         if (error.response?.status === 403) {
-          setError("CORS error: Server rejected the delete request. Check API Gateway CORS configuration.");
+          setError(
+            "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
+          );
         } else {
           setError("Failed to delete product. Please try again.");
         }
@@ -182,7 +192,7 @@ const Product = () => {
         setProductIdValidationError("Product ID is required");
       } else if (
         !edittingProduct &&
-        products.some(p => p.productId === value && p._id !== formData._id)
+        products.some((p) => p.productId === value && p._id !== formData._id)
       ) {
         setProductIdValidationError("Product ID must be unique");
       } else {
@@ -195,7 +205,10 @@ const Product = () => {
         setCostValidationError("Cost is required");
       } else if (isNaN(value) || Number(value) < 0) {
         setCostValidationError("Cost must be a non-negative number");
-      } else if (formData.sellingPrice && Number(value) > Number(formData.sellingPrice)) {
+      } else if (
+        formData.sellingPrice &&
+        Number(value) > Number(formData.sellingPrice)
+      ) {
         setCostValidationError("Cost cannot be greater than selling price");
       } else {
         setCostValidationError("");
@@ -206,9 +219,16 @@ const Product = () => {
       if (value === "") {
         setSellingPriceValidationError("Selling price is required");
       } else if (isNaN(value) || Number(value) < 0) {
-        setSellingPriceValidationError("Selling price must be a non-negative number");
-      } else if (formData.costPrice && Number(value) < Number(formData.costPrice)) {
-        setSellingPriceValidationError("Selling price cannot be less than cost price");
+        setSellingPriceValidationError(
+          "Selling price must be a non-negative number"
+        );
+      } else if (
+        formData.costPrice &&
+        Number(value) < Number(formData.costPrice)
+      ) {
+        setSellingPriceValidationError(
+          "Selling price cannot be less than cost price"
+        );
       } else {
         setSellingPriceValidationError("");
       }
@@ -217,7 +237,11 @@ const Product = () => {
     if (name === "stock") {
       if (value === "") {
         setStockValidationError("Stock is required");
-      } else if (isNaN(value) || Number(value) < 0 || !Number.isInteger(Number(value))) {
+      } else if (
+        isNaN(value) ||
+        Number(value) < 0 ||
+        !Number.isInteger(Number(value))
+      ) {
         setStockValidationError("Stock must be a non-negative integer");
       } else {
         setStockValidationError("");
@@ -241,7 +265,7 @@ const Product = () => {
     if (name === "supplier") {
       if (value === "") {
         setSupplierValidationError("Supplier is required");
-      } else if (!suppliers.some(s => s.supplierName === value)) {
+      } else if (!suppliers.some((s) => s.supplierName === value)) {
         setSupplierValidationError("Invalid supplier selected");
       } else {
         setSupplierValidationError("");
@@ -261,7 +285,9 @@ const Product = () => {
       hasErrors = true;
     } else if (
       !edittingProduct &&
-      products.some(p => p.productId === formData.productId && p._id !== formData._id)
+      products.some(
+        (p) => p.productId === formData.productId && p._id !== formData._id
+      )
     ) {
       setProductIdValidationError("Product ID must be unique");
       hasErrors = true;
@@ -276,17 +302,28 @@ const Product = () => {
     if (formData.sellingPrice === "") {
       setSellingPriceValidationError("Selling price is required");
       hasErrors = true;
-    } else if (isNaN(formData.sellingPrice) || Number(formData.sellingPrice) < 0) {
-      setSellingPriceValidationError("Selling price must be a non-negative number");
+    } else if (
+      isNaN(formData.sellingPrice) ||
+      Number(formData.sellingPrice) < 0
+    ) {
+      setSellingPriceValidationError(
+        "Selling price must be a non-negative number"
+      );
       hasErrors = true;
     } else if (Number(formData.sellingPrice) < Number(formData.costPrice)) {
-      setSellingPriceValidationError("Selling price cannot be less than cost price");
+      setSellingPriceValidationError(
+        "Selling price cannot be less than cost price"
+      );
       hasErrors = true;
     }
     if (formData.stock === "") {
       setStockValidationError("Stock is required");
       hasErrors = true;
-    } else if (isNaN(formData.stock) || Number(formData.stock) < 0 || !Number.isInteger(Number(formData.stock))) {
+    } else if (
+      isNaN(formData.stock) ||
+      Number(formData.stock) < 0 ||
+      !Number.isInteger(Number(formData.stock))
+    ) {
       setStockValidationError("Stock must be a non-negative integer");
       hasErrors = true;
     }
@@ -301,32 +338,37 @@ const Product = () => {
     }
 
     try {
-      console.log('Submitting product data:', formData);
-      
+      console.log("Submitting product data:", formData);
+
       if (edittingProduct) {
         if (!edittingProduct._id) {
-          throw new Error('Product ID is missing');
+          throw new Error("Product ID is missing");
         }
-        setProducts(prevProducts => 
-          prevProducts.map(p => 
-            p._id === edittingProduct._id ? { ...formData, _id: edittingProduct._id } : p
+        setProducts((prevProducts) =>
+          prevProducts.map((p) =>
+            p._id === edittingProduct._id
+              ? { ...formData, _id: edittingProduct._id }
+              : p
           )
         );
         const updateData = { ...formData };
         await apiService.put(`/products?id=${edittingProduct._id}`, updateData);
       } else {
-        const newTempId = 'temp_' + Date.now();
+        const newTempId = "temp_" + Date.now();
         setTempProductId(newTempId);
-        setProducts(prevProducts => [...prevProducts, { ...formData, _id: newTempId }]);
-        const data = await apiService.post('/products', formData);
-        setProducts(prevProducts => 
-          prevProducts.map(p => 
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          { ...formData, _id: newTempId },
+        ]);
+        const data = await apiService.post("/products", formData);
+        setProducts((prevProducts) =>
+          prevProducts.map((p) =>
             p._id === newTempId ? { ...p, _id: data._id } : p
           )
         );
         setTempProductId(null);
       }
-      
+
       setEdittingProduct(null);
       setFormData({
         productName: "",
@@ -355,7 +397,9 @@ const Product = () => {
       fetchProducts();
       setTempProductId(null);
       if (error.response?.status === 403) {
-        setError("CORS error: Server rejected the request. Check API Gateway CORS configuration.");
+        setError(
+          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+        );
       } else {
         setError("Failed to save product. Please try again.");
       }
@@ -378,7 +422,7 @@ const Product = () => {
   }, [loading]);
 
   return (
-    <div className="product h-auto xl:p-12 p-8">
+    <div className="product h-[100vh] xl:px-12 px-8 py-2">
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-[#171717] rounded-lg p-6 w-1/3">
@@ -403,13 +447,24 @@ const Product = () => {
       )}
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
           <span className="block sm:inline">{error}</span>
         </div>
       )}
 
       <div className="flex items-center justify-end md:justify-between">
-        <h1 className="text-3xl font-bold hidden md:flex xl:flex">Products Browser</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold hidden md:flex xl:flex">
+            Products Browser{" "}
+          </h1>
+          <i
+            className="bx bxs-fire-alt text-2xl"
+            style={{ color: "#ff6300" }}
+          ></i>
+        </div>
         <div className="flex justify-end items-center mt-5 search">
           <input
             type="text"
@@ -424,7 +479,7 @@ const Product = () => {
         </div>
       </div>
 
-      <div className="mt-10 h-[40vh] overflow-y-auto overflow-x-auto">
+      <div className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto">
         <div className="overflow-x-auto">
           <table className="table-auto min-w-[600px] w-full">
             <thead className="sticky top-0 bg-gray-100 table-head">
@@ -433,9 +488,13 @@ const Product = () => {
                 <th className="px-4 py-2 hidden sm:table-cell">Product ID</th>
                 <th className="px-4 py-2 hidden md:table-cell">Brand</th>
                 <th className="px-4 py-2 hidden xl:table-cell">Rack Number</th>
-                <th className="px-4 py-2 hidden xl:table-cell">Purchased Date</th>
+                <th className="px-4 py-2 hidden xl:table-cell">
+                  Purchased Date
+                </th>
                 <th className="px-4 py-2">Cost</th>
-                <th className="px-4 py-2 hidden md:table-cell">Selling Price</th>
+                <th className="px-4 py-2 hidden md:table-cell">
+                  Selling Price
+                </th>
                 <th className="px-4 py-2">In Stock</th>
                 <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
                 <th className="px-4 py-2">Edit</th>
@@ -444,7 +503,10 @@ const Product = () => {
             <tbody id="product-table-body">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan="10"
+                    className="px-4 py-4 text-center text-gray-500 dark:text-gray-400"
+                  >
                     No products available
                   </td>
                 </tr>
@@ -472,16 +534,28 @@ const Product = () => {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2 hidden sm:table-cell">{product.productId}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">{product.brand}</td>
-                    <td className="px-4 py-2 hidden xl:table-cell">{product.rackNumber}</td>
+                    <td className="px-4 py-2 hidden sm:table-cell">
+                      {product.productId}
+                    </td>
+                    <td className="px-4 py-2 hidden md:table-cell">
+                      {product.brand}
+                    </td>
                     <td className="px-4 py-2 hidden xl:table-cell">
-                      {product.updatedAt ? product.updatedAt.slice(0, 10) : 'N/A'}
+                      {product.rackNumber}
+                    </td>
+                    <td className="px-4 py-2 hidden xl:table-cell">
+                      {product.updatedAt
+                        ? product.updatedAt.slice(0, 10)
+                        : "N/A"}
                     </td>
                     <td className="px-4 py-2">{product.costPrice}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">{product.sellingPrice}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">
+                      {product.sellingPrice}
+                    </td>
                     <td className="px-4 py-2">{product.stock}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">{product.supplier}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">
+                      {product.supplier}
+                    </td>
                     <td className="px-1 py-2">
                       <i
                         className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
@@ -714,7 +788,9 @@ const Product = () => {
                     id="categories"
                     className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
                     value={formData.category}
-                    onChange={(e) => handleSelectChange("category", e.target.value)}
+                    onChange={(e) =>
+                      handleSelectChange("category", e.target.value)
+                    }
                   >
                     <option value="">Select Category</option>
                     <option value="Genuine">Genuine</option>
@@ -729,7 +805,9 @@ const Product = () => {
                               ${supplierValidationError ? "border border-red-500" : ""}
                               `}
                     value={formData.supplier}
-                    onChange={(e) => handleSelectChange("supplier", e.target.value)}
+                    onChange={(e) =>
+                      handleSelectChange("supplier", e.target.value)
+                    }
                   >
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier) => (
@@ -813,7 +891,9 @@ const Product = () => {
                 >
                   <option value="">Select Location</option>
                   {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                    <option key={num} value={num}>{num}</option>
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
                   ))}
                 </select>
               </div>
