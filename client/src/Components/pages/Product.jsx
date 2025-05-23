@@ -75,7 +75,6 @@ const Product = () => {
   };
 
   const updateRackNumber = (newRack, newRow, newColumn) => {
-    // Set rackNumber only if all fields are provided; otherwise, set to empty string
     const newRackNumber = newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
     setFormData({ ...formData, rackNumber: newRackNumber });
   };
@@ -153,7 +152,6 @@ const Product = () => {
     setRack(product.rackNumber ? product.rackNumber.slice(0, 2) : "");
     setRow(product.rackNumber ? product.rackNumber.slice(2, 3) : "");
     setColumn(product.rackNumber ? product.rackNumber.slice(3, 4) : "");
-    // Clear all validation errors on edit
     setNameValidationError("");
     setProductIdValidationError("");
     setCostValidationError("");
@@ -169,7 +167,6 @@ const Product = () => {
       [name]: value,
     }));
 
-    // Validate productName
     if (name === "productName") {
       if (value.trim() === "") {
         setNameValidationError("Product name is required");
@@ -180,7 +177,6 @@ const Product = () => {
       }
     }
 
-    // Validate productId
     if (name === "productId") {
       if (value.trim() === "") {
         setProductIdValidationError("Product ID is required");
@@ -194,7 +190,6 @@ const Product = () => {
       }
     }
 
-    // Validate costPrice
     if (name === "costPrice") {
       if (value === "") {
         setCostValidationError("Cost is required");
@@ -207,7 +202,6 @@ const Product = () => {
       }
     }
 
-    // Validate sellingPrice
     if (name === "sellingPrice") {
       if (value === "") {
         setSellingPriceValidationError("Selling price is required");
@@ -220,7 +214,6 @@ const Product = () => {
       }
     }
 
-    // Validate stock
     if (name === "stock") {
       if (value === "") {
         setStockValidationError("Stock is required");
@@ -231,7 +224,6 @@ const Product = () => {
       }
     }
 
-    // Validate description
     if (name === "description" && value.length > 500) {
       setFormData((prevFormData) => ({
         ...prevFormData,
@@ -240,14 +232,12 @@ const Product = () => {
     }
   };
 
-  // Handle select changes for category and supplier
   const handleSelectChange = (name, value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
     }));
 
-    // Validate supplier
     if (name === "supplier") {
       if (value === "") {
         setSupplierValidationError("Supplier is required");
@@ -260,7 +250,6 @@ const Product = () => {
   };
 
   const handleSubmit = async () => {
-    // Validate required fields before submission
     let hasErrors = false;
 
     if (formData.productName.trim() === "") {
@@ -373,7 +362,6 @@ const Product = () => {
     }
   };
 
-  // Debounced fetch products
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchProducts();
@@ -381,7 +369,6 @@ const Product = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // React state for loading animation
   const [showLoading, setShowLoading] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -455,51 +442,59 @@ const Product = () => {
               </tr>
             </thead>
             <tbody id="product-table-body">
-              {products.map((product) => (
-                <tr key={product._id} className="border-t">
-                  <td className="px-4 py-2">
-                    {product.productName}
-                    {product.description && (
-                      <div
-                        className="relative inline-block"
-                        onMouseEnter={() => setHoveredProductId(product._id)}
-                        onMouseLeave={() => setHoveredProductId(null)}
-                      >
-                        <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
-                        <div
-                          className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
-                            hoveredProductId === product._id
-                              ? "scale-100 opacity-100"
-                              : "scale-0 opacity-0"
-                          }`}
-                        >
-                          {product.description}
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 hidden sm:table-cell">{product.productId}</td>
-                  <td className="px-4 py-2 hidden md:table-cell">{product.brand}</td>
-                  <td className="px-4 py-2 hidden xl:table-cell">{product.rackNumber}</td>
-                  <td className="px-4 py-2 hidden xl:table-cell">
-                    {product.updatedAt ? product.updatedAt.slice(0, 10) : 'N/A'}
-                  </td>
-                  <td className="px-4 py-2">{product.costPrice}</td>
-                  <td className="px-4 py-2 hidden md:table-cell">{product.sellingPrice}</td>
-                  <td className="px-4 py-2">{product.stock}</td>
-                  <td className="px-4 py-2 hidden md:table-cell">{product.supplier}</td>
-                  <td className="px-1 py-2">
-                    <i
-                      className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
-                      onClick={() => handleEdit(product)}
-                    ></i>
-                    <i
-                      className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
-                      onClick={() => openDeleteModal(product._id)}
-                    ></i>
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
+                    No products available
                   </td>
                 </tr>
-              ))}
+              ) : (
+                products.map((product) => (
+                  <tr key={product._id} className="border-t">
+                    <td className="px-4 py-2">
+                      {product.productName}
+                      {product.description && (
+                        <div
+                          className="relative inline-block"
+                          onMouseEnter={() => setHoveredProductId(product._id)}
+                          onMouseLeave={() => setHoveredProductId(null)}
+                        >
+                          <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
+                          <div
+                            className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
+                              hoveredProductId === product._id
+                                ? "scale-100 opacity-100"
+                                : "scale-0 opacity-0"
+                            }`}
+                          >
+                            {product.description}
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 hidden sm:table-cell">{product.productId}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">{product.brand}</td>
+                    <td className="px-4 py-2 hidden xl:table-cell">{product.rackNumber}</td>
+                    <td className="px-4 py-2 hidden xl:table-cell">
+                      {product.updatedAt ? product.updatedAt.slice(0, 10) : 'N/A'}
+                    </td>
+                    <td className="px-4 py-2">{product.costPrice}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">{product.sellingPrice}</td>
+                    <td className="px-4 py-2">{product.stock}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">{product.supplier}</td>
+                    <td className="px-1 py-2">
+                      <i
+                        className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
+                        onClick={() => handleEdit(product)}
+                      ></i>
+                      <i
+                        className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
+                        onClick={() => openDeleteModal(product._id)}
+                      ></i>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -559,7 +554,7 @@ const Product = () => {
               </label>
               {nameValidationError && (
                 <p className="text-sm text-red-600 dark:text-red-500 mt-1">
-                {nameValidationError}
+                  {nameValidationError}
                 </p>
               )}
             </div>
