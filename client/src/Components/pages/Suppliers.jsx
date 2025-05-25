@@ -33,7 +33,6 @@ const Suppliers = () => {
     try {
       const data = await apiService.get("/suppliers", { search: searchQuery });
       setSuppliers(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
       if (error.response?.status === 403) {

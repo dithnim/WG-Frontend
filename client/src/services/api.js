@@ -3,7 +3,7 @@ import axios from "axios";
 // Create axios instance with default config
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL, // Added fallback URL
-  timeout: 10000,
+  timeout: 50000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,6 +12,14 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Get the token from localStorage
+    const token = sessionStorage.getItem("token");
+
+    // If token exists, add it to the headers
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {

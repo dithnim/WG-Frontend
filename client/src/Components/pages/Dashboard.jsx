@@ -3,9 +3,9 @@ import Smalltile from "../Charts/Smalltile";
 import Largetile from "../Charts/Largetile";
 import Piechart from "../Charts/Piechart";
 import apiService from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Dashboard = () => {
- 
   const [supplierCount, setSupplierCount] = useState(() => {
     return localStorage.getItem("localSupplierCount") || 0;
   });
@@ -36,12 +36,18 @@ const Dashboard = () => {
   const [supplierPercentage, setSupplierPercentage] = useState(0);
   const [salePercentage, setSalePercentage] = useState(0);
   const [revenuePercentage, setRevenuePercentage] = useState(0);
-
+  const { user } = useAuth();
   const [timeframe, setTimeframe] = useState("month");
+
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   const fetchSupplierCount = async () => {
     try {
-      const data = await apiService.get(`/suppliers/count`, { search: timeframe });
+      const data = await apiService.get(`/suppliers/count`, {
+        search: timeframe,
+      });
       setSupplierCount(data.count);
       setPrevSupplierCount(data.prevCount);
       localStorage.setItem("localSupplierCount", data.count);
@@ -53,7 +59,9 @@ const Dashboard = () => {
 
   const fetchRevenueCount = async () => {
     try {
-      const data = await apiService.get(`/sales/revenue`, { search: timeframe });
+      const data = await apiService.get(`/sales/revenue`, {
+        search: timeframe,
+      });
       setRevenueCount(data.totalRevenue);
       setPrevRevenueCount(data.prevTotalRevenue);
       localStorage.setItem("localRevenueCount", data.totalRevenue);
@@ -65,7 +73,9 @@ const Dashboard = () => {
 
   const fetchProductCount = async () => {
     try {
-      const data = await apiService.get(`/products/count`, { search: timeframe });
+      const data = await apiService.get(`/products/count`, {
+        search: timeframe,
+      });
       setProductCount(data.count);
       setPrevProductCount(data.prevCount);
       localStorage.setItem("localProductCount", data.count);
@@ -154,7 +164,9 @@ const Dashboard = () => {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-        <h1 className="text-xl md:text-2xl font-semibold mb-4 md:mb-0">Dashboard</h1>
+        <h1 className="text-xl md:text-2xl font-semibold mb-4 md:mb-0">
+          Dashboard
+        </h1>
 
         <select
           id="categories"
@@ -170,7 +182,7 @@ const Dashboard = () => {
           <option value="year">Last year</option>
         </select>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}
@@ -201,7 +213,7 @@ const Dashboard = () => {
           growth={revenuePercentage}
         />
       </div>
-      
+
       <div className="flex flex-col lg:flex-row mt-6 h-auto lg:h-[40vh] gap-4">
         <div className="w-full lg:w-2/3">
           <Largetile />
