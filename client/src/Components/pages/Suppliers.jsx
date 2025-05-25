@@ -33,6 +33,7 @@ const Suppliers = () => {
     try {
       const data = await apiService.get("/suppliers", { search: searchQuery });
       setSuppliers(data);
+      console.log(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
       if (error.response?.status === 403) {
@@ -81,7 +82,7 @@ const Suppliers = () => {
       setTempSupplierId(newTempId);
       setSuppliers((prevSuppliers) => [
         ...prevSuppliers,
-        { ...formData, _id: newTempId, updatedAt: new Date().toISOString() },
+        { ...formData, _id: newTempId, createdAt: new Date().toISOString() },
       ]);
     }
 
@@ -114,8 +115,6 @@ const Suppliers = () => {
               ? {
                   ...s,
                   _id: data._id,
-                  updatedAt:
-                    data.updatedAt || data.data?.updatedAt || s.updatedAt,
                 }
               : s
           )
@@ -259,8 +258,8 @@ const Suppliers = () => {
                   <td className="px-4 py-2">{supplier.contactNumbers}</td>
                   <td className="px-4 py-2">{supplier.email}</td>
                   <td className="px-4 py-2">
-                    {supplier.updatedAt
-                      ? supplier.updatedAt.slice(0, 10)
+                    {supplier.createdAt
+                      ? supplier.createdAt.slice(0, 10)
                       : "N/A"}
                   </td>
                   <td className="px-1 py-2">
