@@ -2,27 +2,49 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import apiService from "../../services/api";
-import Otpinput from "../Otpinput";
-import Progressmenu from "../Progressmenu";
 import { useAuth } from "../../contexts/AuthContext";
+import { OtpInput } from "../Otpinput";
+import { ProgressMenu } from "../Progressmenu";
 
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const validatePassword = (password) =>
+// Add type definitions
+interface FormData {
+  username: string;
+  password: string;
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+interface FormErrors {
+  username?: string;
+  password?: string;
+  email?: string;
+  otp?: string;
+  newPassword?: string;
+  server?: string;
+}
+
+interface LoginProps {}
+
+const validateEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const validatePassword = (password: string) =>
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
     password
   );
-const validateUsername = (username) => /^[a-zA-Z0-9_]{3,20}$/.test(username);
+const validateUsername = (username: string) =>
+  /^[a-zA-Z0-9_]{3,20}$/.test(username);
 
-const Login = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: "",
     password: "",
     email: "",
     otp: "",
     newPassword: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
@@ -60,16 +82,23 @@ const Login = ({ onLogin }) => {
     }
   }, [isForgotMode]);
 
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  }, []);
+  const handleInputChange = useCallback(
+    (
+      e:
+        | React.ChangeEvent<HTMLInputElement>
+        | { target: { name: string; value: string } }
+    ) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    },
+    []
+  );
 
   const handleInputBlur = useCallback(
-    (e) => {
+    (e: React.FocusEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
-      const newErrors = { ...errors };
+      const newErrors: FormErrors = { ...errors };
 
       if (name === "email" && value && !validateEmail(value)) {
         newErrors.email = "Invalid email format";
@@ -80,7 +109,7 @@ const Login = ({ onLogin }) => {
         newErrors.username =
           "Username must be 3-20 characters and can only contain letters, numbers, and underscores";
       } else {
-        delete newErrors[name];
+        delete newErrors[name as keyof FormErrors];
       }
 
       setErrors(newErrors);
@@ -89,7 +118,7 @@ const Login = ({ onLogin }) => {
   );
 
   const validateForm = useCallback(() => {
-    const newErrors = {};
+    const newErrors: FormErrors = {};
 
     if (isForgotMode) {
       if (!formData.email) {
@@ -148,7 +177,6 @@ const Login = ({ onLogin }) => {
           localStorage.setItem("refreshToken", data.refreshToken);
         }
         setLoginAttempts(0);
-        onLogin(data.token);
         navigate("/");
       } else {
         setErrors({ server: "Invalid response from server" });
@@ -302,7 +330,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="flex items-center justify-between bg-[#0f0f0f] w-screen h-screen px-4 sm:px-20">
-      {isLoading && <Progressmenu message="Processing your request..." />}
+      {isLoading && <ProgressMenu>Processing your request...</ProgressMenu>}
       {isForgotMode ? (
         <>
           <div className="rounded-full w-40 h-40 absolute top-[70vh] right-2 z-0 login-circle3"></div>
@@ -374,7 +402,14 @@ const Login = ({ onLogin }) => {
               <h2 className="text-2xl font-semibold text-white mb-4">
                 Verify OTP
               </h2>
-              <Otpinput value={formData.otp} onChange={handleInputChange} />
+              <OtpInput
+                length={6}
+                onComplete={(otp) =>
+                  handleInputChange({
+                    target: { name: "otp", value: otp },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+              />
               {errors.otp && (
                 <p className="text-red-500 text-sm mb-2">{errors.otp}</p>
               )}

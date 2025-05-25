@@ -6,36 +6,44 @@ import apiService from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 const Dashboard = () => {
-  const [supplierCount, setSupplierCount] = useState(() => {
-    return localStorage.getItem("localSupplierCount") || 0;
+  const [supplierCount, setSupplierCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localSupplierCount");
+    return stored ? Number(stored) : 0;
   });
-  const [productCount, setProductCount] = useState(() => {
-    return localStorage.getItem("localProductCount") || 0;
+  const [productCount, setProductCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localProductCount");
+    return stored ? Number(stored) : 0;
   });
-  const [saleCount, setSaleCount] = useState(() => {
-    return localStorage.getItem("localSaleCount") || 0;
+  const [saleCount, setSaleCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localSaleCount");
+    return stored ? Number(stored) : 0;
   });
-  const [revenueCount, setRevenueCount] = useState(() => {
-    return localStorage.getItem("localRevenueCount") || 0;
-  });
-
-  const [prevSupplierCount, setPrevSupplierCount] = useState(() => {
-    return localStorage.getItem("localPrevSupplierCount") || 0;
-  });
-  const [prevProductCount, setPrevProductCount] = useState(() => {
-    return localStorage.getItem("localPrevProductCount") || 0;
-  });
-  const [prevSaleCount, setPrevSaleCount] = useState(() => {
-    return localStorage.getItem("localPrevSaleCount") || 0;
-  });
-  const [prevRevenueCount, setPrevRevenueCount] = useState(() => {
-    return localStorage.getItem("localPrevRevenueCount") || 0;
+  const [revenueCount, setRevenueCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localRevenueCount");
+    return stored ? Number(stored) : 0;
   });
 
-  const [productPercentage, setProductPercentage] = useState(0);
-  const [supplierPercentage, setSupplierPercentage] = useState(0);
-  const [salePercentage, setSalePercentage] = useState(0);
-  const [revenuePercentage, setRevenuePercentage] = useState(0);
+  const [prevSupplierCount, setPrevSupplierCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localPrevSupplierCount");
+    return stored ? Number(stored) : 0;
+  });
+  const [prevProductCount, setPrevProductCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localPrevProductCount");
+    return stored ? Number(stored) : 0;
+  });
+  const [prevSaleCount, setPrevSaleCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localPrevSaleCount");
+    return stored ? Number(stored) : 0;
+  });
+  const [prevRevenueCount, setPrevRevenueCount] = useState<number>(() => {
+    const stored = localStorage.getItem("localPrevRevenueCount");
+    return stored ? Number(stored) : 0;
+  });
+
+  const [productPercentage, setProductPercentage] = useState<number>(0);
+  const [supplierPercentage, setSupplierPercentage] = useState<number>(0);
+  const [salePercentage, setSalePercentage] = useState<number>(0);
+  const [revenuePercentage, setRevenuePercentage] = useState<number>(0);
   const { user } = useAuth();
   const [timeframe, setTimeframe] = useState("month");
 
@@ -50,8 +58,8 @@ const Dashboard = () => {
       });
       setSupplierCount(data.count);
       setPrevSupplierCount(data.prevCount);
-      localStorage.setItem("localSupplierCount", data.count);
-      localStorage.setItem("localPrevSupplierCount", data.prevCount);
+      localStorage.setItem("localSupplierCount", data.count.toString());
+      localStorage.setItem("localPrevSupplierCount", data.prevCount.toString());
     } catch (error) {
       console.error("Error fetching supplier count:", error);
     }
@@ -64,8 +72,11 @@ const Dashboard = () => {
       });
       setRevenueCount(data.totalRevenue);
       setPrevRevenueCount(data.prevTotalRevenue);
-      localStorage.setItem("localRevenueCount", data.totalRevenue);
-      localStorage.setItem("localPrevRevenueCount", data.prevTotalRevenue);
+      localStorage.setItem("localRevenueCount", data.totalRevenue.toString());
+      localStorage.setItem(
+        "localPrevRevenueCount",
+        data.prevTotalRevenue.toString()
+      );
     } catch (error) {
       console.error("Error fetching revenue:", error);
     }
@@ -78,8 +89,8 @@ const Dashboard = () => {
       });
       setProductCount(data.count);
       setPrevProductCount(data.prevCount);
-      localStorage.setItem("localProductCount", data.count);
-      localStorage.setItem("localPrevProductCount", data.prevCount);
+      localStorage.setItem("localProductCount", data.count.toString());
+      localStorage.setItem("localPrevProductCount", data.prevCount.toString());
     } catch (error) {
       console.error("Error fetching product count:", error);
     }
@@ -90,8 +101,8 @@ const Dashboard = () => {
       const data = await apiService.get(`/sales/count`, { search: timeframe });
       setSaleCount(data.count);
       setPrevSaleCount(data.prevCount);
-      localStorage.setItem("localSaleCount", data.count);
-      localStorage.setItem("localPrevSaleCount", data.prevCount);
+      localStorage.setItem("localSaleCount", data.count.toString());
+      localStorage.setItem("localPrevSaleCount", data.prevCount.toString());
     } catch (error) {
       console.error("Error fetching sale count:", error);
     }
@@ -104,7 +115,7 @@ const Dashboard = () => {
         : prevSaleCount > 0
           ? ((saleCount - prevSaleCount) / prevSaleCount) * 100
           : 0;
-    setSalePercentage(percentage.toFixed(2));
+    setSalePercentage(Number(percentage.toFixed(2)));
   };
 
   const calculateProductPercentage = () => {
@@ -114,7 +125,7 @@ const Dashboard = () => {
         : prevProductCount > 0
           ? ((productCount - prevProductCount) / prevProductCount) * 100
           : 0;
-    setProductPercentage(percentage.toFixed(2));
+    setProductPercentage(Number(percentage.toFixed(2)));
   };
 
   const calculateSupplierPercentage = () => {
@@ -124,7 +135,7 @@ const Dashboard = () => {
         : prevSupplierCount > 0
           ? ((supplierCount - prevSupplierCount) / prevSupplierCount) * 100
           : 0;
-    setSupplierPercentage(percentage.toFixed(2));
+    setSupplierPercentage(Number(percentage.toFixed(2)));
   };
 
   const calculateRevenuePercentage = () => {
@@ -134,7 +145,7 @@ const Dashboard = () => {
         : prevRevenueCount > 0
           ? ((revenueCount - prevRevenueCount) / prevRevenueCount) * 100
           : 0;
-    setRevenuePercentage(percentage.toFixed(2));
+    setRevenuePercentage(Number(percentage.toFixed(2)));
   };
 
   useEffect(() => {

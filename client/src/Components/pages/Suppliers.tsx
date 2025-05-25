@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../../services/api";
 import Toast from "../Toast";
+import { Supplier } from "../../types/api";
 
-const Suppliers = () => {
-  const [suppliers, setSuppliers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [edittingSupplier, setEdittingSupplier] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
+interface FormData {
+  supplierName: string;
+  description: string;
+  contactNumbers: string;
+  email: string;
+}
+
+const Suppliers: React.FC = () => {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [edittingSupplier, setEdittingSupplier] = useState<Supplier | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     supplierName: "",
     description: "",
     contactNumbers: "",
     email: "",
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [supplierIdToDelete, setSupplierIdToDelete] = useState(null);
-  const [tempSupplierId, setTempSupplierId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [supplierIdToDelete, setSupplierIdToDelete] = useState<string | null>(
+    null
+  );
+  const [tempSupplierId, setTempSupplierId] = useState<string | null>(null);
 
   // Clear error messages after 5 seconds
   useEffect(() => {
@@ -27,11 +39,13 @@ const Suppliers = () => {
     }
   }, [error]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiService.get("/suppliers", { search: searchQuery });
+      const data = await apiService.get<Supplier[]>("/suppliers", {
+        search: searchQuery,
+      });
       setSuppliers(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -54,17 +68,17 @@ const Suppliers = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const openDeleteModal = (id) => {
+  const openDeleteModal = (id: string): void => {
     setSupplierIdToDelete(id);
     setShowDeleteModal(true);
   };
 
-  const closeDeleteModal = () => {
+  const closeDeleteModal = (): void => {
     setShowDeleteModal(false);
     setSupplierIdToDelete(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (submitting) return;
     setSubmitting(true);
     setError(null);
@@ -97,17 +111,16 @@ const Suppliers = () => {
 
     try {
       if (edittingSupplier) {
-        // Include the supplier ID in the request body
         const updateData = {
           ...formData,
           _id: edittingSupplier._id,
         };
-        await apiService.put(
+        await apiService.put<Supplier>(
           `/suppliers?id=${edittingSupplier._id}`,
           updateData
         );
       } else {
-        const data = await apiService.post("/suppliers", formData);
+        const data = await apiService.post<Supplier>("/suppliers", formData);
         setSuppliers((prevSuppliers) =>
           prevSuppliers.map((s) =>
             s._id === tempSupplierId
@@ -139,7 +152,7 @@ const Suppliers = () => {
     }
   };
 
-  const confirmDeleteProduct = async () => {
+  const confirmDeleteProduct = async (): Promise<void> => {
     if (supplierIdToDelete) {
       const deletedSupplier = suppliers.find(
         (s) => s._id === supplierIdToDelete
@@ -150,11 +163,15 @@ const Suppliers = () => {
       closeDeleteModal(); // Close modal immediately
 
       try {
-        await apiService.delete(`/suppliers?id=${supplierIdToDelete}`);
+        await apiService.delete<Supplier>(
+          `/suppliers?id=${supplierIdToDelete}`
+        );
         setError(null);
       } catch (error) {
         console.error("Error deleting supplier:", error);
-        setSuppliers((prevSuppliers) => [...prevSuppliers, deletedSupplier]);
+        if (deletedSupplier) {
+          setSuppliers((prevSuppliers) => [...prevSuppliers, deletedSupplier]);
+        }
         if (error.response?.status === 403) {
           setError(
             "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
@@ -170,7 +187,7 @@ const Suppliers = () => {
     }
   };
 
-  const handleEdit = (supplier) => {
+  const handleEdit = (supplier: Supplier): void => {
     console.log("Editing supplier:", supplier);
     setEdittingSupplier(supplier);
     setFormData({
@@ -181,7 +198,9 @@ const Suppliers = () => {
     });
   };
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const { name, value } = event.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
