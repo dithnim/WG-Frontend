@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../../services/api";
 import Toast from "../Toast";
+import GrantWrapper from "../../util/grantWrapper";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -247,7 +248,9 @@ const Suppliers = () => {
                 <th>Contact numbers</th>
                 <th>Email</th>
                 <th>Last updated</th>
-                <th>Edit</th>
+                <GrantWrapper allowedRoles={"Admin"}>
+                  <th>Edit</th>
+                </GrantWrapper>
               </tr>
             </thead>
             <tbody id="supplier-table-body">
@@ -262,16 +265,18 @@ const Suppliers = () => {
                       ? supplier.createdAt.slice(0, 10)
                       : "N/A"}
                   </td>
-                  <td className="px-1 py-2">
-                    <i
-                      className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
-                      onClick={() => handleEdit(supplier)}
-                    ></i>
-                    <i
-                      className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
-                      onClick={() => openDeleteModal(supplier._id)}
-                    ></i>
-                  </td>
+                  <GrantWrapper allowedRoles={"Admin"}>
+                    <td className="px-1 py-2">
+                      <i
+                        className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
+                        onClick={() => handleEdit(supplier)}
+                      ></i>
+                      <i
+                        className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
+                        onClick={() => openDeleteModal(supplier._id)}
+                      ></i>
+                    </td>
+                  </GrantWrapper>
                 </tr>
               ))}
             </tbody>

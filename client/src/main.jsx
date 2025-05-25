@@ -15,6 +15,7 @@ import Dashboard from "./Components/pages/Dashboard.jsx";
 import Suppliers from "./Components/pages/Suppliers.jsx";
 import Sales from "./Components/pages/Sales.jsx";
 import Stats from "./Components/pages/Stats.jsx";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 // Secure token storage utility
 const secureStorage = {
@@ -91,96 +92,98 @@ function App() {
 
   return (
     <StrictMode>
-      <Router>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            }
-          />
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <div className="flex">
-                  <Sidebar onLogout={handleLogout} />
-                  <div className="bg-[#0f0f0f] text-white h-auto w-screen">
-                    <Dashboard />
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Login onLogin={handleLogin} />
+                )
+              }
+            />
+            <Route
+              path="/"
+              element={
+                isAuthenticated ? (
+                  <div className="flex">
+                    <Sidebar onLogout={handleLogout} />
+                    <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                      <Dashboard />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              isAuthenticated ? (
-                <div className="flex">
-                  <Sidebar onLogout={handleLogout} />
-                  <div className="bg-[#0f0f0f] text-white h-auto w-screen">
-                    <Product />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                isAuthenticated ? (
+                  <div className="flex">
+                    <Sidebar onLogout={handleLogout} />
+                    <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                      <Product />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/suppliers"
-            element={
-              isAuthenticated ? (
-                <div className="flex">
-                  <Sidebar onLogout={handleLogout} />
-                  <div className="bg-[#0f0f0f] text-white h-auto w-screen">
-                    <Suppliers />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/suppliers"
+              element={
+                isAuthenticated ? (
+                  <div className="flex">
+                    <Sidebar onLogout={handleLogout} />
+                    <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                      <Suppliers />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/sales"
-            element={
-              isAuthenticated ? (
-                <div className="flex">
-                  <Sidebar onLogout={handleLogout} />
-                  <div className="bg-[#0f0f0f] text-white h-auto w-screen">
-                    <Sales />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/sales"
+              element={
+                isAuthenticated ? (
+                  <div className="flex">
+                    <Sidebar onLogout={handleLogout} />
+                    <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                      <Sales />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/stats"
-            element={
-              isAuthenticated ? (
-                <div className="flex">
-                  <Sidebar onLogout={handleLogout} />
-                  <div className="bg-[#0f0f0f] text-white h-auto w-screen">
-                    <Stats />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/stats"
+              element={
+                isAuthenticated ? (
+                  <div className="flex">
+                    <Sidebar onLogout={handleLogout} />
+                    <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                      <Stats />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </StrictMode>
   );
 }

@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import apiService from "../../services/api";
 import Otpinput from "../Otpinput";
 import Progressmenu from "../Progressmenu";
+import { useAuth } from "../../contexts/AuthContext";
 
 const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePassword = (password) =>
@@ -31,6 +32,7 @@ const Login = ({ onLogin }) => {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTimer, setLockoutTimer] = useState(0);
+  const { login } = useAuth();
 
   useEffect(() => {
     // Check for existing token and validate it
@@ -138,7 +140,7 @@ const Login = ({ onLogin }) => {
         username: formData.username.trim(),
         password: formData.password,
       });
-
+      login(data);
       if (data.token) {
         sessionStorage.setItem("token", data.token);
         if (rememberMe && data.refreshToken) {
