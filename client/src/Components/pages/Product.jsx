@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiService from "../../services/api";
+import Toast from "../Toast";
 
 const Product = () => {
   const [products, setProducts] = useState(() => {
@@ -85,16 +86,48 @@ const Product = () => {
     setLoading(true);
     try {
       const data = await apiService.get("/products", { search: searchQuery });
-      setProducts(data);
-      setError(null);
+      if (data && Array.isArray(data)) {
+        setProducts(data);
+        // Only update localStorage if the API call was successful
+        localStorage.setItem("products", JSON.stringify(data));
+        setError(null);
+      } else {
+        throw new Error("Invalid data format received from server");
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
-      if (error.response?.status === 403) {
-        setError(
-          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
-        );
+
+      // Try to get cached data
+      const cachedProducts = localStorage.getItem("products");
+      if (cachedProducts) {
+        try {
+          const parsedProducts = JSON.parse(cachedProducts);
+          if (Array.isArray(parsedProducts)) {
+            setProducts(parsedProducts);
+            setError(
+              "Using cached data. Please check your internet connection."
+            );
+          } else {
+            throw new Error("Invalid cached data format");
+          }
+        } catch (parseError) {
+          console.error("Error parsing cached products:", parseError);
+          setError("Failed to load products. Please refresh the page.");
+          setProducts([]);
+        }
       } else {
-        setError("Failed to fetch products. Using cached data.");
+        setError(
+          "Failed to load products. Please check your internet connection."
+        );
+        setProducts([]);
+      }
+
+      if (error.response?.status === 403) {
+        setError("Access denied. Please check your authentication.");
+      } else if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        // Optionally redirect to login
+        // window.location.href = "/login";
       }
     } finally {
       setLoading(false);
@@ -105,16 +138,25 @@ const Product = () => {
     setLoading(true);
     try {
       const data = await apiService.get("/suppliers", { search: searchQuery });
-      setSuppliers(data);
-      setError(null);
+      if (data && Array.isArray(data)) {
+        setSuppliers(data);
+        setError(null);
+      } else {
+        throw new Error("Invalid data format received from server");
+      }
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+      setError(
+        "Failed to load suppliers. Please check your internet connection."
+      );
+      setSuppliers([]);
+
       if (error.response?.status === 403) {
-        setError(
-          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
-        );
-      } else {
-        setError("Failed to fetch suppliers.");
+        setError("Access denied. Please check your authentication.");
+      } else if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        // Optionally redirect to login
+        // window.location.href = "/login";
       }
     } finally {
       setLoading(false);
@@ -344,6 +386,8 @@ const Product = () => {
         if (!edittingProduct._id) {
           throw new Error("Product ID is missing");
         }
+
+        // Optimistic update
         setProducts((prevProducts) =>
           prevProducts.map((p) =>
             p._id === edittingProduct._id
@@ -351,26 +395,65 @@ const Product = () => {
               : p
           )
         );
+
         const updateData = { ...formData };
-        await apiService.put(`/products?id=${edittingProduct._id}`, updateData);
+        const response = await apiService.put(
+          `/products?id=${edittingProduct._id}`,
+          updateData
+        );
+
+        // Check if response exists and has data
+        if (!response) {
+          throw new Error("No response received from server");
+        }
+
+        // Update the product list with the response data if available
+        if (response.data) {
+          setProducts((prevProducts) =>
+            prevProducts.map((p) =>
+              p._id === edittingProduct._id
+                ? { ...response.data, _id: edittingProduct._id }
+                : p
+            )
+          );
+        }
       } else {
         const newTempId = "temp_" + Date.now();
         setTempProductId(newTempId);
+
+        // Optimistic update
         setProducts((prevProducts) => [
           ...prevProducts,
           { ...formData, _id: newTempId, updatedAt: new Date().toISOString() },
         ]);
-        const data = await apiService.post("/products", formData);
-        setProducts((prevProducts) =>
-          prevProducts.map((p) =>
-            p._id === newTempId
-              ? { ...p, _id: data._id, updatedAt: data.data.updatedAt }
-              : p
-          )
-        );
+
+        const response = await apiService.post("/products", formData);
+
+        // Check if response exists and has data
+        if (!response) {
+          throw new Error("No response received from server");
+        }
+
+        // Update the product list with the response data
+        if (response.data) {
+          setProducts((prevProducts) =>
+            prevProducts.map((p) =>
+              p._id === newTempId
+                ? { ...response.data, _id: response.data._id }
+                : p
+            )
+          );
+        } else {
+          // If no data in response, revert the optimistic update
+          setProducts((prevProducts) =>
+            prevProducts.filter((p) => p._id !== newTempId)
+          );
+          throw new Error("No data received from server");
+        }
         setTempProductId(null);
       }
 
+      // Reset form and states on success
       setEdittingProduct(null);
       setFormData({
         productName: "",
@@ -394,23 +477,41 @@ const Product = () => {
       setSellingPriceValidationError("");
       setStockValidationError("");
       setSupplierValidationError("");
+
+      // Refresh the product list
+      await fetchProducts();
     } catch (error) {
       console.error("Error updating/adding product:", error);
-      fetchProducts();
-      setTempProductId(null);
-      if (error.response?.status === 403) {
-        setError(
-          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
-        );
+
+      // Revert optimistic updates
+      if (edittingProduct) {
+        await fetchProducts();
       } else {
-        setError("Failed to save product. Please try again.");
+        setProducts((prevProducts) =>
+          prevProducts.filter((p) => p._id !== tempProductId)
+        );
+        setTempProductId(null);
+      }
+
+      if (error.response?.status === 403) {
+        setError("Access denied. Please check your authentication.");
+      } else if (error.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+        // Optionally redirect to login
+        // window.location.href = "/login";
+      } else {
+        setError(error.message || "Failed to save product. Please try again.");
       }
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchProducts();
+      if (searchQuery.trim() === "") {
+        fetchProducts();
+      } else {
+        fetchProducts();
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -448,14 +549,7 @@ const Product = () => {
         </div>
       )}
 
-      {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-          role="alert"
-        >
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
+      {error && <Toast message={error} onClose={() => setError(null)} />}
 
       <div className="flex items-center justify-end md:justify-between">
         <div className="flex items-center gap-2">

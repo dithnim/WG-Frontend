@@ -1,6 +1,11 @@
 import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import apiService from "./services/api";
 import Sidebar from "./Components/pages/Sidebar.jsx";
 import "./index.css";
@@ -21,7 +26,7 @@ const secureStorage = {
   },
   removeToken: () => {
     sessionStorage.removeItem("token");
-  }
+  },
 };
 
 function App() {
@@ -40,11 +45,11 @@ function App() {
 
       try {
         // Try to make a request to a protected endpoint
-        await apiService.get('/products');
+        // await apiService.get('/products');
         // If we get here, the token is valid
         setIsAuthenticated(true);
       } catch (error) {
-        console.error('Token validation error:', error);
+        console.error("Token validation error:", error);
         // Remove token if it's an authentication error
         if (error.response?.status === 401) {
           secureStorage.removeToken();
@@ -67,9 +72,9 @@ function App() {
   // Function to handle logout
   const handleLogout = async () => {
     try {
-      await apiService.post('/logout');
+      await apiService.post("/logout");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       secureStorage.removeToken();
       setIsAuthenticated(false);
@@ -88,13 +93,15 @@ function App() {
     <StrictMode>
       <Router>
         <Routes>
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
-              isAuthenticated ? 
-                <Navigate to="/" replace /> : 
+              isAuthenticated ? (
+                <Navigate to="/" replace />
+              ) : (
                 <Login onLogin={handleLogin} />
-            } 
+              )
+            }
           />
           <Route
             path="/"

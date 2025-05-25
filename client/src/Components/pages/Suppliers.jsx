@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../../services/api";
+import Toast from "../Toast";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [edittingSupplier, setEdittingSupplier] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false); // New state for form submission
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     supplierName: "",
@@ -16,24 +17,41 @@ const Suppliers = () => {
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [supplierIdToDelete, setSupplierIdToDelete] = useState(null);
-  const [tempSupplierId, setTempSupplierId] = useState(null); // Added for temporary IDs
+  const [tempSupplierId, setTempSupplierId] = useState(null);
+
+  // Clear error messages after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const fetchSuppliers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiService.get('/suppliers', { search: searchQuery });
+      const data = await apiService.get("/suppliers", { search: searchQuery });
       setSuppliers(data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
-      setError(error.message || "Failed to fetch suppliers");
+      if (error.response?.status === 403) {
+        setError(
+          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+        );
+      } else {
+        setError(error.message || "Failed to fetch suppliers");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSuppliers();
+    const timer = setTimeout(() => {
+      fetchSuppliers();
+    }, 500);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const openDeleteModal = (id) => {
@@ -51,48 +69,106 @@ const Suppliers = () => {
     setSubmitting(true);
     setError(null);
 
+    // Perform optimistic update and reset form immediately
+    if (edittingSupplier) {
+      setSuppliers((prevSuppliers) =>
+        prevSuppliers.map((s) =>
+          s._id === edittingSupplier._id ? { ...s, ...formData } : s
+        )
+      );
+    } else {
+      const newTempId = "temp_" + Date.now();
+      setTempSupplierId(newTempId);
+      setSuppliers((prevSuppliers) => [
+        ...prevSuppliers,
+        { ...formData, _id: newTempId, updatedAt: new Date().toISOString() },
+      ]);
+    }
+
+    // Reset form
+    setEdittingSupplier(null);
+    setFormData({
+      supplierName: "",
+      description: "",
+      contactNumbers: "",
+      email: "",
+    });
+    setTempSupplierId(null);
+
     try {
       if (edittingSupplier) {
-        const data = await apiService.put(`/suppliers`, formData, { id: edittingSupplier._id });
-        setSuppliers(prevSuppliers => 
-          prevSuppliers.map(s => 
-            s._id === edittingSupplier._id ? { ...s, ...formData } : s
-          )
+        // Include the supplier ID in the request body
+        const updateData = {
+          ...formData,
+          _id: edittingSupplier._id,
+        };
+        await apiService.put(
+          `/suppliers?id=${edittingSupplier._id}`,
+          updateData
         );
       } else {
-        const data = await apiService.post('/suppliers', formData);
-        setSuppliers(prevSuppliers => [...prevSuppliers, { ...formData, _id: data._id, updatedAt: data.data?.updatedAt }]);
+        const data = await apiService.post("/suppliers", formData);
+        setSuppliers((prevSuppliers) =>
+          prevSuppliers.map((s) =>
+            s._id === tempSupplierId
+              ? {
+                  ...s,
+                  _id: data._id,
+                  updatedAt:
+                    data.updatedAt || data.data?.updatedAt || s.updatedAt,
+                }
+              : s
+          )
+        );
       }
-
-      // Reset form after success
-      setEdittingSupplier(null);
-      setFormData({
-        supplierName: "",
-        description: "",
-        contactNumbers: "",
-        email: "",
-      });
-      setTempSupplierId(null);
     } catch (error) {
-      console.error("Error updating/adding Supplier:", error);
-      setError(error.message || "Failed to save supplier. Please try again.");
+      console.error("Error updating/adding supplier:", error);
+      fetchSuppliers(); // Refetch to sync state
+      if (error.response?.status === 403) {
+        setError(
+          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+        );
+      } else if (error.response?.status === 400) {
+        setError(
+          error.response?.data?.message ||
+            "Invalid supplier data. Please check all fields."
+        );
+      } else {
+        setError(error.message || "Failed to save supplier. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const confirmDeleteProduct = async () => {
-    try {
-      await apiService.delete('/suppliers', { id: supplierIdToDelete });
-      setSuppliers((prevSuppliers) =>
-        prevSuppliers.filter((supplier) => supplier._id !== supplierIdToDelete)
+    if (supplierIdToDelete) {
+      const deletedSupplier = suppliers.find(
+        (s) => s._id === supplierIdToDelete
       );
-      await fetchSuppliers(); // Ensure sync with server
-    } catch (error) {
-      console.error("Error deleting supplier:", error);
-      setError(error.response?.data?.message || error.message || "Failed to delete supplier");
-    } finally {
-      closeDeleteModal();
+      setSuppliers((prevSuppliers) =>
+        prevSuppliers.filter((s) => s._id !== supplierIdToDelete)
+      );
+      closeDeleteModal(); // Close modal immediately
+
+      try {
+        await apiService.delete(`/suppliers?id=${supplierIdToDelete}`);
+        setError(null);
+      } catch (error) {
+        console.error("Error deleting supplier:", error);
+        setSuppliers((prevSuppliers) => [...prevSuppliers, deletedSupplier]);
+        if (error.response?.status === 403) {
+          setError(
+            "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
+          );
+        } else {
+          setError(
+            error.response?.data?.message ||
+              error.message ||
+              "Failed to delete supplier"
+          );
+        }
+      }
     }
   };
 
@@ -117,11 +193,7 @@ const Suppliers = () => {
 
   return (
     <div className="supplier h-screen p-12">
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
+      {error && <Toast message={error} onClose={() => setError(null)} />}
 
       {/* Search input */}
       <div className="mb-4">
@@ -163,6 +235,10 @@ const Suppliers = () => {
           <div className="flex justify-center items-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
+        ) : suppliers.length === 0 ? (
+          <div className="flex justify-center items-center h-full text-gray-500 dark:text-gray-400">
+            No suppliers available
+          </div>
         ) : (
           <table className="table-auto w-full">
             <thead className="sticky top-0 bg-transparent table-head">
@@ -183,19 +259,18 @@ const Suppliers = () => {
                   <td className="px-4 py-2">{supplier.contactNumbers}</td>
                   <td className="px-4 py-2">{supplier.email}</td>
                   <td className="px-4 py-2">
-                    {supplier.updatedAt ? supplier.updatedAt.slice(0, 10) : "N/A"}
+                    {supplier.updatedAt
+                      ? supplier.updatedAt.slice(0, 10)
+                      : "N/A"}
                   </td>
                   <td className="px-1 py-2">
                     <i
-                      className="bx bxs-pencil text-lg ms-5 edit"
+                      className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
                       onClick={() => handleEdit(supplier)}
                     ></i>
                     <i
-                      className="bx bxs-trash text-lg ms-1 delete"
-                      onClick={() => {
-                        console.log(supplier._id);
-                        openDeleteModal(supplier._id)
-                      }}
+                      className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
+                      onClick={() => openDeleteModal(supplier._id)}
                     ></i>
                   </td>
                 </tr>
@@ -312,8 +387,8 @@ const Suppliers = () => {
               {submitting
                 ? "Processing..."
                 : edittingSupplier
-                ? "Update supplier"
-                : "Add supplier"}
+                  ? "Update supplier"
+                  : "Add supplier"}
             </button>
           </div>
         </div>
