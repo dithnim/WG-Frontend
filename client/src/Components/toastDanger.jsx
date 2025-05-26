@@ -22,7 +22,7 @@ const Toast = ({ message, type = "danger", onClose }) => {
       <div className="ms-3 text-sm font-normal">{message}</div>
       <button
         type="button"
-        className="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-full py-1 px-3 focus:ring-2 focus:ring-gray-300 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-[#171717] dark:hover:bg-[#292929]"
+        className="ms-auto -mx-1.5 -my-1.5 bg-black text-black rounded-full focus:ring-2 focus:ring-gray-300 inline-flex items-center justify-center h-4 w-4 bg-[#5f5f5f] p-1"
         onClick={onClose}
         aria-label="Close"
       >

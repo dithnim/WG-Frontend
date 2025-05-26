@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import apiService from "../../services/api";
-import Toast from "../Toast";
+import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
 
 const Suppliers = () => {

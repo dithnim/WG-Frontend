@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import apiService from "../../services/api";
-import Toast from "../Toast";
+import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
+import toastSuccess from "../toastSuccess";
+import ToastSuccess from "../toastSuccess";
 
 const Product = () => {
   const [products, setProducts] = useState(() => {
@@ -10,6 +12,7 @@ const Product = () => {
   });
   const [suppliers, setSuppliers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tempProductId, setTempProductId] = useState(null);
@@ -185,6 +188,11 @@ const Product = () => {
         await apiService.delete(`/products?id=${productIdToDelete}`);
         closeDeleteModal();
         setError(null);
+        // Show success message with product name
+        const productName =
+          products.find((p) => p._id === productIdToDelete)?.productName ||
+          "Product";
+        setSuccessMessage(`${productName} has been deleted successfully`);
       } catch (error) {
         console.error("Error deleting product:", error);
         setProducts((prevProducts) => [...prevProducts, deletedProduct]);
@@ -403,6 +411,11 @@ const Product = () => {
           updateData
         );
 
+        // Show success message
+        setSuccessMessage(
+          `${formData.productName} has been updated successfully`
+        );
+
         // Check if response exists and has data
         if (!response) {
           throw new Error("No response received from server");
@@ -429,6 +442,11 @@ const Product = () => {
         ]);
 
         const response = await apiService.post("/products", formData);
+
+        // Show success message
+        setSuccessMessage(
+          `${formData.productName} has been added successfully`
+        );
 
         // Check if response exists and has data
         if (!response) {
@@ -498,13 +516,19 @@ const Product = () => {
         setError("Access denied. Please check your authentication.");
       } else if (error.response?.status === 401) {
         setError("Session expired. Please log in again.");
-        // Optionally redirect to login
-        // window.location.href = "/login";
       } else {
         setError(error.message || "Failed to save product. Please try again.");
       }
     }
   };
+
+  // Add effect to clear success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -547,6 +571,16 @@ const Product = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Success Toast Message */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50">
+          <ToastSuccess
+            message={successMessage}
+            onClose={() => setSuccessMessage("")}
+          />
         </div>
       )}
 
