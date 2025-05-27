@@ -411,7 +411,7 @@ const Product = () => {
           updateData
         );
 
-        // Show success message
+        // Show success message with product name
         setSuccessMessage(
           `${formData.productName} has been updated successfully`
         );
@@ -443,7 +443,7 @@ const Product = () => {
 
         const response = await apiService.post("/products", formData);
 
-        // Show success message
+        // Show success message with product name
         setSuccessMessage(
           `${formData.productName} has been added successfully`
         );
@@ -521,14 +521,6 @@ const Product = () => {
       }
     }
   };
-
-  // Add effect to clear success message after 5 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(""), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

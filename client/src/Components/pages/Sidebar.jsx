@@ -1,7 +1,12 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import apiService from "../../services/api";
-
+import GrantWrapper from "../../util/grantWrapper";
 
 const initialNavigation = [
   {
@@ -89,7 +94,7 @@ export default function Sidebar({ onLogout }) {
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      await apiService.post('/logout');
+      await apiService.post("/logout");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -159,7 +164,7 @@ export default function Sidebar({ onLogout }) {
             </div>
           </div>
           <div className="px-2 space-y-1 pb-4">
-            {bottomNav.map((item, index) => (
+            {bottomNav.map((item, index) =>
               item.id === "logout" ? (
                 <button
                   key={item.name}
@@ -189,7 +194,7 @@ export default function Sidebar({ onLogout }) {
                   {item.name}
                 </Link>
               )
-            ))}
+            )}
           </div>
         </div>
       </div>

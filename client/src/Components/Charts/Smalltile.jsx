@@ -82,7 +82,7 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
   }, []);
 
   return (
-    <div className="rounded-xl bg-[#171717] p-2 w-full h-[120px] mb-4">
+    <div className="rounded-xl bg-[#171717] p-3 w-full h-[120px] mb-4">
       <div className="flex justify-between">
         <div className="p-1">
           <h1 className="font-semibold">{Title}</h1>
@@ -114,7 +114,7 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
         <div
           ref={chartRef}
           id="area-chart"
-          className="h-20 w-20 md:h-24 md:w-24 flex items-center text-black"
+          className="h-20 w-[50%] flex items-center text-black"
         ></div>
       </div>
     </div>

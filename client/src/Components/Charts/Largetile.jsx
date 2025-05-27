@@ -63,7 +63,7 @@ const Largetile = () => {
         name: "local-sales",
         data: [0, 25, 10, 15, 5, 25],
         color: "#f34378",
-      }
+      },
     ],
     xaxis: {
       labels: {
@@ -83,7 +83,7 @@ const Largetile = () => {
   };
 
   return (
-    <div className="w-full lg:w-[55vw] rounded-xl bg-[#171717] pt-5 pe-4 pb-3">
+    <div className="w-full rounded-xl bg-[#171717] pt-5 pe-4 pb-3 h-[40vh]">
       <div id="line-chart"></div>
     </div>
   );

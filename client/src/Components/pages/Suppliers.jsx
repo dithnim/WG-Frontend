@@ -192,8 +192,18 @@ const Suppliers = () => {
   };
 
   return (
-    <div className="supplier h-screen p-12">
+    <div className="supplier h-[100vh] px-12 py-6">
       {error && <Toast message={error} onClose={() => setError(null)} />}
+
+      <div className="flex items-center gap-2 mb-8">
+        <h1 className="text-3xl font-bold hidden md:flex xl:flex">
+          Supplier Browser{" "}
+        </h1>
+        <i
+          className="bx bxs-fire-alt text-2xl"
+          style={{ color: "#ff6300" }}
+        ></i>
+      </div>
 
       {/* Search input */}
       <div className="mb-4">
