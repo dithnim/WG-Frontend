@@ -542,9 +542,9 @@ const Product = () => {
   }, [loading]);
 
   return (
-    <div className="product h-[100vh] xl:px-12 px-8 py-2">
+    <div className="product h-auto xl:px-12 px-8 py-2 ">
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
           <div className="bg-[#171717] rounded-lg p-6 w-1/3">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p>Are you sure you want to delete this product?</p>
