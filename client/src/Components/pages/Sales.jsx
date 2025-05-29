@@ -28,10 +28,12 @@ const Sales = () => {
 
   const [isPrinting, setIsPrinting] = useState(false);
 
+  const [productQuantity, setProductQuantity] = useState(1);
+
   const printBill = async () => {
     setIsPrinting(true);
     try {
-      const result = await apiService.post('/print', { bill: billData });
+      const result = await apiService.post("/print", { bill: billData });
       console.log(result);
     } catch (error) {
       console.error("Error printing bill:", error);
@@ -89,11 +91,11 @@ const Sales = () => {
         costPrice: product.costPrice,
       }));
 
-      const data = await apiService.post('/sales', { 
-        grandTotal: grandTotal, 
-        products: saleData 
+      const data = await apiService.post("/sales", {
+        grandTotal: grandTotal,
+        products: saleData,
       });
-      
+
       console.log("Sales created:", data);
       setIsPrinting(false);
     } catch (error) {
@@ -151,33 +153,6 @@ const Sales = () => {
     setProfit(newProfit);
   };
 
-  const increaseQuantity = (index, maxQuantity) => {
-    setProductList((prevList) => {
-      const updatedList = prevList.map((item, idx) => {
-        if (idx === index) {
-          return item.quantity < maxQuantity
-            ? { ...item, quantity: item.quantity + 1 }
-            : item;
-        }
-        return item;
-      });
-      updateTotals(updatedList);
-      return updatedList;
-    });
-  };
-
-  const decreaseQuantity = (index) => {
-    setProductList((prevList) => {
-      const updatedList = prevList.map((item, idx) =>
-        idx === index && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      );
-      updateTotals(updatedList);
-      return updatedList;
-    });
-  };
-
   const handleProductClick = (product) => {
     const productTotal = product.sellingPrice * quantity;
     const discountAmount = 0;
@@ -226,7 +201,7 @@ const Sales = () => {
 
     setLoading(true);
     try {
-      const data = await apiService.get('/products', { search: searchQuery });
+      const data = await apiService.get("/products", { search: searchQuery });
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -241,7 +216,7 @@ const Sales = () => {
 
   return (
     // Cash In popup
-    <div className="sales h-screen flex items-start justify-between p-12">
+    <div className="sales h-screen flex items-start justify-between px-5 pb-12 pt-5">
       {showCashinModel && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-[#171717] rounded-lg p-6 w-1/3">
@@ -267,11 +242,12 @@ const Sales = () => {
               >
                 Close
               </button>
-              <button className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-red-600 bg-[#a10000]  border border-neutral-500/50 font-semibold cursor-pointer"
-              onClick={() => {
-                printBill();
-                setShowCashinModel(false);
-              }}
+              <button
+                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-red-600 bg-[#a10000]  border border-neutral-500/50 font-semibold cursor-pointer"
+                onClick={() => {
+                  printBill();
+                  setShowCashinModel(false);
+                }}
               >
                 {isPrinting ? "Printing..." : "Print bill"}
               </button>
@@ -280,25 +256,35 @@ const Sales = () => {
         </div>
       )}
 
-      <div className="flex flex-col mt-5 search">
-        <div className="flex">
-          <input
-            type="text"
-            placeholder="Search products..."
-            id="product-search"
-            className="rounded-s-xl px-6 py-2 font-semibold"
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-          <button
-            className="flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]"
-            onClick={fetchProducts}
-          >
-            <i className="bx bx-search-alt-2 text-xl"></i>
-          </button>
+      <div className="flex mt-5 search w-full justify-between">
+        <div className="flex justify-between w-full pe-8">
+          <i
+            className="bx bx-menu-wide bx-flip-horizontal text-2xl flex items-center justify-center me-2 cursor-pointer ms-2 bg-[#171717] rounded-xl px-2 hover:bg-[#fff] hover:text-black transition-all duration-300 "
+            id="filter-icon"
+          ></i>
+          <div className="flex w-full">
+            <input
+              type="text"
+              placeholder="Search products..."
+              id="product-search"
+              className="rounded-s-xl px-6 py-2 font-semibold w-full"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            <button
+              className="flex items-center justify-center px-4 bg-[#171717] text-white rounded-e-xl py-[6px]"
+              onClick={fetchProducts}
+            >
+              <i className="bx bx-search-alt-2 text-xl"></i>
+            </button>
+          </div>
+          <i
+            className="bx bx-filter bx-flip-horizontal text-2xl flex items-center justify-center me-2 cursor-pointer ms-2 bg-[#171717] rounded-xl px-2 hover:bg-[#fff] hover:text-black transition-all duration-300 "
+            id="filter-icon"
+          ></i>
         </div>
 
-        <div
+        {/* <div
           id="search-results"
           className="bg-[#171717] h-[15vh] w-[40vw] mt-1 z-50 p-2 rounded-lg overflow-y-auto"
         >
@@ -327,10 +313,10 @@ const Sales = () => {
               <label htmlFor="pname">No results found...</label>
             </div>
           )}
-        </div>
+        </div> */}
 
-        <div
-          className="bg-[#171717] h-[60vh] w-[55vw] top-[32vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
+        {/* <div
+          className="bg-[#171717] h-[60vh] w-[50%] top-[32vh] p-4 pb-6 pt-0 rounded-md absolute overflow-y-auto"
           id="product-list"
         >
           <table className="w-full text-left" id="sales-table">
@@ -428,60 +414,147 @@ const Sales = () => {
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
       </div>
 
-      <div className=" w-[20vw] mt-5">
-        <div className="checkout bg-[#171717] w-full p-8 rounded-md">
+      <div className=" w-[23vw] h-[100%] mt-5 bg-[#171717] rounded-md px-5 py-6">
+        <div className="">
           <div className="flex items-center justify-between">
-            <p className="text-white text-md font-semibold">Sub Total</p>
-            <span className="text-white text-md font-semibold">
-              {subTotal.toFixed(2)}
-            </span>
+            <h1 className="text-xl font-bold">Cart</h1>
+            <p className="text-xs text-orange-800">Order #1</p>
           </div>
-          <div className="flex items-center justify-between my-5">
-            <p className="text-white text-md font-semibold">Discount</p>
-            <span className="text-white text-md font-semibold">
-              {discount.toFixed(2)}
-            </span>
+
+          <div className="h-[1px] w-full bg-gray-300/50 rounded-full mt-1"></div>
+        </div>
+
+        <div className="h-[65%] overflow-y-auto">
+          {productList.length > 0 ? (
+            productList.map((product, index) => (
+              <div
+                key={index}
+                className="flex mt-2 bg-[#292929] rounded-xl p-2"
+              >
+                <div className="w-[100%] h-auto flex justify-between">
+                  <div className="flex flex-col items-between w-[100%]">
+                    <div className="flex flex-col">
+                      <label
+                        htmlFor="productName"
+                        className="font-bold text-sm"
+                      >
+                        {product.productName}
+                      </label>
+                      <div className="flex mt-1">
+                        <label
+                          htmlFor="description"
+                          className="text-xs text-gray-400/50"
+                        >
+                          {product.supplier}
+                        </label>
+                        <label
+                          htmlFor="stock"
+                          className="text-[10px] ms-3 bg-green-600 px-1 rounded-full"
+                        >
+                          In Stock
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex text-lg justify-end mb-4 font-bold">
+                    Rs.{product.sellingPrice}
+                  </div>
+
+                  <div className="flex items-end max-w-[8rem]">
+                    <button
+                      type="button"
+                      className="bg-[#292929] hover:bg-[#5f5f5f] border border-gray-600 rounded-s-lg p-3 h-7"
+                      onClick={() => {
+                        setProductQuantity(productQuantity - 1);
+                      }}
+                    >
+                      <svg
+                        className="w-2 h-3 text-white"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 18 2"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M1 1h16"
+                        />
+                      </svg>
+                    </button>
+                    <input
+                      type="text"
+                      className="bg-[#292929] border border-x-0 text-white border-gray-600 h-7 text-center text-sm block w-8 py-2.5"
+                      value={productQuantity}
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      className="bg-[#292929] hover:bg-[#5f5f5f] border-gray-600 border rounded-e-lg p-3 h-7"
+                      onClick={() => {
+                        setProductQuantity(productQuantity + 1);
+                      }}
+                    >
+                      <svg
+                        className="w-2 h-3 text-gray-900 dark:text-white"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 18 18"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 1v16M1 9h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="mt-6 text-center text-gray-400 h-full flex items-center justify-center">
+              No products in cart
+            </div>
+          )}
+        </div>
+
+        <div className="">
+          <div className="flex justify-between w-full p-2">
+            <label htmlFor="price" className="text-sm">
+              Items
+            </label>
+            <label htmlFor="priceVal" className="text-sm">
+              RS.299
+            </label>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-white text-md font-semibold">Grand Total</p>
-            <span className="text-white text-md font-semibold">
-              {grandTotal.toFixed(2)}
-            </span>
+
+          <div className="flex justify-between w-full px-2 py-1">
+            <label htmlFor="price" className="text-sm">
+              Discount
+            </label>
+            <label htmlFor="priceVal" className="text-sm">
+              RS.100
+            </label>
           </div>
+
           <button
-            className="bg-white w-full text-black font-bold py-3 rounded-xl mt-5 cursor-pointer"
-            onClick={() => {
-              setShowCashinModel(true);
-            }}
+            type="button"
+            class="text-gray-300 border border-gray-300/50 hover:text-black hover:bg-white bg-transparent font-bold rounded-full text-md w-full py-2 text-center mt-6 mb-2 animation duration-300 ease-in-out"
           >
             Checkout
           </button>
-        </div>
-
-        <div className="bg-[#171717] w-full rounded-md mt-5 p-8">
-          <div className="flex items-center justify-between">
-            <p className="text-white text-md font-semibold">Cash In</p>
-            <span className="text-white text-md font-semibold">
-              {cashIn.toFixed(2)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between mt-5">
-            <p className="text-white text-md font-semibold ">Change</p>
-            <span className="text-md font-semibold">{change.toFixed(2)}</span>
-          </div>
-
-          <div className="flex items-center justify-between mt-5">
-            <p className="text-white text-md font-semibold">Profit</p>
-            <span className="text-md font-semibold">{profit.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="bg-[#171717] w-full rounded-md mt-5 px-8 py-2">
-          <h2 className="text-white text-xl font-semibold">Bill browser</h2>
         </div>
       </div>
     </div>
