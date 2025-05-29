@@ -38,6 +38,8 @@ const Login = ({ onLogin }) => {
     // Check for existing token and validate it
     const validateExistingToken = async () => {
       const token = sessionStorage.getItem("token");
+      const refreshToken = localStorage.getItem("refreshToken");
+
       if (token) {
         try {
           // Validate token by making a test request
@@ -46,6 +48,20 @@ const Login = ({ onLogin }) => {
         } catch (error) {
           // If token is invalid, remove it
           sessionStorage.removeItem("token");
+          // If refresh token exists, try to get a new token
+          if (refreshToken) {
+            try {
+              const response = await apiService.post("/refresh-token", {
+                refreshToken,
+              });
+              if (response.token) {
+                sessionStorage.setItem("token", response.token);
+                navigate("/");
+              }
+            } catch (refreshError) {
+              localStorage.removeItem("refreshToken");
+            }
+          }
         }
       }
     };
@@ -139,12 +155,15 @@ const Login = ({ onLogin }) => {
       const data = await apiService.post("/login", {
         username: formData.username.trim(),
         password: formData.password,
+        rememberMe: rememberMe,
       });
       login(data);
       if (data.token) {
         sessionStorage.setItem("token", data.token);
         if (rememberMe && data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
+        } else {
+          localStorage.removeItem("refreshToken");
         }
         setLoginAttempts(0);
         onLogin(data.token);
@@ -300,7 +319,7 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex items-center justify-center xl:justify-between bg-[#0f0f0f] w-screen h-screen xl:p-20 lg:p-10 md:p-8 sm:p-5 p-3 relative">
+    <div className="flex items-center justify-center xl:justify-between bg-[#0f0f0f] w-screen h-screen xl:p-20 lg:p-10 md:p-8 sm:p-5 p-10 relative">
       {isLoading && <Progressmenu message="Processing your request..." />}
       {isForgotMode ? (
         <>
@@ -330,7 +349,7 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
       {isForgotMode ? (
-        <div className="w-full max-w-md h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center">
+        <div className="w-full max-w-md py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center">
           {errors.server && (
             <p className="text-red-500 text-sm mb-2">{errors.server}</p>
           )}
@@ -430,7 +449,7 @@ const Login = ({ onLogin }) => {
       ) : (
         <form
           onSubmit={handleLogin}
-          className="w-full max-w-md h-[80vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
+          className="w-full max-w-md xl:h-[80vh] lg:h-[70vh] md:h-[70vh] sm:h-[60vh] h-[60vh] py-10 px-7 rounded shadow-md login-card z-10 flex flex-col justify-center"
         >
           <h2 className="text-2xl font-semibold text-white mb-1">Login</h2>
           <h2 className="text-xs font-semibold text-white mb-4">
