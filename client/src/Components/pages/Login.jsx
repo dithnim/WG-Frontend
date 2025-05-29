@@ -300,21 +300,21 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex items-center justify-between bg-[#0f0f0f] w-screen h-screen px-4 sm:px-20">
+    <div className="flex items-center justify-center xl:justify-between bg-[#0f0f0f] w-screen h-screen xl:p-20 lg:p-10 md:p-8 sm:p-5 p-3 relative">
       {isLoading && <Progressmenu message="Processing your request..." />}
       {isForgotMode ? (
         <>
-          <div className="rounded-full w-40 h-40 absolute top-[70vh] right-2 z-0 login-circle3"></div>
-          <div className="rounded-full w-60 h-60 absolute top-[10vh] right-[20vw] z-0 login-circle4"></div>
+          <div className="rounded-full xl:w-40 xl:h-40 lg:w-30 lg:h-30 w-20 h-20 absolute top-[70vh] right-2 z-0 login-circle3"></div>
+          <div className="rounded-full xl:w-60 xl:h-60 lg:w-50 lg:h-50 w-40 h-40 absolute top-[10vh] right-[20vw] z-0 login-circle4"></div>
         </>
       ) : (
         <>
-          <div className="rounded-full w-40 h-40 absolute top-[70vh] right-2 z-0 login-circle1"></div>
-          <div className="rounded-full w-60 h-60 absolute top-[10vh] right-[20vw] z-0 login-circle2"></div>
+          <div className="rounded-full xl:w-40 xl:h-40 lg:w-30 lg:h-30 w-20 h-20 absolute top-[70vh] right-2 z-0 login-circle1"></div>
+          <div className="rounded-full xl:w-60 xl:h-60 lg:w-50 lg:h-50 w-40 h-40 absolute top-[10vh] right-[20vw] z-0 login-circle2"></div>
         </>
       )}
 
-      <div className="text-white w-full sm:w-[65%]">
+      <div className="text-white w-full sm:w-[65%] xl:block lg:block md:block sm:hidden hidden">
         <h1 className="xl:text-6xl lg:text-5xl md:text-4xl sm:text-3xl text-2xl font-bold mb-4">
           Welcome Back..!
         </h1>
