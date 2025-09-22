@@ -1,7 +1,15 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
-const GrantWrapper = ({ children, allowedRoles }) => {
+interface GrantWrapperProps {
+  children: ReactNode;
+  allowedRoles: string[];
+}
+
+const GrantWrapper: React.FC<GrantWrapperProps> = ({
+  children,
+  allowedRoles,
+}) => {
   const { user } = useAuth();
   // Get user role from sessionStorage
   const userRole = user?.userData?.role;

@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // Added fallback URL
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -50,7 +50,7 @@ api.interceptors.response.use(
 // API methods
 const apiService = {
   // GET request
-  get: async (url, params = {}) => {
+  get: async <T = any>(url: string, params: any = {}): Promise<T> => {
     try {
       const response = await api.get(url, { params });
       return response.data;
@@ -60,7 +60,7 @@ const apiService = {
   },
 
   // POST request
-  post: async (url, data = {}) => {
+  post: async <T = any>(url: string, data: any = {}): Promise<T> => {
     try {
       const response = await api.post(url, data);
       return response.data;
@@ -70,7 +70,7 @@ const apiService = {
   },
 
   // PUT request
-  put: async (url, data = {}) => {
+  put: async <T = any>(url: string, data: any = {}): Promise<T> => {
     try {
       const response = await api.put(url, data);
       return response.data;
@@ -80,7 +80,7 @@ const apiService = {
   },
 
   // DELETE request
-  delete: async (url) => {
+  delete: async <T = any>(url: string): Promise<T> => {
     try {
       const response = await api.delete(url);
       return response.data;
@@ -90,7 +90,7 @@ const apiService = {
   },
 
   // PATCH request (for partial updates)
-  patch: async (url, data = {}) => {
+  patch: async <T = any>(url: string, data: any = {}): Promise<T> => {
     try {
       const response = await api.patch(url, data);
       return response.data;

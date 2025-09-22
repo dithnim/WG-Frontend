@@ -1,14 +1,25 @@
 import React, { useState } from "react";
 
-const Dropdown = ({ options }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
+interface DropdownOption {
+  label: string;
+  value: string | number;
+}
+
+interface DropdownProps {
+  options: DropdownOption[];
+}
+
+const Dropdown: React.FC<DropdownProps> = ({ options }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [selectedOption, setSelectedOption] = useState<DropdownOption | null>(
+    null
+  );
 
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleOptionClick = (option) => {
+  const handleOptionClick = (option: DropdownOption) => {
     setSelectedOption(option);
     setIsOpen(false);
   };

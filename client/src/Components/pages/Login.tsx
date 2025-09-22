@@ -1,37 +1,54 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import PropTypes from "prop-types";
 import apiService from "../../services/api";
 import Otpinput from "../Otpinput";
 import Progressmenu from "../Progressmenu";
 import { useAuth } from "../../contexts/AuthContext";
 
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const validatePassword = (password) =>
+interface FormData {
+  username: string;
+  password: string;
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+interface Errors {
+  [key: string]: string;
+}
+
+interface LoginProps {
+  onLogin: (token: string) => void;
+}
+
+const validateEmail = (email: string): boolean =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const validatePassword = (password: string): boolean =>
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
     password
   );
-const validateUsername = (username) => /^[a-zA-Z0-9_]{3,20}$/.test(username);
+const validateUsername = (username: string): boolean =>
+  /^[a-zA-Z0-9_]{3,20}$/.test(username);
 
-const Login = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: "",
     password: "",
     email: "",
     otp: "",
     newPassword: "",
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [isForgotMode, setIsForgotMode] = useState(false);
-  const [otpAttempts, setOtpAttempts] = useState(0);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockoutTimer, setLockoutTimer] = useState(0);
+  const [errors, setErrors] = useState<Errors>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [otpSent, setOtpSent] = useState<boolean>(false);
+  const [otpVerified, setOtpVerified] = useState<boolean>(false);
+  const [isForgotMode, setIsForgotMode] = useState<boolean>(false);
+  const [otpAttempts, setOtpAttempts] = useState<number>(0);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [loginAttempts, setLoginAttempts] = useState<number>(0);
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [lockoutTimer, setLockoutTimer] = useState<number>(0);
   const { login } = useAuth();
 
   useEffect(() => {
@@ -76,14 +93,17 @@ const Login = ({ onLogin }) => {
     }
   }, [isForgotMode]);
 
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    },
+    []
+  );
 
   const handleInputBlur = useCallback(
-    (e) => {
+    (e: React.FocusEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       const newErrors = { ...errors };
 
@@ -105,7 +125,7 @@ const Login = ({ onLogin }) => {
   );
 
   const validateForm = useCallback(() => {
-    const newErrors = {};
+    const newErrors: Errors = {};
 
     if (isForgotMode) {
       if (!formData.email) {
@@ -140,7 +160,7 @@ const Login = ({ onLogin }) => {
     return Object.keys(newErrors).length === 0;
   }, [formData, isForgotMode, otpSent, otpVerified]);
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
     if (isLocked) {
@@ -171,7 +191,7 @@ const Login = ({ onLogin }) => {
       } else {
         setErrors({ server: "Invalid response from server" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
       setLoginAttempts((prev) => {
         const newAttempts = prev + 1;
@@ -228,7 +248,7 @@ const Login = ({ onLogin }) => {
           5 * 60 * 1000
         ); // 5 minutes expiration
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("OTP request error:", error);
       setErrors({
         server:
@@ -263,7 +283,7 @@ const Login = ({ onLogin }) => {
           server: "Invalid OTP. Please try again.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("OTP verification error:", error);
       setOtpAttempts((prev) => prev + 1);
       setErrors({
@@ -306,7 +326,7 @@ const Login = ({ onLogin }) => {
           "Password reset successfully! Please log in with your new password."
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password reset error:", error);
       setErrors({
         server:
@@ -522,10 +542,6 @@ const Login = ({ onLogin }) => {
       )}
     </div>
   );
-};
-
-Login.propTypes = {
-  onLogin: PropTypes.func.isRequired,
 };
 
 export default Login;

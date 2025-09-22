@@ -1,8 +1,34 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
-const AuthContext = createContext();
+interface User {
+  username?: string;
+  email?: string;
+  role: string;
+  [key: string]: any;
+}
 
-export const useAuth = () => {
+interface AuthContextType {
+  user: User | null;
+  login: (userData: any) => Promise<boolean>;
+  logout: () => void;
+  hasRole: (requiredRole: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
+  isAuthenticated: boolean;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
@@ -10,8 +36,8 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(() => {
     // Initialize user state from localStorage if available
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -25,11 +51,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (userData) => {
+  const login = async (userData: any): Promise<boolean> => {
     try {
       // Here you would typically make an API call to your backend
       // For now, we'll just store the user data
-      const userWithRole = {
+      const userWithRole: User = {
         ...userData,
         role: userData.role || "user", // Default role if not provided
       };
@@ -37,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userWithRole);
       localStorage.setItem("user", JSON.stringify(userWithRole));
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
       return false;
     }
@@ -48,17 +74,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
-  const hasRole = (requiredRole) => {
+  const hasRole = (requiredRole: string): boolean => {
     if (!user) return false;
     return user.role === requiredRole;
   };
 
-  const hasAnyRole = (roles) => {
+  const hasAnyRole = (roles: string[]): boolean => {
     if (!user) return false;
     return roles.includes(user.role);
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     login,
     logout,

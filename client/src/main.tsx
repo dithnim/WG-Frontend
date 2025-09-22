@@ -7,19 +7,25 @@ import {
   Navigate,
 } from "react-router-dom";
 import apiService from "./services/api";
-import Sidebar from "./Components/pages/Sidebar.jsx";
+import Sidebar from "./Components/pages/Sidebar";
 import "./index.css";
-import Login from "./Components/pages/Login.jsx";
-import Product from "./Components/pages/Product.jsx";
-import Dashboard from "./Components/pages/Dashboard.jsx";
-import Suppliers from "./Components/pages/Suppliers.jsx";
-import Sales from "./Components/pages/Sales.jsx";
-import Stats from "./Components/pages/Stats.jsx";
-import { AuthProvider } from "./contexts/AuthContext.jsx";
+import Login from "./Components/pages/Login";
+import Product from "./Components/pages/Product";
+import Dashboard from "./Components/pages/Dashboard";
+import Suppliers from "./Components/pages/Suppliers";
+import Sales from "./Components/pages/Sales";
+import Stats from "./Components/pages/Stats";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Secure token storage utility
-const secureStorage = {
-  setToken: (token) => {
+interface SecureStorage {
+  setToken: (token: string) => void;
+  getToken: () => string | null;
+  removeToken: () => void;
+}
+
+const secureStorage: SecureStorage = {
+  setToken: (token: string) => {
     sessionStorage.setItem("token", token);
   },
   getToken: () => {
@@ -49,7 +55,7 @@ function App() {
         // await apiService.get('/products');
         // If we get here, the token is valid
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Token validation error:", error);
         // Remove token if it's an authentication error
         if (error.response?.status === 401) {
@@ -65,7 +71,7 @@ function App() {
   }, []);
 
   // Function to handle login success and store the token
-  const handleLogin = (token) => {
+  const handleLogin = (token: string) => {
     secureStorage.setToken(token);
     setIsAuthenticated(true);
   };
@@ -74,7 +80,7 @@ function App() {
   const handleLogout = async () => {
     try {
       await apiService.post("/logout");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Logout error:", error);
     } finally {
       secureStorage.removeToken();
@@ -188,4 +194,7 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  createRoot(rootElement).render(<App />);
+}
