@@ -4,95 +4,123 @@ import Largetile from "../Charts/Largetile";
 import Piechart from "../Charts/Piechart";
 import apiService from "../../services/api";
 
-const Dashboard = () => {
-  const [supplierCount, setSupplierCount] = useState(() => {
+interface CountListItem {
+  count: number;
+  date: string;
+  updatedAt: string;
+}
+
+interface ApiCountResponse {
+  totalCount?: number;
+  count?: number;
+  prevCount?: number;
+  totalRevenue?: number;
+  prevTotalRevenue?: number;
+}
+
+const Dashboard: React.FC = () => {
+  const [supplierCount, setSupplierCount] = useState<number>(() => {
     const saved = localStorage.getItem("localSupplierCount");
     return saved ? Number(saved) : 0;
   });
-  const [productCount, setProductCount] = useState(() => {
+  const [productCount, setProductCount] = useState<number>(() => {
     const saved = localStorage.getItem("localProductCount");
     return saved ? Number(saved) : 0;
   });
-  const [saleCount, setSaleCount] = useState(() => {
-    return localStorage.getItem("localSaleCount") || 0;
+  const [saleCount, setSaleCount] = useState<number>(() => {
+    const saved = localStorage.getItem("localSaleCount");
+    return saved ? Number(saved) : 0;
   });
-  const [revenueCount, setRevenueCount] = useState(() => {
-    return localStorage.getItem("localRevenueCount") || 0;
+  const [revenueCount, setRevenueCount] = useState<number>(() => {
+    const saved = localStorage.getItem("localRevenueCount");
+    return saved ? Number(saved) : 0;
   });
 
-  const [prevSupplierCount, setPrevSupplierCount] = useState(() => {
+  const [prevSupplierCount, setPrevSupplierCount] = useState<number>(() => {
     const saved = localStorage.getItem("localPrevSupplierCount");
     return saved ? Number(saved) : 0;
   });
-  const [prevProductCount, setPrevProductCount] = useState(() => {
+  const [prevProductCount, setPrevProductCount] = useState<number>(() => {
     const saved = localStorage.getItem("localPrevProductCount");
     return saved ? Number(saved) : 0;
   });
-  const [prevSaleCount, setPrevSaleCount] = useState(() => {
-    return localStorage.getItem("localPrevSaleCount") || 0;
+  const [prevSaleCount, setPrevSaleCount] = useState<number>(() => {
+    const saved = localStorage.getItem("localPrevSaleCount");
+    return saved ? Number(saved) : 0;
   });
-  const [prevRevenueCount, setPrevRevenueCount] = useState(() => {
-    return localStorage.getItem("localPrevRevenueCount") || 0;
+  const [prevRevenueCount, setPrevRevenueCount] = useState<number>(() => {
+    const saved = localStorage.getItem("localPrevRevenueCount");
+    return saved ? Number(saved) : 0;
   });
 
-  const [productPercentage, setProductPercentage] = useState(0);
-  const [supplierPercentage, setSupplierPercentage] = useState(0);
-  const [salePercentage, setSalePercentage] = useState(0);
-  const [revenuePercentage, setRevenuePercentage] = useState(0);
+  const [productPercentage, setProductPercentage] = useState<string | number>(
+    0
+  );
+  const [supplierPercentage, setSupplierPercentage] = useState<string | number>(
+    0
+  );
+  const [salePercentage, setSalePercentage] = useState<string | number>(0);
+  const [revenuePercentage, setRevenuePercentage] = useState<string | number>(
+    0
+  );
 
-  const [timeframe, setTimeframe] = useState("month");
+  const [timeframe, setTimeframe] = useState<string>("month");
 
   //?States for counting
-  const [productCountList, setProductCountList] = useState(() => {
-    const savedList = localStorage.getItem("productCountList");
-    return savedList ? JSON.parse(savedList) : [];
-  });
+  const [productCountList, setProductCountList] = useState<CountListItem[]>(
+    () => {
+      const savedList = localStorage.getItem("productCountList");
+      return savedList ? JSON.parse(savedList) : [];
+    }
+  );
 
-  const [supplierCountList, setSupplierCountList] = useState(() => {
-    const savedList = localStorage.getItem("supplierCountList");
-    return savedList ? JSON.parse(savedList) : [];
-  });
+  const [supplierCountList, setSupplierCountList] = useState<CountListItem[]>(
+    () => {
+      const savedList = localStorage.getItem("supplierCountList");
+      return savedList ? JSON.parse(savedList) : [];
+    }
+  );
 
   // Add this new function to format data for chart
-  const getProductChartData = () => {
+  const getProductChartData = (): number[] => {
     if (!productCountList || productCountList.length === 0) {
       return [0, 0, 0, 0, 0];
     } else if (productCountList.length === 1) {
       return [0, productCountList[0].count];
     } else {
-      return productCountList.map((item) => item.count);
+      return productCountList.map((item: CountListItem) => item.count);
     }
   };
 
-  const getSupplierChartData = () => {
+  const getSupplierChartData = (): number[] => {
     if (!supplierCountList || supplierCountList.length === 0) {
       return [0, 0, 0, 0, 0];
     } else if (supplierCountList.length === 1) {
       return [0, supplierCountList[0].count];
     } else {
-      return supplierCountList.map((item) => item.count);
+      return supplierCountList.map((item: CountListItem) => item.count);
     }
   };
 
-  const fetchSupplierCount = async () => {
+  const fetchSupplierCount = async (): Promise<void> => {
     try {
-      const data = await apiService.get(`/suppliers/count`, {
+      const data: ApiCountResponse = await apiService.get(`/suppliers/count`, {
         search: timeframe,
       });
 
       // Store daily count
       const today = new Date().toISOString().split("T")[0];
-      const newCount = {
+      const newCount: CountListItem = {
         count: data.totalCount || 0,
         date: today,
         updatedAt: new Date().toISOString(),
       };
 
       // First update the count list
-      setSupplierCountList((prevList) => {
+      setSupplierCountList((prevList: CountListItem[]) => {
         const updatedList = [...prevList];
         const existingIndex = updatedList.findIndex(
-          (item) => item.date === today
+          (item: CountListItem) => item.date === today
         );
 
         if (existingIndex !== -1) {
@@ -110,57 +138,66 @@ const Dashboard = () => {
       // Then update the counts
       const currentCount = data.totalCount || 0;
       setSupplierCount(currentCount);
-      localStorage.setItem("localSupplierCount", currentCount);
+      localStorage.setItem("localSupplierCount", currentCount.toString());
 
       // Get previous count from the list after it's updated
-      setSupplierCountList((prevList) => {
+      setSupplierCountList((prevList: CountListItem[]) => {
         const previousCount = prevList.length > 0 ? prevList[0].count : 0;
         setPrevSupplierCount(previousCount);
-        localStorage.setItem("localPrevSupplierCount", previousCount);
+        localStorage.setItem(
+          "localPrevSupplierCount",
+          previousCount.toString()
+        );
         return prevList;
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching supplier count:", error);
       // Set default values in case of error
       setSupplierCount(0);
       setPrevSupplierCount(0);
-      localStorage.setItem("localSupplierCount", 0);
-      localStorage.setItem("localPrevSupplierCount", 0);
+      localStorage.setItem("localSupplierCount", "0");
+      localStorage.setItem("localPrevSupplierCount", "0");
     }
   };
 
-  const fetchRevenueCount = async () => {
+  const fetchRevenueCount = async (): Promise<void> => {
     try {
-      const data = await apiService.get(`/sales/revenue`, {
+      const data: ApiCountResponse = await apiService.get(`/sales/revenue`, {
         search: timeframe,
       });
-      setRevenueCount(data.totalRevenue);
-      setPrevRevenueCount(data.prevTotalRevenue);
-      localStorage.setItem("localRevenueCount", data.totalRevenue);
-      localStorage.setItem("localPrevRevenueCount", data.prevTotalRevenue);
-    } catch (error) {
+      setRevenueCount(data.totalRevenue || 0);
+      setPrevRevenueCount(data.prevTotalRevenue || 0);
+      localStorage.setItem(
+        "localRevenueCount",
+        (data.totalRevenue || 0).toString()
+      );
+      localStorage.setItem(
+        "localPrevRevenueCount",
+        (data.prevTotalRevenue || 0).toString()
+      );
+    } catch (error: any) {
       console.error("Error fetching revenue:", error);
     }
   };
 
-  const fetchProductCount = async () => {
+  const fetchProductCount = async (): Promise<void> => {
     try {
-      const data = await apiService.get(`/products/count`, {
+      const data: ApiCountResponse = await apiService.get(`/products/count`, {
         search: timeframe,
       });
 
       // Store daily count
       const today = new Date().toISOString().split("T")[0];
-      const newCount = {
+      const newCount: CountListItem = {
         count: data.totalCount || 0,
         date: today,
         updatedAt: new Date().toISOString(),
       };
 
-      setProductCountList((prevList) => {
+      setProductCountList((prevList: CountListItem[]) => {
         const updatedList = [...prevList];
         const existingIndex = updatedList.findIndex(
-          (item) => item.date === today
+          (item: CountListItem) => item.date === today
         );
 
         if (existingIndex !== -1) {
@@ -181,26 +218,34 @@ const Dashboard = () => {
         productCountList.length > 0 ? productCountList[0].count : 0;
       setPrevProductCount(previousCount);
 
-      localStorage.setItem("localProductCount", data.totalCount || 0);
-      localStorage.setItem("localPrevProductCount", previousCount);
-    } catch (error) {
+      localStorage.setItem(
+        "localProductCount",
+        (data.totalCount || 0).toString()
+      );
+      localStorage.setItem("localPrevProductCount", previousCount.toString());
+    } catch (error: any) {
       console.error("Error fetching product count:", error);
     }
   };
 
-  const fetchSaleCount = async () => {
+  const fetchSaleCount = async (): Promise<void> => {
     try {
-      const data = await apiService.get(`/sales/count`, { search: timeframe });
-      setSaleCount(data.count);
-      setPrevSaleCount(data.prevCount);
-      localStorage.setItem("localSaleCount", data.count);
-      localStorage.setItem("localPrevSaleCount", data.prevCount);
-    } catch (error) {
+      const data: ApiCountResponse = await apiService.get(`/sales/count`, {
+        search: timeframe,
+      });
+      setSaleCount(data.count || 0);
+      setPrevSaleCount(data.prevCount || 0);
+      localStorage.setItem("localSaleCount", (data.count || 0).toString());
+      localStorage.setItem(
+        "localPrevSaleCount",
+        (data.prevCount || 0).toString()
+      );
+    } catch (error: any) {
       console.error("Error fetching sale count:", error);
     }
   };
 
-  const calculateSalePercentage = () => {
+  const calculateSalePercentage = (): void => {
     const percentage =
       prevSaleCount === 0
         ? saleCount * 100
@@ -210,7 +255,7 @@ const Dashboard = () => {
     setSalePercentage(percentage.toFixed(2));
   };
 
-  const calculateProductPercentage = () => {
+  const calculateProductPercentage = (): void => {
     const current = Number(productCount || 0);
     const previous = Number(prevProductCount || 0);
 
@@ -231,7 +276,7 @@ const Dashboard = () => {
     setProductPercentage(percentage.toFixed(2));
   };
 
-  const calculateSupplierPercentage = () => {
+  const calculateSupplierPercentage = (): void => {
     const current = Number(supplierCount || 0);
     const previous = Number(prevSupplierCount || 0);
 
@@ -252,7 +297,7 @@ const Dashboard = () => {
     setSupplierPercentage(percentage.toFixed(2));
   };
 
-  const calculateRevenuePercentage = () => {
+  const calculateRevenuePercentage = (): void => {
     const percentage =
       prevRevenueCount === 0
         ? revenueCount * 100

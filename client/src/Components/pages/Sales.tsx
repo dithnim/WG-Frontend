@@ -33,6 +33,15 @@ const Sales = () => {
   const printBill = async () => {
     setIsPrinting(true);
     try {
+      const billData = {
+        products: productList,
+        subTotal,
+        discount,
+        grandTotal,
+        cashIn,
+        change,
+        profit
+      };
       const result = await apiService.post("/print", { bill: billData });
       console.log(result);
     } catch (error) {
@@ -224,7 +233,7 @@ const Sales = () => {
             <input
               type="number"
               id="cashin"
-              class="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
               placeholder="Enter cash ammount"
               onChange={(event) => {
                 const val = parseFloat(event.target.value) || 0;
@@ -551,7 +560,7 @@ const Sales = () => {
 
           <button
             type="button"
-            class="text-gray-300 border border-gray-300/50 hover:text-black hover:bg-white bg-transparent font-bold rounded-full text-md w-full py-2 text-center mt-6 mb-2 animation duration-300 ease-in-out"
+            className="text-gray-300 border border-gray-300/50 hover:text-black hover:bg-white bg-transparent font-bold rounded-full text-md w-full py-2 text-center mt-6 mb-2 animation duration-300 ease-in-out"
           >
             Checkout
           </button>

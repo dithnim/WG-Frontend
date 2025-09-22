@@ -2,35 +2,75 @@ import React, { useEffect, useState } from "react";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
-import toastSuccess from "../toastSuccess";
 import ToastSuccess from "../toastSuccess";
 
-const Product = () => {
-  const [products, setProducts] = useState(() => {
+interface Product {
+  _id: string;
+  productName: string;
+  productId: string;
+  description?: string;
+  rackNumber?: string;
+  costPrice: number;
+  sellingPrice: number;
+  stock: number;
+  category?: string;
+  brand?: string;
+  supplier: string;
+  updatedAt?: string;
+}
+
+interface Supplier {
+  _id: string;
+  supplierName: string;
+  description?: string;
+  contactNumbers?: string;
+  email?: string;
+  createdAt?: string;
+}
+
+interface FormData {
+  productName: string;
+  productId: string;
+  description: string;
+  rackNumber: string;
+  costPrice: string;
+  sellingPrice: string;
+  stock: string;
+  category: string;
+  brand: string;
+  supplier: string;
+}
+
+const Product: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>(() => {
     const savedProducts = localStorage.getItem("products");
     return savedProducts ? JSON.parse(savedProducts) : [];
   });
-  const [suppliers, setSuppliers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [tempProductId, setTempProductId] = useState(null);
-  const [rack, setRack] = useState("");
-  const [row, setRow] = useState("");
-  const [column, setColumn] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [productIdToDelete, setProductIdToDelete] = useState(null);
-  const [nameValidationError, setNameValidationError] = useState("");
-  const [productIdValidationError, setProductIdValidationError] = useState("");
-  const [costValidationError, setCostValidationError] = useState("");
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tempProductId, setTempProductId] = useState<string | null>(null);
+  const [rack, setRack] = useState<string>("");
+  const [row, setRow] = useState<string>("");
+  const [column, setColumn] = useState<string>("");
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(
+    null
+  );
+  const [nameValidationError, setNameValidationError] = useState<string>("");
+  const [productIdValidationError, setProductIdValidationError] =
+    useState<string>("");
+  const [costValidationError, setCostValidationError] = useState<string>("");
   const [sellingPriceValidationError, setSellingPriceValidationError] =
-    useState("");
-  const [stockValidationError, setStockValidationError] = useState("");
-  const [supplierValidationError, setSupplierValidationError] = useState("");
-  const [hoveredProductId, setHoveredProductId] = useState(null);
-  const [edittingProduct, setEdittingProduct] = useState(null);
-  const [formData, setFormData] = useState({
+    useState<string>("");
+  const [stockValidationError, setStockValidationError] = useState<string>("");
+  const [supplierValidationError, setSupplierValidationError] =
+    useState<string>("");
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+  const [edittingProduct, setEdittingProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     productName: "",
     productId: "",
     description: "",
@@ -62,25 +102,29 @@ const Product = () => {
   }, []);
 
   // Handle rack, row, column changes
-  const handleRackChange = (event) => {
+  const handleRackChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setRack(value);
     updateRackNumber(value, row, column);
   };
 
-  const handleRowChange = (event) => {
+  const handleRowChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setRow(value);
     updateRackNumber(rack, value, column);
   };
 
-  const handleColumnChange = (event) => {
+  const handleColumnChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setColumn(value);
     updateRackNumber(rack, row, value);
   };
 
-  const updateRackNumber = (newRack, newRow, newColumn) => {
+  const updateRackNumber = (
+    newRack: string,
+    newRow: string,
+    newColumn: string
+  ) => {
     const newRackNumber =
       newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
     setFormData({ ...formData, rackNumber: newRackNumber });
@@ -98,7 +142,7 @@ const Product = () => {
       } else {
         throw new Error("Invalid data format received from server");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching products:", error);
 
       // Try to get cached data
@@ -148,7 +192,7 @@ const Product = () => {
       } else {
         throw new Error("Invalid data format received from server");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching suppliers:", error);
       setError(
         "Failed to load suppliers. Please check your internet connection."
@@ -167,7 +211,7 @@ const Product = () => {
     }
   };
 
-  const openDeleteModal = (id) => {
+  const openDeleteModal = (id: string) => {
     setProductIdToDelete(id);
     setShowDeleteModal(true);
   };
@@ -179,9 +223,11 @@ const Product = () => {
 
   const confirmDeleteProduct = async () => {
     if (productIdToDelete) {
-      const deletedProduct = products.find((p) => p._id === productIdToDelete);
-      setProducts((prevProducts) =>
-        prevProducts.filter((p) => p._id !== productIdToDelete)
+      const deletedProduct = products.find(
+        (p: Product) => p._id === productIdToDelete
+      );
+      setProducts((prevProducts: Product[]) =>
+        prevProducts.filter((p: Product) => p._id !== productIdToDelete)
       );
 
       try {
@@ -190,12 +236,15 @@ const Product = () => {
         setError(null);
         // Show success message with product name
         const productName =
-          products.find((p) => p._id === productIdToDelete)?.productName ||
-          "Product";
+          products.find((p: Product) => p._id === productIdToDelete)
+            ?.productName || "Product";
         setSuccessMessage(`${productName} has been deleted successfully`);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error deleting product:", error);
-        setProducts((prevProducts) => [...prevProducts, deletedProduct]);
+        setProducts((prevProducts: Product[]) => [
+          ...prevProducts,
+          deletedProduct!,
+        ]);
         if (error.response?.status === 403) {
           setError(
             "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
@@ -207,9 +256,20 @@ const Product = () => {
     }
   };
 
-  const handleEdit = (product) => {
+  const handleEdit = (product: Product) => {
     setEdittingProduct(product);
-    setFormData(product);
+    setFormData({
+      productName: product.productName,
+      productId: product.productId,
+      description: product.description || "",
+      rackNumber: product.rackNumber || "",
+      costPrice: product.costPrice.toString(),
+      sellingPrice: product.sellingPrice.toString(),
+      stock: product.stock.toString(),
+      category: product.category || "",
+      brand: product.brand || "",
+      supplier: product.supplier,
+    });
     setRack(product.rackNumber ? product.rackNumber.slice(0, 2) : "");
     setRow(product.rackNumber ? product.rackNumber.slice(2, 3) : "");
     setColumn(product.rackNumber ? product.rackNumber.slice(3, 4) : "");
@@ -221,7 +281,7 @@ const Product = () => {
     setSupplierValidationError("");
   };
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -243,7 +303,7 @@ const Product = () => {
         setProductIdValidationError("Product ID is required");
       } else if (
         !edittingProduct &&
-        products.some((p) => p.productId === value && p._id !== formData._id)
+        products.some((p: Product) => p.productId === value)
       ) {
         setProductIdValidationError("Product ID must be unique");
       } else {
@@ -254,7 +314,7 @@ const Product = () => {
     if (name === "costPrice") {
       if (value === "") {
         setCostValidationError("Cost is required");
-      } else if (isNaN(value) || Number(value) < 0) {
+      } else if (isNaN(Number(value)) || Number(value) < 0) {
         setCostValidationError("Cost must be a non-negative number");
       } else if (
         formData.sellingPrice &&
@@ -269,7 +329,7 @@ const Product = () => {
     if (name === "sellingPrice") {
       if (value === "") {
         setSellingPriceValidationError("Selling price is required");
-      } else if (isNaN(value) || Number(value) < 0) {
+      } else if (isNaN(Number(value)) || Number(value) < 0) {
         setSellingPriceValidationError(
           "Selling price must be a non-negative number"
         );
@@ -289,7 +349,7 @@ const Product = () => {
       if (value === "") {
         setStockValidationError("Stock is required");
       } else if (
-        isNaN(value) ||
+        isNaN(Number(value)) ||
         Number(value) < 0 ||
         !Number.isInteger(Number(value))
       ) {
@@ -307,7 +367,7 @@ const Product = () => {
     }
   };
 
-  const handleSelectChange = (name, value) => {
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
@@ -316,7 +376,7 @@ const Product = () => {
     if (name === "supplier") {
       if (value === "") {
         setSupplierValidationError("Supplier is required");
-      } else if (!suppliers.some((s) => s.supplierName === value)) {
+      } else if (!suppliers.some((s: Supplier) => s.supplierName === value)) {
         setSupplierValidationError("Invalid supplier selected");
       } else {
         setSupplierValidationError("");
@@ -336,9 +396,7 @@ const Product = () => {
       hasErrors = true;
     } else if (
       !edittingProduct &&
-      products.some(
-        (p) => p.productId === formData.productId && p._id !== formData._id
-      )
+      products.some((p: Product) => p.productId === formData.productId)
     ) {
       setProductIdValidationError("Product ID must be unique");
       hasErrors = true;
@@ -346,7 +404,10 @@ const Product = () => {
     if (formData.costPrice === "") {
       setCostValidationError("Cost is required");
       hasErrors = true;
-    } else if (isNaN(formData.costPrice) || Number(formData.costPrice) < 0) {
+    } else if (
+      isNaN(Number(formData.costPrice)) ||
+      Number(formData.costPrice) < 0
+    ) {
       setCostValidationError("Cost must be a non-negative number");
       hasErrors = true;
     }
@@ -354,7 +415,7 @@ const Product = () => {
       setSellingPriceValidationError("Selling price is required");
       hasErrors = true;
     } else if (
-      isNaN(formData.sellingPrice) ||
+      isNaN(Number(formData.sellingPrice)) ||
       Number(formData.sellingPrice) < 0
     ) {
       setSellingPriceValidationError(
@@ -371,7 +432,7 @@ const Product = () => {
       setStockValidationError("Stock is required");
       hasErrors = true;
     } else if (
-      isNaN(formData.stock) ||
+      isNaN(Number(formData.stock)) ||
       Number(formData.stock) < 0 ||
       !Number.isInteger(Number(formData.stock))
     ) {
@@ -397,10 +458,16 @@ const Product = () => {
         }
 
         // Optimistic update
-        setProducts((prevProducts) =>
-          prevProducts.map((p) =>
+        setProducts((prevProducts: Product[]) =>
+          prevProducts.map((p: Product) =>
             p._id === edittingProduct._id
-              ? { ...formData, _id: edittingProduct._id }
+              ? {
+                  ...p,
+                  ...formData,
+                  costPrice: Number(formData.costPrice),
+                  sellingPrice: Number(formData.sellingPrice),
+                  stock: Number(formData.stock),
+                }
               : p
           )
         );
@@ -436,9 +503,16 @@ const Product = () => {
         setTempProductId(newTempId);
 
         // Optimistic update
-        setProducts((prevProducts) => [
+        setProducts((prevProducts: Product[]) => [
           ...prevProducts,
-          { ...formData, _id: newTempId, updatedAt: new Date().toISOString() },
+          {
+            ...formData,
+            _id: newTempId,
+            updatedAt: new Date().toISOString(),
+            costPrice: Number(formData.costPrice),
+            sellingPrice: Number(formData.sellingPrice),
+            stock: Number(formData.stock),
+          } as Product,
         ]);
 
         const response = await apiService.post("/products", formData);
@@ -499,15 +573,15 @@ const Product = () => {
 
       // Refresh the product list
       await fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating/adding product:", error);
 
       // Revert optimistic updates
       if (edittingProduct) {
         await fetchProducts();
       } else {
-        setProducts((prevProducts) =>
-          prevProducts.filter((p) => p._id !== tempProductId)
+        setProducts((prevProducts: Product[]) =>
+          prevProducts.filter((p: Product) => p._id !== tempProductId)
         );
         setTempProductId(null);
       }
@@ -620,7 +694,7 @@ const Product = () => {
                 </th>
                 <th className="px-4 py-2">In Stock</th>
                 <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
-                <GrantWrapper allowedRoles={"Admin"}>
+                <GrantWrapper allowedRoles={["Admin"]}>
                   <th className="px-4 py-2">Edit</th>
                 </GrantWrapper>
               </tr>
@@ -629,14 +703,14 @@ const Product = () => {
               {products.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="10"
+                    colSpan={10}
                     className="px-4 py-4 text-center text-gray-500 dark:text-gray-400"
                   >
                     No products available
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                products.map((product: Product) => (
                   <tr key={product._id} className="border-t">
                     <td className="px-4 py-2">
                       {product.productName}
@@ -681,7 +755,7 @@ const Product = () => {
                     <td className="px-4 py-2 hidden md:table-cell">
                       {product.supplier}
                     </td>
-                    <GrantWrapper allowedRoles={"Admin"}>
+                    <GrantWrapper allowedRoles={["Admin"]}>
                       <td className="px-1 py-2">
                         <i
                           className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
@@ -923,7 +997,7 @@ const Product = () => {
                     }
                   >
                     <option value="">Select Supplier</option>
-                    {suppliers.map((supplier) => (
+                    {suppliers.map((supplier: Supplier) => (
                       <option key={supplier._id} value={supplier.supplierName}>
                         {supplier.supplierName}
                       </option>
@@ -1050,12 +1124,12 @@ const Product = () => {
               onClick={handleSubmit}
               className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
-                nameValidationError ||
-                productIdValidationError ||
-                costValidationError ||
-                sellingPriceValidationError ||
-                stockValidationError ||
-                supplierValidationError
+                !!nameValidationError ||
+                !!productIdValidationError ||
+                !!costValidationError ||
+                !!sellingPriceValidationError ||
+                !!stockValidationError ||
+                !!supplierValidationError
               }
             >
               {edittingProduct ? "Update Product" : "Add Product"}

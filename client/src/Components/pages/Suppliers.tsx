@@ -3,22 +3,42 @@ import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
 
-const Suppliers = () => {
-  const [suppliers, setSuppliers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [edittingSupplier, setEdittingSupplier] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
+interface Supplier {
+  _id: string;
+  supplierName: string;
+  description?: string;
+  contactNumbers?: string;
+  email?: string;
+  createdAt?: string;
+}
+
+interface FormData {
+  supplierName: string;
+  description: string;
+  contactNumbers: string;
+  email: string;
+}
+
+const Suppliers: React.FC = () => {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [edittingSupplier, setEdittingSupplier] = useState<Supplier | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     supplierName: "",
     description: "",
     contactNumbers: "",
     email: "",
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [supplierIdToDelete, setSupplierIdToDelete] = useState(null);
-  const [tempSupplierId, setTempSupplierId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [supplierIdToDelete, setSupplierIdToDelete] = useState<string | null>(
+    null
+  );
+  const [tempSupplierId, setTempSupplierId] = useState<string | null>(null);
 
   // Clear error messages after 5 seconds
   useEffect(() => {
@@ -28,14 +48,16 @@ const Suppliers = () => {
     }
   }, [error]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiService.get("/suppliers", { search: searchQuery });
+      const data: Supplier[] = await apiService.get("/suppliers", {
+        search: searchQuery,
+      });
       setSuppliers(data);
       console.log(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching suppliers:", error);
       if (error.response?.status === 403) {
         setError(
@@ -56,34 +78,38 @@ const Suppliers = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const openDeleteModal = (id) => {
+  const openDeleteModal = (id: string): void => {
     setSupplierIdToDelete(id);
     setShowDeleteModal(true);
   };
 
-  const closeDeleteModal = () => {
+  const closeDeleteModal = (): void => {
     setShowDeleteModal(false);
     setSupplierIdToDelete(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (submitting) return;
     setSubmitting(true);
     setError(null);
 
     // Perform optimistic update and reset form immediately
     if (edittingSupplier) {
-      setSuppliers((prevSuppliers) =>
-        prevSuppliers.map((s) =>
+      setSuppliers((prevSuppliers: Supplier[]) =>
+        prevSuppliers.map((s: Supplier) =>
           s._id === edittingSupplier._id ? { ...s, ...formData } : s
         )
       );
     } else {
       const newTempId = "temp_" + Date.now();
       setTempSupplierId(newTempId);
-      setSuppliers((prevSuppliers) => [
+      setSuppliers((prevSuppliers: Supplier[]) => [
         ...prevSuppliers,
-        { ...formData, _id: newTempId, createdAt: new Date().toISOString() },
+        {
+          ...formData,
+          _id: newTempId,
+          createdAt: new Date().toISOString(),
+        } as Supplier,
       ]);
     }
 
@@ -109,9 +135,9 @@ const Suppliers = () => {
           updateData
         );
       } else {
-        const data = await apiService.post("/suppliers", formData);
-        setSuppliers((prevSuppliers) =>
-          prevSuppliers.map((s) =>
+        const data: Supplier = await apiService.post("/suppliers", formData);
+        setSuppliers((prevSuppliers: Supplier[]) =>
+          prevSuppliers.map((s: Supplier) =>
             s._id === tempSupplierId
               ? {
                   ...s,
@@ -121,7 +147,7 @@ const Suppliers = () => {
           )
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating/adding supplier:", error);
       fetchSuppliers(); // Refetch to sync state
       if (error.response?.status === 403) {
@@ -141,22 +167,25 @@ const Suppliers = () => {
     }
   };
 
-  const confirmDeleteProduct = async () => {
+  const confirmDeleteProduct = async (): Promise<void> => {
     if (supplierIdToDelete) {
       const deletedSupplier = suppliers.find(
-        (s) => s._id === supplierIdToDelete
+        (s: Supplier) => s._id === supplierIdToDelete
       );
-      setSuppliers((prevSuppliers) =>
-        prevSuppliers.filter((s) => s._id !== supplierIdToDelete)
+      setSuppliers((prevSuppliers: Supplier[]) =>
+        prevSuppliers.filter((s: Supplier) => s._id !== supplierIdToDelete)
       );
       closeDeleteModal(); // Close modal immediately
 
       try {
         await apiService.delete(`/suppliers?id=${supplierIdToDelete}`);
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error deleting supplier:", error);
-        setSuppliers((prevSuppliers) => [...prevSuppliers, deletedSupplier]);
+        setSuppliers((prevSuppliers: Supplier[]) => [
+          ...prevSuppliers,
+          deletedSupplier!,
+        ]);
         if (error.response?.status === 403) {
           setError(
             "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
@@ -172,7 +201,7 @@ const Suppliers = () => {
     }
   };
 
-  const handleEdit = (supplier) => {
+  const handleEdit = (supplier: Supplier): void => {
     console.log("Editing supplier:", supplier);
     setEdittingSupplier(supplier);
     setFormData({
@@ -183,9 +212,11 @@ const Suppliers = () => {
     });
   };
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const { name, value } = event.target;
-    setFormData((prevFormData) => ({
+    setFormData((prevFormData: FormData) => ({
       ...prevFormData,
       [name]: value,
     }));
@@ -258,13 +289,13 @@ const Suppliers = () => {
                 <th>Contact numbers</th>
                 <th>Email</th>
                 <th>Last updated</th>
-                <GrantWrapper allowedRoles={"Admin"}>
+                <GrantWrapper allowedRoles={["Admin"]}>
                   <th>Edit</th>
                 </GrantWrapper>
               </tr>
             </thead>
             <tbody id="supplier-table-body">
-              {suppliers.map((supplier) => (
+              {suppliers.map((supplier: Supplier) => (
                 <tr key={supplier._id}>
                   <td className="px-4 py-2">{supplier.supplierName}</td>
                   <td className="px-4 py-2">{supplier.description}</td>
@@ -275,7 +306,7 @@ const Suppliers = () => {
                       ? supplier.createdAt.slice(0, 10)
                       : "N/A"}
                   </td>
-                  <GrantWrapper allowedRoles={"Admin"}>
+                  <GrantWrapper allowedRoles={["Admin"]}>
                     <td className="px-1 py-2">
                       <i
                         className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
