@@ -289,7 +289,7 @@ const Suppliers: React.FC = () => {
                 <th>Contact numbers</th>
                 <th>Email</th>
                 <th>Last updated</th>
-                <GrantWrapper allowedRoles={["Admin"]}>
+                <GrantWrapper allowedRoles={["admin"]}>
                   <th>Edit</th>
                 </GrantWrapper>
               </tr>
@@ -306,7 +306,7 @@ const Suppliers: React.FC = () => {
                       ? supplier.createdAt.slice(0, 10)
                       : "N/A"}
                   </td>
-                  <GrantWrapper allowedRoles={["Admin"]}>
+                  <GrantWrapper allowedRoles={["admin"]}>
                     <td className="px-1 py-2">
                       <i
                         className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"

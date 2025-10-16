@@ -694,7 +694,7 @@ const Product: React.FC = () => {
                 </th>
                 <th className="px-4 py-2">In Stock</th>
                 <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
-                <GrantWrapper allowedRoles={["Admin"]}>
+                <GrantWrapper allowedRoles={["admin"]}>
                   <th className="px-4 py-2">Edit</th>
                 </GrantWrapper>
               </tr>
@@ -755,7 +755,7 @@ const Product: React.FC = () => {
                     <td className="px-4 py-2 hidden md:table-cell">
                       {product.supplier}
                     </td>
-                    <GrantWrapper allowedRoles={["Admin"]}>
+                    <GrantWrapper allowedRoles={["admin"]}>
                       <td className="px-1 py-2">
                         <i
                           className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"

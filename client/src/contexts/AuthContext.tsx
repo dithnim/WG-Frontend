@@ -55,9 +55,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Here you would typically make an API call to your backend
       // For now, we'll just store the user data
+      console.log("Logging in user-------------------------------:", userData);
       const userWithRole: User = {
         ...userData,
-        role: userData.role || "user", // Default role if not provided
+        role: userData?.user.role || "admin", // Default role if not provided
       };
 
       setUser(userWithRole);

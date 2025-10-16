@@ -12,7 +12,7 @@ const GrantWrapper: React.FC<GrantWrapperProps> = ({
 }) => {
   const { user } = useAuth();
   // Get user role from sessionStorage
-  const userRole = user?.userData?.role;
+  const userRole = user?.user?.role;
   console.log("My Role", user);
 
   // Check if user has required role
