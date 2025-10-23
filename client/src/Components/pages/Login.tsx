@@ -27,8 +27,6 @@ const validatePassword = (password: string): boolean =>
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
     password
   );
-const validateUsername = (username: string): boolean =>
-  /^[a-zA-Z0-9_]{3,20}$/.test(username);
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -112,9 +110,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       } else if (name === "newPassword" && value && !validatePassword(value)) {
         newErrors.newPassword =
           "Password must be at least 8 characters with one uppercase, one lowercase, one number, and one special character";
-      } else if (name === "username" && value && !validateUsername(value)) {
-        newErrors.username =
-          "Username must be 3-20 characters and can only contain letters, numbers, and underscores";
       } else {
         delete newErrors[name];
       }
@@ -147,8 +142,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     } else {
       if (!formData.username) {
         newErrors.username = "Username is required";
-      } else if (!validateUsername(formData.username)) {
-        newErrors.username = "Invalid username format";
       }
 
       if (!formData.password) {
@@ -175,7 +168,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const data = await apiService.post("/login", {
         username: formData.username.trim(),
         password: formData.password,
-        rememberMe: rememberMe,
       });
       login(data);
       if (data.token) {

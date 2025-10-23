@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Link,
@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import apiService from "../../services/api";
 import GrantWrapper from "../../util/grantWrapper";
+import "../../styles/sidebar.css";
 
 const initialNavigation = [
   {
@@ -80,6 +81,8 @@ export default function Sidebar({ onLogout }) {
   const [navigation, setNavigation] = useState(initialNavigation);
   const [bottomNav, setBottomNav] = useState(bottomNavigation);
   const [menu, setMenu] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleMenuClick = (index, isBottom = false) => {
     const updatedNavigation = isBottom
@@ -105,16 +108,38 @@ export default function Sidebar({ onLogout }) {
     }
   };
 
+  // Add ripple effect
+  const createRipple = (event) => {
+    const button = event.currentTarget;
+    const circle = document.createElement("span");
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+    circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
+    circle.classList.add("ripple");
+
+    const ripple = button.getElementsByClassName("ripple")[0];
+    if (ripple) {
+      ripple.remove();
+    }
+
+    button.appendChild(circle);
+  };
+
   return (
     <div className="flex">
       {/* Menu Button for Small Screens */}
       <button
         onClick={() => setMenu(!menu)}
-        className={`fixed top-4 left-4 z-50 text-white bg-[#262626] p-1 rounded-full md:hidden w-10 h-10 flex items-center transition-transform duration-300 justify-center ${
-          menu ? "translate-x-[180px]" : "translate-x-0"
+        className={`fixed top-4 left-4 z-50 text-white bg-[#262626] p-1 rounded-full md:hidden w-10 h-10 flex items-center transition-all duration-300 justify-center hover:bg-[#303030] hover:scale-110 hover:shadow-lg ${
+          menu ? "translate-x-[180px] rotate-180" : "translate-x-0"
         }`}
       >
-        <i className={`bx ${menu ? "bx-x" : "bx-menu"} text-xl`}></i>
+        <i
+          className={`bx ${menu ? "bx-x" : "bx-menu"} text-xl transition-transform duration-300`}
+        ></i>
       </button>
 
       {/* Overlay for Sidebar */}
@@ -127,9 +152,13 @@ export default function Sidebar({ onLogout }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-transform duration-300 z-50 w-44 border-e border-[#262626] ${
-          menu ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-all duration-500 ease-in-out z-50 w-44 border-e border-[#262626] backdrop-blur-sm ${
+          menu ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         } md:translate-x-0 md:relative md:w-52 xl:w-64`}
+        style={{
+          background: "linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%)",
+          boxShadow: menu ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "none",
+        }}
       >
         <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between">
           <div>
@@ -140,59 +169,160 @@ export default function Sidebar({ onLogout }) {
                 GENUINE
               </h1>
             </div>
-            <nav className="flex-1 px-2 space-y-1 sidebar-icons">
+
+            <nav className="flex-1 px-3 space-y-2">
               {navigation.map((item, index) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  id={item.id}
-                  onClick={() => handleMenuClick(index)}
-                  className={classNames(
-                    location.pathname === item.href
-                      ? "bg-[#262626] text-white hover:bg-[#303030] border-s-4"
-                      : "text-gray-300 hover:bg-[#262626] hover:text-white",
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-e-md"
-                  )}
-                >
-                  <i className={item.icon}></i>
-                  {item.name}
-                </Link>
+                <div key={item.name} className="relative">
+                  <Link
+                    to={item.href}
+                    id={item.id}
+                    onClick={(e) => {
+                      createRipple(e);
+                      handleMenuClick(index);
+                    }}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className={classNames(
+                      location.pathname === item.href
+                        ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
+                        : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
+                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                    )}
+                    style={{
+                      background:
+                        location.pathname === item.href
+                          ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                          : hoveredItem === item.id
+                            ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                            : "transparent",
+                    }}
+                  >
+                    {/* Active indicator */}
+                    {location.pathname === item.href && (
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                    )}
+
+                    {/* Icon with animation */}
+                    <i
+                      className={`${item.icon} transition-all duration-300 ${
+                        hoveredItem === item.id
+                          ? "transform scale-110 rotate-6"
+                          : ""
+                      } ${location.pathname === item.href ? "text-blue-400" : ""}`}
+                    ></i>
+
+                    {/* Text with slide animation */}
+                    <span
+                      className={`transition-all duration-300 ${
+                        hoveredItem === item.id ? "transform translate-x-1" : ""
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+
+                    {/* Hover glow effect */}
+                    {hoveredItem === item.id && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl"></div>
+                    )}
+                  </Link>
+                </div>
               ))}
             </nav>
             <div className="flex justify-center mt-4">
               <div className="w-[85%] h-[2px] bg-[#292929] rounded-full"></div>
             </div>
           </div>
-          <div className="px-2 space-y-1 pb-4">
+          <div className="px-3 space-y-2 pb-4 relative z-10">
             {bottomNav.map((item, index) =>
               item.id === "logout" ? (
                 <button
                   key={item.name}
-                  onClick={handleLogout}
+                  onClick={(e) => {
+                    createRipple(e);
+                    handleLogout(e);
+                  }}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
                   className={classNames(
-                    "text-gray-300 hover:bg-[#262626] hover:text-white",
-                    "group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md"
+                    "text-gray-300 hover:bg-gradient-to-r hover:from-red-900/20 hover:to-red-800/20 hover:text-red-300 hover:transform hover:scale-105",
+                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
                   )}
+                  style={{
+                    background:
+                      hoveredItem === item.id
+                        ? "linear-gradient(135deg, rgba(153, 27, 27, 0.2) 0%, rgba(127, 29, 29, 0.2) 100%)"
+                        : "transparent",
+                  }}
                 >
-                  <i className={item.icon}></i>
-                  {item.name}
+                  <i
+                    className={`${item.icon} transition-all duration-300 ${
+                      hoveredItem === item.id
+                        ? "transform scale-110 text-red-400"
+                        : ""
+                    }`}
+                  ></i>
+                  <span
+                    className={`transition-all duration-300 ${
+                      hoveredItem === item.id ? "transform translate-x-1" : ""
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                  {hoveredItem === item.id && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent rounded-xl"></div>
+                  )}
                 </button>
               ) : (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  id={item.id}
-                  onClick={() => handleMenuClick(index, true)}
-                  className={classNames(
-                    location.pathname === item.href
-                      ? "bg-[#262626] text-white hover:bg-[#303030]"
-                      : "text-gray-300 hover:bg-[#262626] hover:text-white",
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                  )}
-                >
-                  <i className={item.icon}></i>
-                  {item.name}
-                </Link>
+                <div key={item.name} className="relative">
+                  <Link
+                    to={item.href}
+                    id={item.id}
+                    onClick={(e) => {
+                      createRipple(e);
+                      handleMenuClick(index, true);
+                    }}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className={classNames(
+                      location.pathname === item.href
+                        ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
+                        : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
+                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                    )}
+                    style={{
+                      background:
+                        location.pathname === item.href
+                          ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                          : hoveredItem === item.id
+                            ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                            : "transparent",
+                    }}
+                  >
+                    {location.pathname === item.href && (
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                    )}
+
+                    <i
+                      className={`${item.icon} transition-all duration-300 ${
+                        hoveredItem === item.id
+                          ? "transform scale-110 rotate-6"
+                          : ""
+                      } ${location.pathname === item.href ? "text-blue-400" : ""}`}
+                    ></i>
+
+                    <span
+                      className={`transition-all duration-300 ${
+                        hoveredItem === item.id ? "transform translate-x-1" : ""
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+
+                    {hoveredItem === item.id && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl"></div>
+                    )}
+                  </Link>
+                </div>
               )
             )}
           </div>
