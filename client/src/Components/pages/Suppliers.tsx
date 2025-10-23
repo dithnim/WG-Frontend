@@ -7,7 +7,7 @@ interface Supplier {
   _id: string;
   supplierName: string;
   description?: string;
-  contactNumbers?: string;
+  contact?: string;
   email?: string;
   createdAt?: string;
 }
@@ -15,7 +15,7 @@ interface Supplier {
 interface FormData {
   supplierName: string;
   description: string;
-  contactNumbers: string;
+  contact: string;
   email: string;
 }
 
@@ -31,7 +31,7 @@ const Suppliers: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     supplierName: "",
     description: "",
-    contactNumbers: "",
+    contact: "",
     email: "",
   });
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -118,7 +118,7 @@ const Suppliers: React.FC = () => {
     setFormData({
       supplierName: "",
       description: "",
-      contactNumbers: "",
+      contact: "",
       email: "",
     });
     setTempSupplierId(null);
@@ -207,7 +207,7 @@ const Suppliers: React.FC = () => {
     setFormData({
       supplierName: supplier.supplierName || "",
       description: supplier.description || "",
-      contactNumbers: supplier.contactNumbers || "",
+      contact: supplier.contact || "",
       email: supplier.email || "",
     });
   };
@@ -299,7 +299,7 @@ const Suppliers: React.FC = () => {
                 <tr key={supplier._id}>
                   <td className="px-4 py-2">{supplier.supplierName}</td>
                   <td className="px-4 py-2">{supplier.description}</td>
-                  <td className="px-4 py-2">{supplier.contactNumbers}</td>
+                  <td className="px-4 py-2">{supplier.contact}</td>
                   <td className="px-4 py-2">{supplier.email}</td>
                   <td className="px-4 py-2">
                     {supplier.createdAt
@@ -370,12 +370,12 @@ const Suppliers: React.FC = () => {
             <div className="relative z-0 w-full mb-5 group">
               <input
                 type="text"
-                name="contactNumbers"
+                name="contact"
                 id="floating-contact-numbers"
                 className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer"
                 placeholder=" "
                 onChange={handleInputChange}
-                value={formData.contactNumbers}
+                value={formData.contact}
                 required
               />
               <label
@@ -414,7 +414,7 @@ const Suppliers: React.FC = () => {
                 setFormData({
                   supplierName: "",
                   description: "",
-                  contactNumbers: "",
+                  contact: "",
                   email: "",
                 });
               }}
