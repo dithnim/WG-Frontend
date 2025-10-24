@@ -23,7 +23,7 @@ interface Supplier {
   _id: string;
   supplierName: string;
   description?: string;
-  contactNumbers?: string;
+  contact?: string;
   email?: string;
   createdAt?: string;
 }
@@ -133,11 +133,27 @@ const Product: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const data = await apiService.get("/products", { search: searchQuery });
+      const data = await apiService.get("/product", { search: searchQuery });
       if (data && Array.isArray(data)) {
-        setProducts(data);
+        // Map the nested response structure to flat Product interface
+        const mappedProducts = data.map((item: any) => ({
+          _id: item._id,
+          productName: item.productName,
+          productId: item.productId,
+          description: item.description,
+          rackNumber: item.rackNumber,
+          costPrice: item.inventories?.[0]?.cost || 0,
+          sellingPrice: item.inventories?.[0]?.sellingPrice || 0,
+          stock: item.inventories?.[0]?.stock || 0,
+          category: item.category,
+          brand: item.brand,
+          supplier: item.suppliers?.[0]?.supplierName || "",
+          updatedAt: item.updatedAt,
+        }));
+
+        setProducts(mappedProducts);
         // Only update localStorage if the API call was successful
-        localStorage.setItem("products", JSON.stringify(data));
+        localStorage.setItem("products", JSON.stringify(mappedProducts));
         setError(null);
       } else {
         throw new Error("Invalid data format received from server");
@@ -231,7 +247,7 @@ const Product: React.FC = () => {
       );
 
       try {
-        await apiService.delete(`/products?id=${productIdToDelete}`);
+        await apiService.delete(`/product/all?id=${productIdToDelete}`);
         closeDeleteModal();
         setError(null);
         // Show success message with product name
@@ -457,6 +473,15 @@ const Product: React.FC = () => {
           throw new Error("Product ID is missing");
         }
 
+        // Find the supplier ID from the selected supplier name
+        const selectedSupplier = suppliers.find(
+          (s: Supplier) => s.supplierName === formData.supplier
+        );
+
+        if (!selectedSupplier) {
+          throw new Error("Supplier not found");
+        }
+
         // Optimistic update
         setProducts((prevProducts: Product[]) =>
           prevProducts.map((p: Product) =>
@@ -472,10 +497,27 @@ const Product: React.FC = () => {
           )
         );
 
-        const updateData = { ...formData };
+        // Restructure payload for /product/all endpoint
+        const updatePayload = {
+          product: {
+            productId: formData.productId,
+            productName: formData.productName,
+            brand: formData.brand || undefined,
+            rackNumber: formData.rackNumber || undefined,
+            description: formData.description || undefined,
+            category: formData.category || undefined,
+          },
+          inventory: {
+            cost: Number(formData.costPrice),
+            sellingPrice: Number(formData.sellingPrice),
+            stock: Number(formData.stock),
+          },
+          supplierId: selectedSupplier._id,
+        };
+
         const response = await apiService.put(
-          `/products?id=${edittingProduct._id}`,
-          updateData
+          `/product/all?id=${edittingProduct._id}`,
+          updatePayload
         );
 
         // Show success message with product name
@@ -502,6 +544,15 @@ const Product: React.FC = () => {
         const newTempId = "temp_" + Date.now();
         setTempProductId(newTempId);
 
+        // Find the supplier ID from the selected supplier name
+        const selectedSupplier = suppliers.find(
+          (s: Supplier) => s.supplierName === formData.supplier
+        );
+
+        if (!selectedSupplier) {
+          throw new Error("Supplier not found");
+        }
+
         // Optimistic update
         setProducts((prevProducts: Product[]) => [
           ...prevProducts,
@@ -515,7 +566,25 @@ const Product: React.FC = () => {
           } as Product,
         ]);
 
-        const response = await apiService.post("/products", formData);
+        // Restructure payload for /products/all endpoint
+        const productPayload = {
+          product: {
+            productId: formData.productId,
+            productName: formData.productName,
+            brand: formData.brand || undefined,
+            rackNumber: formData.rackNumber || undefined,
+            description: formData.description || undefined,
+            category: formData.category || undefined,
+          },
+          inventory: {
+            cost: Number(formData.costPrice),
+            sellingPrice: Number(formData.sellingPrice),
+            stock: Number(formData.stock),
+          },
+          supplierId: selectedSupplier._id,
+        };
+
+        const response = await apiService.post("/product/all", productPayload);
 
         // Show success message with product name
         setSuccessMessage(

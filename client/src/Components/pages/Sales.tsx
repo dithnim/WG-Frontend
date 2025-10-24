@@ -210,7 +210,7 @@ const Sales = () => {
 
     setLoading(true);
     try {
-      const data = await apiService.get("/products", { search: searchQuery });
+      const data = await apiService.get("/product", { search: searchQuery });
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);

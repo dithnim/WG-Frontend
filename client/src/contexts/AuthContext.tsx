@@ -16,7 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (userData: any) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasRole: (requiredRole: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   isAuthenticated: boolean;
@@ -53,12 +53,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (userData: any): Promise<boolean> => {
     try {
-      // Here you would typically make an API call to your backend
-      // For now, we'll just store the user data
-      console.log("Logging in user-------------------------------:", userData);
+      console.log("Logging in user:", userData);
+
+      // Handle different response structures
+      // API returns: { token, refreshToken, userData: { email, role } }
       const userWithRole: User = {
-        ...userData,
-        role: userData?.user.role || "admin", // Default role if not provided
+        username:
+          userData?.username ||
+          userData?.userData?.username ||
+          userData?.user?.username,
+        email:
+          userData?.email || userData?.userData?.email || userData?.user?.email,
+        role:
+          userData?.role ||
+          userData?.userData?.role ||
+          userData?.user?.role ||
+          "user",
+        name:
+          userData?.name || userData?.userData?.name || userData?.user?.name,
+        imageUrl:
+          userData?.imageUrl ||
+          userData?.userData?.imageUrl ||
+          userData?.user?.imageUrl ||
+          "",
+        ...userData?.userData, // Spread userData from API response
       };
 
       setUser(userWithRole);
@@ -70,9 +88,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint
+      await fetch(`${import.meta.env.VITE_API_URL}logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch (error) {
+      console.error("Logout API error:", error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Clear all auth data
+      setUser(null);
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+    }
   };
 
   const hasRole = (requiredRole: string): boolean => {
