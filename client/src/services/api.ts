@@ -30,15 +30,48 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     // Handle common errors here
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
+      const status = error.response.status;
+
+      // Handle 401 Unauthorized - Token expired or invalid
+      if (status === 401) {
+        console.error("Session expired or unauthorized access");
+
+        // Clear all authentication data
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+
+        // Redirect to login page
+        window.location.href = "/login";
+
+        // Return a more descriptive error
+        return Promise.reject({
+          ...error,
+          message: "Session expired. Please log in again.",
+        });
+      }
+
+      // Handle 403 Forbidden - Access denied
+      if (status === 403) {
+        console.error("Access denied");
+        return Promise.reject({
+          ...error,
+          message:
+            "Access denied. You don't have permission to perform this action.",
+        });
+      }
+
       console.error("Response Error:", error.response.data);
     } else if (error.request) {
       // The request was made but no response was received
       console.error("Request Error:", error.request);
+      return Promise.reject({
+        ...error,
+        message: "Network error. Please check your internet connection.",
+      });
     } else {
       // Something happened in setting up the request that triggered an Error
       console.error("Error:", error.message);

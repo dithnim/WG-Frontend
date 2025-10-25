@@ -15,6 +15,7 @@ import Dashboard from "./Components/pages/Dashboard";
 import Suppliers from "./Components/pages/Suppliers";
 import Sales from "./Components/pages/Sales";
 import Stats from "./Components/pages/Stats";
+import NotFound from "./Components/pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Secure token storage utility
@@ -186,7 +187,7 @@ function App() {
                 )
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </AuthProvider>

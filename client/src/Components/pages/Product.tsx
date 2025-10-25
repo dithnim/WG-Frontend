@@ -17,6 +17,8 @@ interface Product {
   brand?: string;
   supplier: string;
   updatedAt?: string;
+  inventoryId?: string;
+  supplierId?: string;
 }
 
 interface Supplier {
@@ -130,8 +132,10 @@ const Product: React.FC = () => {
     setFormData({ ...formData, rackNumber: newRackNumber });
   };
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (preserveData = false) => {
+    if (!preserveData) {
+      setLoading(true);
+    }
     try {
       const data = await apiService.get("/product", { search: searchQuery });
       if (data && Array.isArray(data)) {
@@ -149,6 +153,8 @@ const Product: React.FC = () => {
           brand: item.brand,
           supplier: item.suppliers?.[0]?.supplierName || "",
           updatedAt: item.updatedAt,
+          inventoryId: item.inventories?.[0]?._id || "",
+          supplierId: item.suppliers?.[0]?._id || "",
         }));
 
         setProducts(mappedProducts);
@@ -161,40 +167,32 @@ const Product: React.FC = () => {
     } catch (error: any) {
       console.error("Error fetching products:", error);
 
-      // Try to get cached data
-      const cachedProducts = localStorage.getItem("products");
-      if (cachedProducts) {
-        try {
-          const parsedProducts = JSON.parse(cachedProducts);
-          if (Array.isArray(parsedProducts)) {
-            setProducts(parsedProducts);
-            setError(
-              "Using cached data. Please check your internet connection."
-            );
-          } else {
-            throw new Error("Invalid cached data format");
+      // Use error message from API service if available
+      const errorMessage = error.message || "Failed to load products";
+
+      // Try to get cached data only for network errors (not auth errors)
+      if (error.response?.status !== 401 && error.response?.status !== 403) {
+        const cachedProducts = localStorage.getItem("products");
+        if (cachedProducts) {
+          try {
+            const parsedProducts = JSON.parse(cachedProducts);
+            if (Array.isArray(parsedProducts)) {
+              setProducts(parsedProducts);
+              setError("Using cached data. " + errorMessage);
+              return; // Exit early since we have cached data
+            }
+          } catch (parseError) {
+            console.error("Error parsing cached products:", parseError);
           }
-        } catch (parseError) {
-          console.error("Error parsing cached products:", parseError);
-          setError("Failed to load products. Please refresh the page.");
-          setProducts([]);
         }
-      } else {
-        setError(
-          "Failed to load products. Please check your internet connection."
-        );
-        setProducts([]);
       }
 
-      if (error.response?.status === 403) {
-        setError("Access denied. Please check your authentication.");
-      } else if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        // Optionally redirect to login
-        // window.location.href = "/login";
-      }
+      setError(errorMessage);
+      setProducts([]);
     } finally {
-      setLoading(false);
+      if (!preserveData) {
+        setLoading(false);
+      }
     }
   };
 
@@ -210,18 +208,9 @@ const Product: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error fetching suppliers:", error);
-      setError(
-        "Failed to load suppliers. Please check your internet connection."
-      );
+      const errorMessage = error.message || "Failed to load suppliers";
+      setError(errorMessage);
       setSuppliers([]);
-
-      if (error.response?.status === 403) {
-        setError("Access denied. Please check your authentication.");
-      } else if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        // Optionally redirect to login
-        // window.location.href = "/login";
-      }
     } finally {
       setLoading(false);
     }
@@ -261,13 +250,9 @@ const Product: React.FC = () => {
           ...prevProducts,
           deletedProduct!,
         ]);
-        if (error.response?.status === 403) {
-          setError(
-            "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
-          );
-        } else {
-          setError("Failed to delete product. Please try again.");
-        }
+        const errorMessage =
+          error.message || "Failed to delete product. Please try again.";
+        setError(errorMessage);
       }
     }
   };
@@ -500,18 +485,20 @@ const Product: React.FC = () => {
         // Restructure payload for /product/all endpoint
         const updatePayload = {
           product: {
-            productId: formData.productId,
             productName: formData.productName,
             brand: formData.brand || undefined,
+            category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
             description: formData.description || undefined,
-            category: formData.category || undefined,
           },
-          inventory: {
-            cost: Number(formData.costPrice),
-            sellingPrice: Number(formData.sellingPrice),
-            stock: Number(formData.stock),
-          },
+          inventories: [
+            {
+              _id: edittingProduct.inventoryId,
+              cost: Number(formData.costPrice),
+              sellingPrice: Number(formData.sellingPrice),
+              stock: Number(formData.stock),
+            },
+          ],
           supplierId: selectedSupplier._id,
         };
 
@@ -572,15 +559,17 @@ const Product: React.FC = () => {
             productId: formData.productId,
             productName: formData.productName,
             brand: formData.brand || undefined,
+            category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
             description: formData.description || undefined,
-            category: formData.category || undefined,
           },
-          inventory: {
-            cost: Number(formData.costPrice),
-            sellingPrice: Number(formData.sellingPrice),
-            stock: Number(formData.stock),
-          },
+          inventories: [
+            {
+              cost: Number(formData.costPrice),
+              sellingPrice: Number(formData.sellingPrice),
+              stock: Number(formData.stock),
+            },
+          ],
           supplierId: selectedSupplier._id,
         };
 
@@ -641,7 +630,7 @@ const Product: React.FC = () => {
       setSupplierValidationError("");
 
       // Refresh the product list
-      await fetchProducts();
+      await fetchProducts(true);
     } catch (error: any) {
       console.error("Error updating/adding product:", error);
 
@@ -655,13 +644,9 @@ const Product: React.FC = () => {
         setTempProductId(null);
       }
 
-      if (error.response?.status === 403) {
-        setError("Access denied. Please check your authentication.");
-      } else if (error.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-      } else {
-        setError(error.message || "Failed to save product. Please try again.");
-      }
+      const errorMessage =
+        error.message || "Failed to save product. Please try again.";
+      setError(errorMessage);
     }
   };
 
@@ -816,11 +801,11 @@ const Product: React.FC = () => {
                         ? product.updatedAt.slice(0, 10)
                         : "N/A"}
                     </td>
-                    <td className="px-4 py-2">{product.costPrice}</td>
+                    <td className="px-4 py-2">{product.costPrice || 0}</td>
                     <td className="px-4 py-2 hidden md:table-cell">
-                      {product.sellingPrice}
+                      {product.sellingPrice || 0}
                     </td>
-                    <td className="px-4 py-2">{product.stock}</td>
+                    <td className="px-4 py-2">{product.stock || 0}</td>
                     <td className="px-4 py-2 hidden md:table-cell">
                       {product.supplier}
                     </td>
@@ -925,14 +910,14 @@ const Product: React.FC = () => {
                   type="text"
                   name="brand"
                   id="floating-brand"
-                  className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                  className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#ff6300] focus:outline-none focus:ring-0 focus:border-[#ff6300] peer"
                   placeholder=" "
                   onChange={handleInputChange}
                   value={formData.brand}
                 />
                 <label
                   htmlFor="floating-brand"
-                  className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                  className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
                 >
                   Brand
                 </label>
@@ -947,8 +932,8 @@ const Product: React.FC = () => {
                 name="costPrice"
                 id="floating-cost"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${costValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${costValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
+                          dark:${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -960,7 +945,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${costValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${costValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${costValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -978,8 +963,8 @@ const Product: React.FC = () => {
                 name="sellingPrice"
                 id="floating-selling-price"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${sellingPriceValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${sellingPriceValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
+                          dark:${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -991,7 +976,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${sellingPriceValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${sellingPriceValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${sellingPriceValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -1012,8 +997,8 @@ const Product: React.FC = () => {
                 name="stock"
                 id="floating-stock"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${stockValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${stockValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
+                          dark:${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -1025,7 +1010,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${stockValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${stockValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${stockValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -1088,14 +1073,14 @@ const Product: React.FC = () => {
                 type="text"
                 id="floating-description"
                 name="description"
-                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#ff6300] focus:outline-none focus:ring-0 focus:border-[#ff6300] peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
               />
               <label
                 htmlFor="floating-description"
-                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Description
               </label>
@@ -1159,7 +1144,7 @@ const Product: React.FC = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-[#ff6300] font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-[#ff6300]"
               onClick={() => {
                 setEdittingProduct(null);
                 setFormData({
@@ -1191,7 +1176,7 @@ const Product: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-[#ff6300] font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-[#ff6300] disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
                 !!nameValidationError ||
                 !!productIdValidationError ||

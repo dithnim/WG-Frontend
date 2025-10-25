@@ -199,7 +199,7 @@ export default function Sidebar({ onLogout }) {
                   >
                     {/* Active indicator */}
                     {location.pathname === item.href && (
-                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#ff6300] to-[#cc4f00] rounded-r-full shadow-lg active-indicator"></div>
                     )}
 
                     {/* Icon with animation */}
@@ -299,7 +299,7 @@ export default function Sidebar({ onLogout }) {
                     }}
                   >
                     {location.pathname === item.href && (
-                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#ff6300] to-[#cc4f00] rounded-r-full shadow-lg active-indicator"></div>
                     )}
 
                     <i
@@ -307,7 +307,7 @@ export default function Sidebar({ onLogout }) {
                         hoveredItem === item.id
                           ? "transform scale-110 rotate-6"
                           : ""
-                      } ${location.pathname === item.href ? "text-blue-400" : ""}`}
+                      } ${location.pathname === item.href ? "text-[#ff6300]" : ""}`}
                     ></i>
 
                     <span

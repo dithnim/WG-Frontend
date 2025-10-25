@@ -47,6 +47,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loginAttempts, setLoginAttempts] = useState<number>(0);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [lockoutTimer, setLockoutTimer] = useState<number>(0);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
   const { login } = useAuth();
 
   useEffect(() => {
@@ -424,18 +426,32 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <label htmlFor="newPassword" className="text-white text-sm">
                 New Password
               </label>
-              <input
-                id="newPassword"
-                type="password"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleInputChange}
-                onBlur={handleInputBlur}
-                placeholder="New Password"
-                className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
-                required
-                aria-required="true"
-              />
+              <div className="relative">
+                <input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  placeholder="New Password"
+                  className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-[#ff6300] focus:border-[#ff6300] block w-full p-2.5 pr-10 mb-4"
+                  required
+                  aria-required="true"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-[#ff6300] transition-colors mb-4"
+                  aria-label={
+                    showNewPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  <i
+                    className={`bx ${showNewPassword ? "bx-hide" : "bx-show"} text-lg`}
+                  ></i>
+                </button>
+              </div>
               {errors.newPassword && (
                 <p className="text-red-500 text-sm mb-2">
                   {errors.newPassword}
@@ -471,7 +487,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <p className="text-red-500 text-sm mb-2">{errors.server}</p>
           )}
           <label htmlFor="username" className="text-white text-sm">
-            Username
+            Username/Email
           </label>
           <input
             id="username"
@@ -491,18 +507,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <label htmlFor="password" className="text-white text-sm">
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-3"
-            placeholder="Password"
-            required
-            aria-required="true"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-[#ff6300] focus:border-[#ff6300] block w-full p-2.5 pr-10 mb-3"
+              placeholder="Password"
+              required
+              aria-required="true"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-[#ff6300] transition-colors mb-3"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              <i
+                className={`bx ${showPassword ? "bx-hide" : "bx-show"} text-lg`}
+              ></i>
+            </button>
+          </div>
           {errors.password && (
             <p className="text-red-500 text-sm mb-2">{errors.password}</p>
           )}

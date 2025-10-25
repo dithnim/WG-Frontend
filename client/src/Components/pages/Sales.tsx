@@ -40,7 +40,7 @@ const Sales = () => {
         grandTotal,
         cashIn,
         change,
-        profit
+        profit,
       };
       const result = await apiService.post("/print", { bill: billData });
       console.log(result);
@@ -233,7 +233,7 @@ const Sales = () => {
             <input
               type="number"
               id="cashin"
-              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-4"
+              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-[#ff6300] focus:border-[#ff6300] block w-full p-2.5 mb-4"
               placeholder="Enter cash ammount"
               onChange={(event) => {
                 const val = parseFloat(event.target.value) || 0;
