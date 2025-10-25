@@ -243,7 +243,7 @@ const Suppliers: React.FC = () => {
           placeholder="Search suppliers..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border rounded-lg bg-[#171717] border-gray-600 text-white focus:border-[#ff6300] focus:ring-[#ff6300] focus:outline-none"
+          className="w-full p-2 border rounded-lg bg-[#171717] border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
         />
       </div>
 
@@ -333,7 +333,7 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="supplierName"
                 id="floating-supplier-name"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-[#ff6300] focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.supplierName}
@@ -341,7 +341,7 @@ const Suppliers: React.FC = () => {
               />
               <label
                 htmlFor="floating-supplier-name"
-                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Supplier name
               </label>
@@ -351,7 +351,7 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="description"
                 id="floating-description"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-[#ff6300] focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
@@ -359,7 +359,7 @@ const Suppliers: React.FC = () => {
               />
               <label
                 htmlFor="floating-description"
-                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Description
               </label>
@@ -372,7 +372,7 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="contact"
                 id="floating-contact-numbers"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-[#ff6300] focus:outline-none focus:ring-0 peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.contact}
@@ -380,7 +380,7 @@ const Suppliers: React.FC = () => {
               />
               <label
                 htmlFor="floating-contact-numbers"
-                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Contact numbers
               </label>
@@ -390,7 +390,7 @@ const Suppliers: React.FC = () => {
                 type="email"
                 name="email"
                 id="floating-email"
-                className="block py-2.5 px-0 w-full text-sm  bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-[#ff6300] focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm  bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.email}
@@ -398,7 +398,7 @@ const Suppliers: React.FC = () => {
               />
               <label
                 htmlFor="floating-email"
-                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Email
               </label>
@@ -408,7 +408,7 @@ const Suppliers: React.FC = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-[#ff6300]"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
               onClick={() => {
                 setEdittingSupplier(null);
                 setFormData({
@@ -426,7 +426,7 @@ const Suppliers: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-[#ff6300]"
+              className="w-full text-[#303030] bg-white focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
               disabled={submitting}
             >
               {submitting

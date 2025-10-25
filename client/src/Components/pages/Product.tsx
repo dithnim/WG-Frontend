@@ -910,14 +910,14 @@ const Product: React.FC = () => {
                   type="text"
                   name="brand"
                   id="floating-brand"
-                  className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#ff6300] focus:outline-none focus:ring-0 focus:border-[#ff6300] peer"
+                  className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                   placeholder=" "
                   onChange={handleInputChange}
                   value={formData.brand}
                 />
                 <label
                   htmlFor="floating-brand"
-                  className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                  className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
                 >
                   Brand
                 </label>
@@ -932,8 +932,8 @@ const Product: React.FC = () => {
                 name="costPrice"
                 id="floating-cost"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${costValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
-                          dark:${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
+                          ${costValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
+                          dark:${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -945,7 +945,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${costValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${costValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
+                          ${costValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -963,8 +963,8 @@ const Product: React.FC = () => {
                 name="sellingPrice"
                 id="floating-selling-price"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${sellingPriceValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
-                          dark:${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
+                          ${sellingPriceValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
+                          dark:${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -976,7 +976,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${sellingPriceValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${sellingPriceValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
+                          ${sellingPriceValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -997,8 +997,8 @@ const Product: React.FC = () => {
                 name="stock"
                 id="floating-stock"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${stockValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-[#ff6300]"}
-                          dark:${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-[#ff6300]"}
+                          ${stockValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
+                          dark:${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -1010,7 +1010,7 @@ const Product: React.FC = () => {
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
                           ${stockValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${stockValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300]"}
+                          ${stockValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
@@ -1073,14 +1073,14 @@ const Product: React.FC = () => {
                 type="text"
                 id="floating-description"
                 name="description"
-                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#ff6300] focus:outline-none focus:ring-0 focus:border-[#ff6300] peer"
+                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
               />
               <label
                 htmlFor="floating-description"
-                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-[#ff6300] peer-focus:dark:text-[#ff6300] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Description
               </label>
@@ -1144,7 +1144,7 @@ const Product: React.FC = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-[#ff6300] font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-[#ff6300]"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800"
               onClick={() => {
                 setEdittingProduct(null);
                 setFormData({
@@ -1176,7 +1176,7 @@ const Product: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-[#ff6300] font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-[#ff6300] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
                 !!nameValidationError ||
                 !!productIdValidationError ||

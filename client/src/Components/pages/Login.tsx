@@ -435,7 +435,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   onChange={handleInputChange}
                   onBlur={handleInputBlur}
                   placeholder="New Password"
-                  className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-[#ff6300] focus:border-[#ff6300] block w-full p-2.5 pr-10 mb-4"
+                  className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pr-10 mb-4"
                   required
                   aria-required="true"
                 />
@@ -515,7 +515,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               value={formData.password}
               onChange={handleInputChange}
               onBlur={handleInputBlur}
-              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-[#ff6300] focus:border-[#ff6300] block w-full p-2.5 pr-10 mb-3"
+              className="border border-gray-400 bg-transparent placeholder-gray-400 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pr-10 mb-3"
               placeholder="Password"
               required
               aria-required="true"

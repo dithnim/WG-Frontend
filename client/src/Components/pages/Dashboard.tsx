@@ -339,7 +339,7 @@ const Dashboard: React.FC = () => {
         <select
           id="categories"
           name="rackNumber"
-          className="text-sm rounded-lg block w-full md:w-[20vw] p-2.5 bg-[#171717] dark:text-white mb-4 md:mb-0 border border-gray-400 focus:ring-[#ff6300] focus:border-[#ff6300]"
+          className="text-sm rounded-lg block w-full md:w-[20vw] p-2.5 bg-[#171717] dark:text-white mb-4 md:mb-0 border border-gray-400 focus:ring-blue-500 focus:border-blue-500"
           value={timeframe}
           onChange={(e) => setTimeframe(e.target.value)}
         >

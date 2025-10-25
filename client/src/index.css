@@ -54,15 +54,15 @@
 }
 
 .login-btn {
-  background: linear-gradient(90deg, #ff6300 0%, #8740cd 100%);
+  background: linear-gradient(90deg, #628eff 0%, #8740cd 100%);
 }
 
 .reset-btn {
-  background: linear-gradient(90deg, #ff6300 0%, #530061 100%);
+  background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
 }
 
 .verify-btn {
-  background: linear-gradient(90deg, #ff6300 0%, #530061 100%);
+  background: linear-gradient(90deg, #2e4cee 0%, #040f75 100%);
 }
 
 .product .search input,
