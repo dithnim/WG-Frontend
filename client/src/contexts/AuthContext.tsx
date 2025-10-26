@@ -4,7 +4,9 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
+import { registerTokenInvalidCallback } from "../services/api";
 
 interface User {
   username?: string;
@@ -16,10 +18,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (userData: any) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: (reason?: string) => Promise<void>;
   hasRole: (requiredRole: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   isAuthenticated: boolean;
+  registerNotificationCallback: (callback: (message: string) => void) => void;
+  validateToken: () => Promise<boolean>;
 }
 
 interface AuthProviderProps {
@@ -43,13 +47,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // Effect to handle user persistence
+  const [notificationCallback, setNotificationCallback] = useState<
+    ((message: string) => void) | null
+  >(null);
+
+  // Register notification callback with API service
+  useEffect(() => {
+    const handleTokenInvalid = (reason: string) => {
+      let message = "";
+
+      switch (reason) {
+        case "TOKEN_EXPIRED":
+          message = "Your session has expired. Please log in again.";
+          break;
+        case "TOKEN_INVALID":
+          message = "Your session is invalid. Please log in again.";
+          break;
+        case "SESSION_NOT_FOUND":
+          message = "No active session found. Please log in.";
+          break;
+        case "TOKEN_NOT_FOUND":
+          message = "Authentication token not found. Please log in.";
+          break;
+        default:
+          message = "Session ended. Please log in again.";
+      }
+
+      if (notificationCallback) {
+        notificationCallback(message);
+      }
+
+      // Perform logout after notification
+      logout(reason);
+    };
+
+    registerTokenInvalidCallback(handleTokenInvalid);
+  }, [notificationCallback]);
+
+  // Effect to handle user persistence and token validation
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+
+    // Validate token on app initialization
+    validateTokenOnInit();
   }, []);
+
+  const validateTokenOnInit = async () => {
+    const token = sessionStorage.getItem("token");
+    const tokenExpiration = localStorage.getItem("tokenExpiration");
+
+    // Check if token exists
+    if (!token) {
+      // No token available, clear user
+      if (user) {
+        await logout("TOKEN_NOT_FOUND");
+      }
+      return;
+    }
+
+    // Check if token is expired
+    if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
+      await logout("TOKEN_EXPIRED");
+      return;
+    }
+  };
 
   const login = async (userData: any): Promise<boolean> => {
     try {
@@ -88,25 +152,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      // Call backend logout endpoint
-      await fetch(`${import.meta.env.VITE_API_URL}logout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-    } catch (error) {
-      console.error("Logout API error:", error);
-      // Continue with local logout even if API call fails
-    } finally {
-      // Clear all auth data
-      setUser(null);
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-    }
-  };
+  const logout = useCallback(
+    async (reason: string = "USER_LOGOUT") => {
+      try {
+        // Notify about logout reason
+        if (notificationCallback && reason !== "USER_LOGOUT") {
+          let message = "";
+          switch (reason) {
+            case "TOKEN_EXPIRED":
+              message = "Your session has expired. Please log in again.";
+              break;
+            case "TOKEN_INVALID":
+              message = "Your session is invalid. Please log in again.";
+              break;
+            case "SESSION_NOT_FOUND":
+              message = "No active session found. Please log in.";
+              break;
+            case "TOKEN_NOT_FOUND":
+              message = "Authentication token not found. Please log in.";
+              break;
+            default:
+              message = "Session ended. Please log in again.";
+          }
+          notificationCallback(message);
+        }
+
+        // Call backend logout endpoint
+        try {
+          await fetch(`${import.meta.env.VITE_API_URL}logout`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+        } catch (error) {
+          console.error("Logout API error:", error);
+          // Continue with local logout even if API call fails
+        }
+      } finally {
+        // Clear all auth data
+        setUser(null);
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("tokenExpiration");
+      }
+    },
+    [notificationCallback]
+  );
 
   const hasRole = (requiredRole: string): boolean => {
     if (!user) return false;
@@ -118,6 +210,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return roles.includes(user.role);
   };
 
+  const registerNotificationCallback = (
+    callback: (message: string) => void
+  ) => {
+    setNotificationCallback(() => callback);
+  };
+
+  const validateToken = async (): Promise<boolean> => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return false;
+
+    const tokenExpiration = localStorage.getItem("tokenExpiration");
+    if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
+      return false;
+    }
+
+    return true;
+  };
+
   const value: AuthContextType = {
     user,
     login,
@@ -125,6 +235,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasRole,
     hasAnyRole,
     isAuthenticated: !!user,
+    registerNotificationCallback,
+    validateToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

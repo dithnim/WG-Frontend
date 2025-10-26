@@ -8,7 +8,7 @@ interface Supplier {
   supplierName: string;
   description?: string;
   contact?: string;
-  email?: string;
+  contactPerson?: string;
   createdAt?: string;
 }
 
@@ -16,7 +16,7 @@ interface FormData {
   supplierName: string;
   description: string;
   contact: string;
-  email: string;
+  contactPerson: string;
 }
 
 const Suppliers: React.FC = () => {
@@ -32,7 +32,7 @@ const Suppliers: React.FC = () => {
     supplierName: "",
     description: "",
     contact: "",
-    email: "",
+    contactPerson: "",
   });
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [supplierIdToDelete, setSupplierIdToDelete] = useState<string | null>(
@@ -119,7 +119,7 @@ const Suppliers: React.FC = () => {
       supplierName: "",
       description: "",
       contact: "",
-      email: "",
+      contactPerson: "",
     });
     setTempSupplierId(null);
 
@@ -208,7 +208,7 @@ const Suppliers: React.FC = () => {
       supplierName: supplier.supplierName || "",
       description: supplier.description || "",
       contact: supplier.contact || "",
-      email: supplier.email || "",
+      contactPerson: supplier.contactPerson || "",
     });
   };
 
@@ -287,7 +287,7 @@ const Suppliers: React.FC = () => {
                 <th>Supplier name</th>
                 <th>Description</th>
                 <th>Contact numbers</th>
-                <th>Email</th>
+                <th>contact Person</th>
                 <th>Last updated</th>
                 <GrantWrapper allowedRoles={["admin"]}>
                   <th>Edit</th>
@@ -300,7 +300,7 @@ const Suppliers: React.FC = () => {
                   <td className="px-4 py-2">{supplier.supplierName}</td>
                   <td className="px-4 py-2">{supplier.description}</td>
                   <td className="px-4 py-2">{supplier.contact}</td>
-                  <td className="px-4 py-2">{supplier.email}</td>
+                  <td className="px-4 py-2">{supplier.contactPerson}</td>
                   <td className="px-4 py-2">
                     {supplier.createdAt
                       ? supplier.createdAt.slice(0, 10)
@@ -387,20 +387,20 @@ const Suppliers: React.FC = () => {
             </div>
             <div className="relative z-0 w-full mb-5 group">
               <input
-                type="email"
-                name="email"
-                id="floating-email"
+                type="text"
+                name="contactPerson"
+                id="floating-contactPerson"
                 className="block py-2.5 px-0 w-full text-sm  bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
-                value={formData.email}
+                value={formData.contactPerson}
                 required
               />
               <label
-                htmlFor="floating-email"
+                htmlFor="floating-contactPerson"
                 className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
-                Email
+                contact Person
               </label>
             </div>
           </div>
@@ -415,7 +415,7 @@ const Suppliers: React.FC = () => {
                   supplierName: "",
                   description: "",
                   contact: "",
-                  email: "",
+                  contactPerson: "",
                 });
               }}
               disabled={submitting}

@@ -17,6 +17,7 @@ import Sales from "./Components/pages/Sales";
 import Stats from "./Components/pages/Stats";
 import NotFound from "./Components/pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
+import TokenNotification from "./Components/TokenNotification";
 
 // Secure token storage utility
 interface SecureStorage {
@@ -100,6 +101,7 @@ function App() {
   return (
     <StrictMode>
       <AuthProvider>
+        <TokenNotification />
         <Router>
           <Routes>
             <Route
