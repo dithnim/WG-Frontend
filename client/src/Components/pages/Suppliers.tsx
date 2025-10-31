@@ -344,23 +344,23 @@ const Suppliers: React.FC = () => {
               <tbody id="supplier-table-body">
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <tr key={idx} className="select-none">
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-3/4" />
+                    <td className="px-8 py-8">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-3/4" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-5/6" />
+                    <td className="px-8 py-8 ">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-5/6" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-2/3" />
+                    <td className="px-8 py-8 ">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-2/3" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-1/2" />
+                    <td className="px-8 py-8 ">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-1/2" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-1/3" />
+                    <td className="px-8 py-8 ">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-1/3" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-6" />
+                    <td className="px-8 py-8 ">
+                      <div className="h-8 bg-neutral-700 rounded animate-pulse w-6" />
                     </td>
                   </tr>
                 ))}
