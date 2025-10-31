@@ -14,9 +14,9 @@ interface Supplier {
 
 interface FormData {
   supplierName: string;
-  description: string;
-  contact: string;
-  contactPerson: string;
+  description?: string;
+  contact?: string;
+  contactPerson?: string;
 }
 
 const Suppliers: React.FC = () => {
@@ -26,8 +26,12 @@ const Suppliers: React.FC = () => {
     null
   );
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const LIMIT = 8;
   const [formData, setFormData] = useState<FormData>({
     supplierName: "",
     description: "",
@@ -48,15 +52,40 @@ const Suppliers: React.FC = () => {
     }
   }, [error]);
 
-  const fetchSuppliers = async (): Promise<void> => {
-    setLoading(true);
+  const fetchSuppliers = async (opts?: { reset?: boolean }): Promise<void> => {
+    const reset = !!opts?.reset;
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     setError(null);
     try {
-      const data: Supplier[] = await apiService.get("/suppliers", {
+      const currentPage = reset ? 1 : page;
+      const params: Record<string, any> = {
         search: searchQuery,
-      });
-      setSuppliers(data);
-      console.log(data);
+        limit: LIMIT,
+        page: currentPage,
+        skip: (currentPage - 1) * LIMIT,
+      };
+      const data: Supplier[] = await apiService.get("/suppliers", params);
+
+      if (reset) {
+        setSuppliers(data);
+      } else {
+        setSuppliers((prev: Supplier[]) => {
+          // Prevent duplicates by _id when appending
+          const existingIds = new Set(prev.map((s) => s._id));
+          const merged = [...prev];
+          data.forEach((item) => {
+            if (!existingIds.has(item._id)) merged.push(item);
+          });
+          return merged;
+        });
+      }
+
+      setHasMore(data.length === LIMIT);
+      setPage((p) => (reset ? 2 : data.length > 0 ? p + 1 : p));
     } catch (error: any) {
       console.error("Error fetching suppliers:", error);
       if (error.response?.status === 403) {
@@ -67,16 +96,42 @@ const Suppliers: React.FC = () => {
         setError(error.message || "Failed to fetch suppliers");
       }
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchSuppliers();
+      // Reset pagination on new search and fetch first page
+      setPage(1);
+      setHasMore(true);
+      fetchSuppliers({ reset: true });
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    // Initial load (first page)
+    setPage(1);
+    setHasMore(true);
+    fetchSuppliers({ reset: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
+    const target = event.currentTarget;
+    const thresholdPx = 48; // prefetch when 48px from bottom
+    const nearBottom =
+      target.scrollTop + target.clientHeight >=
+      target.scrollHeight - thresholdPx;
+    if (nearBottom && hasMore && !loading && !loadingMore) {
+      fetchSuppliers();
+    }
+  };
 
   const openDeleteModal = (id: string): void => {
     setSupplierIdToDelete(id);
@@ -223,34 +278,34 @@ const Suppliers: React.FC = () => {
   };
 
   return (
-    <div className="supplier h-[100vh] px-12 py-6">
+    <div className="supplier h-screen flex flex-col px-4 sm:px-6 md:px-8 lg:px-12 py-4 md:py-6">
       {error && <Toast message={error} onClose={() => setError(null)} />}
 
-      <div className="flex items-center gap-2 mb-8">
-        <h1 className="text-3xl font-bold hidden md:flex xl:flex">
-          Supplier Browser{" "}
-        </h1>
-        <i
-          className="bx bxs-fire-alt text-2xl"
-          style={{ color: "#ff6300" }}
-        ></i>
-      </div>
-
       {/* Search input */}
-      <div className="mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+            Supplier Browser
+          </h1>
+          <i
+            className="bx bxs-fire-alt text-xl sm:text-2xl"
+            style={{ color: "#ff6300" }}
+          ></i>
+        </div>
+
         <input
           type="text"
-          placeholder="Search suppliers..."
+          placeholder="Search Anything..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border rounded-lg bg-[#171717] border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+          className="w-full sm:w-64 md:w-72 lg:w-80 p-2 border rounded-lg bg-[#171717] border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
         />
       </div>
 
       {/* Delete confirmation popup */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-[#171717] rounded-lg p-6 w-1/3">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-4">
+          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p>Are you sure you want to delete this Supplier?</p>
             <div className="mt-6 flex justify-end">
@@ -271,63 +326,131 @@ const Suppliers: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-10 h-[40vh] overflow-y-auto">
+      <div className="mt-5  h-[40vh] overflow-y-auto " onScroll={handleScroll}>
         {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          // Skeleton table while loading
+          <div className="w-full">
+            <table className="table-auto w-full">
+              <thead className="sticky top-0 bg-transparent table-head">
+                <tr>
+                  <th className="py-2">Supplier name</th>
+                  <th className="py-2">Description</th>
+                  <th className="py-2">Contact numbers</th>
+                  <th className="py-2">contact Person</th>
+                  <th className="py-2">Last updated</th>
+                  <th className="py-2">&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody id="supplier-table-body">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <tr key={idx} className="select-none">
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-3/4" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-5/6" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-2/3" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-1/2" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-1/3" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 bg-neutral-700 rounded animate-pulse w-6" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : suppliers.length === 0 ? (
           <div className="flex justify-center items-center h-fulltext-gray-400">
             No suppliers available
           </div>
         ) : (
-          <table className="table-auto w-full">
-            <thead className="sticky top-0 bg-transparent table-head">
-              <tr>
-                <th>Supplier name</th>
-                <th>Description</th>
-                <th>Contact numbers</th>
-                <th>contact Person</th>
-                <th>Last updated</th>
-                <GrantWrapper allowedRoles={["admin"]}>
-                  <th>Edit</th>
-                </GrantWrapper>
-              </tr>
-            </thead>
-            <tbody id="supplier-table-body">
-              {suppliers.map((supplier: Supplier) => (
-                <tr key={supplier._id}>
-                  <td className="px-4 py-2">{supplier.supplierName}</td>
-                  <td className="px-4 py-2">{supplier.description}</td>
-                  <td className="px-4 py-2">{supplier.contact}</td>
-                  <td className="px-4 py-2">{supplier.contactPerson}</td>
-                  <td className="px-4 py-2">
-                    {supplier.createdAt
-                      ? supplier.createdAt.slice(0, 10)
-                      : "N/A"}
-                  </td>
+          <>
+            <table className="table-auto w-full">
+              <thead className="sticky top-0 bg-[#0f0f0f] table-head">
+                <tr>
+                  <th className="px-2 sm:px-4">Supplier name</th>
+                  <th className="px-2 sm:px-4 hidden sm:table-cell">
+                    Description
+                  </th>
+                  <th className="px-2 sm:px-4 hidden md:table-cell">Contact</th>
+                  <th className="px-2 sm:px-4 hidden lg:table-cell">
+                    Contact Person
+                  </th>
+                  <th className="px-2 sm:px-4 hidden xl:table-cell">
+                    Last updated
+                  </th>
                   <GrantWrapper allowedRoles={["admin"]}>
-                    <td className="px-1 py-2">
-                      <i
-                        className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
-                        onClick={() => handleEdit(supplier)}
-                      ></i>
-                      <i
-                        className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
-                        onClick={() => openDeleteModal(supplier._id)}
-                      ></i>
-                    </td>
+                    <th className="px-2 sm:px-4">Edit</th>
                   </GrantWrapper>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody id="supplier-table-body">
+                {suppliers.map((supplier: Supplier) => (
+                  <tr key={supplier._id}>
+                    <td className="px-2 sm:px-4 py-2">
+                      {supplier.supplierName}
+                    </td>
+                    <td className="px-2 sm:px-4 py-2 hidden sm:table-cell">
+                      {supplier.description}
+                    </td>
+                    <td className="px-2 sm:px-4 py-2 hidden md:table-cell">
+                      {supplier.contact}
+                    </td>
+                    <td className="px-2 sm:px-4 py-2 hidden lg:table-cell">
+                      {supplier.contactPerson}
+                    </td>
+                    <td className="px-2 sm:px-4 py-2 hidden xl:table-cell">
+                      {supplier.createdAt
+                        ? supplier.createdAt.slice(0, 10)
+                        : "N/A"}
+                    </td>
+                    <GrantWrapper allowedRoles={["admin"]}>
+                      <td className="px-1 sm:px-2 py-2">
+                        <i
+                          className="bx bxs-pencil text-lg ms-2 sm:ms-5 edit cursor-pointer"
+                          onClick={() => handleEdit(supplier)}
+                        ></i>
+                        <i
+                          className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
+                          onClick={() => openDeleteModal(supplier._id)}
+                        ></i>
+                      </td>
+                    </GrantWrapper>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {loadingMore && (
+              <div className="flex justify-center items-center py-4 gap-1">
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      <div className="mx-auto px-2 py-2 mt-5">
-        <div className="relative z-0 w-full mb-5 group">
-          <div className="grid md:grid-cols-2 md:gap-6">
+      <div className="flex-shrink-0 mt-40">
+        <div className="relative z-0 w-full mb-2 group">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="relative z-0 w-full mb-5 group">
               <input
                 type="text"
@@ -355,7 +478,6 @@ const Suppliers: React.FC = () => {
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
-                required
               />
               <label
                 htmlFor="floating-description"
@@ -366,7 +488,7 @@ const Suppliers: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="relative z-0 w-full mb-5 group">
               <input
                 type="text"
@@ -376,13 +498,12 @@ const Suppliers: React.FC = () => {
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.contact}
-                required
               />
               <label
                 htmlFor="floating-contact-numbers"
                 className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
-                Contact numbers
+                Contact number
               </label>
             </div>
             <div className="relative z-0 w-full mb-5 group">
@@ -394,7 +515,6 @@ const Suppliers: React.FC = () => {
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.contactPerson}
-                required
               />
               <label
                 htmlFor="floating-contactPerson"
@@ -405,10 +525,10 @@ const Suppliers: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 mb-2 focus:outline-none focus:ring-blue-800"
               onClick={() => {
                 setEdittingSupplier(null);
                 setFormData({
@@ -426,7 +546,7 @@ const Suppliers: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
+              className="w-full text-[#303030] bg-white focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 mb-2 focus:outline-none focus:ring-blue-800"
               disabled={submitting}
             >
               {submitting
