@@ -39,9 +39,9 @@ const initialNavigation = [
     icon: "bx bxs-user-check me-2 text-2xl",
   },
   {
-    name: "Analytics",
-    id: "stats",
-    href: "/stats",
+    name: "Inventory",
+    id: "inventory",
+    href: "/inventory",
     current: false,
     icon: "bx bx-stats me-2 text-2xl",
   },

@@ -326,7 +326,7 @@ const Suppliers: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-5  h-[40vh] overflow-y-auto " onScroll={handleScroll}>
+      <div className="mt-5 h-[40vh] overflow-y-auto " onScroll={handleScroll}>
         {loading ? (
           // Skeleton table while loading
           <div className="w-full">

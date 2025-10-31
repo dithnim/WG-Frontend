@@ -313,12 +313,14 @@ const Product: React.FC = () => {
     }
 
     if (name === "costPrice") {
+      // Cost is optional — validate only when provided
       if (value === "") {
-        setCostValidationError("Cost is required");
+        setCostValidationError("");
       } else if (isNaN(Number(value)) || Number(value) < 0) {
         setCostValidationError("Cost must be a non-negative number");
       } else if (
         formData.sellingPrice &&
+        formData.sellingPrice !== "" &&
         Number(value) > Number(formData.sellingPrice)
       ) {
         setCostValidationError("Cost cannot be greater than selling price");
@@ -328,14 +330,16 @@ const Product: React.FC = () => {
     }
 
     if (name === "sellingPrice") {
+      // Selling price optional — validate only when provided
       if (value === "") {
-        setSellingPriceValidationError("Selling price is required");
+        setSellingPriceValidationError("");
       } else if (isNaN(Number(value)) || Number(value) < 0) {
         setSellingPriceValidationError(
           "Selling price must be a non-negative number"
         );
       } else if (
         formData.costPrice &&
+        formData.costPrice !== "" &&
         Number(value) < Number(formData.costPrice)
       ) {
         setSellingPriceValidationError(
@@ -347,8 +351,9 @@ const Product: React.FC = () => {
     }
 
     if (name === "stock") {
+      // Stock is optional — validate only when provided
       if (value === "") {
-        setStockValidationError("Stock is required");
+        setStockValidationError("");
       } else if (
         isNaN(Number(value)) ||
         Number(value) < 0 ||
@@ -402,43 +407,51 @@ const Product: React.FC = () => {
       setProductIdValidationError("Product ID must be unique");
       hasErrors = true;
     }
-    if (formData.costPrice === "") {
-      setCostValidationError("Cost is required");
-      hasErrors = true;
-    } else if (
-      isNaN(Number(formData.costPrice)) ||
-      Number(formData.costPrice) < 0
-    ) {
-      setCostValidationError("Cost must be a non-negative number");
-      hasErrors = true;
+    // Cost, sellingPrice and stock are optional — validate only when provided
+    if (formData.costPrice !== "") {
+      if (isNaN(Number(formData.costPrice)) || Number(formData.costPrice) < 0) {
+        setCostValidationError("Cost must be a non-negative number");
+        hasErrors = true;
+      }
+      if (
+        formData.sellingPrice !== "" &&
+        Number(formData.costPrice) > Number(formData.sellingPrice)
+      ) {
+        setCostValidationError("Cost cannot be greater than selling price");
+        hasErrors = true;
+      }
     }
-    if (formData.sellingPrice === "") {
-      setSellingPriceValidationError("Selling price is required");
-      hasErrors = true;
-    } else if (
-      isNaN(Number(formData.sellingPrice)) ||
-      Number(formData.sellingPrice) < 0
-    ) {
-      setSellingPriceValidationError(
-        "Selling price must be a non-negative number"
-      );
-      hasErrors = true;
-    } else if (Number(formData.sellingPrice) < Number(formData.costPrice)) {
-      setSellingPriceValidationError(
-        "Selling price cannot be less than cost price"
-      );
-      hasErrors = true;
+
+    if (formData.sellingPrice !== "") {
+      if (
+        isNaN(Number(formData.sellingPrice)) ||
+        Number(formData.sellingPrice) < 0
+      ) {
+        setSellingPriceValidationError(
+          "Selling price must be a non-negative number"
+        );
+        hasErrors = true;
+      }
+      if (
+        formData.costPrice !== "" &&
+        Number(formData.sellingPrice) < Number(formData.costPrice)
+      ) {
+        setSellingPriceValidationError(
+          "Selling price cannot be less than cost price"
+        );
+        hasErrors = true;
+      }
     }
-    if (formData.stock === "") {
-      setStockValidationError("Stock is required");
-      hasErrors = true;
-    } else if (
-      isNaN(Number(formData.stock)) ||
-      Number(formData.stock) < 0 ||
-      !Number.isInteger(Number(formData.stock))
-    ) {
-      setStockValidationError("Stock must be a non-negative integer");
-      hasErrors = true;
+
+    if (formData.stock !== "") {
+      if (
+        isNaN(Number(formData.stock)) ||
+        Number(formData.stock) < 0 ||
+        !Number.isInteger(Number(formData.stock))
+      ) {
+        setStockValidationError("Stock must be a non-negative integer");
+        hasErrors = true;
+      }
     }
     if (formData.supplier === "") {
       setSupplierValidationError("Supplier is required");
@@ -483,6 +496,13 @@ const Product: React.FC = () => {
         );
 
         // Restructure payload for /product/all endpoint
+        const invItem: any = { _id: edittingProduct.inventoryId };
+        if (formData.costPrice !== "")
+          invItem.cost = Number(formData.costPrice);
+        if (formData.sellingPrice !== "")
+          invItem.sellingPrice = Number(formData.sellingPrice);
+        if (formData.stock !== "") invItem.stock = Number(formData.stock);
+
         const updatePayload = {
           product: {
             productName: formData.productName,
@@ -491,14 +511,7 @@ const Product: React.FC = () => {
             rackNumber: formData.rackNumber || undefined,
             description: formData.description || undefined,
           },
-          inventories: [
-            {
-              _id: edittingProduct.inventoryId,
-              cost: Number(formData.costPrice),
-              sellingPrice: Number(formData.sellingPrice),
-              stock: Number(formData.stock),
-            },
-          ],
+          inventories: [invItem],
           supplierId: selectedSupplier._id,
         };
 
@@ -554,6 +567,13 @@ const Product: React.FC = () => {
         ]);
 
         // Restructure payload for /products/all endpoint
+        const newInvItem: any = {};
+        if (formData.costPrice !== "")
+          newInvItem.cost = Number(formData.costPrice);
+        if (formData.sellingPrice !== "")
+          newInvItem.sellingPrice = Number(formData.sellingPrice);
+        if (formData.stock !== "") newInvItem.stock = Number(formData.stock);
+
         const productPayload = {
           product: {
             productId: formData.productId,
@@ -563,13 +583,7 @@ const Product: React.FC = () => {
             rackNumber: formData.rackNumber || undefined,
             description: formData.description || undefined,
           },
-          inventories: [
-            {
-              cost: Number(formData.costPrice),
-              sellingPrice: Number(formData.sellingPrice),
-              stock: Number(formData.stock),
-            },
-          ],
+          inventories: [newInvItem],
           supplierId: selectedSupplier._id,
         };
 
@@ -758,7 +772,7 @@ const Product: React.FC = () => {
                 <tr>
                   <td
                     colSpan={10}
-                    className="px-4 py-4 text-center text-gray-500 dark:text-gray-400"
+                    className="px-4 py-4 text-center text-gray-400"
                   >
                     No products available
                   </td>
@@ -848,8 +862,7 @@ const Product: React.FC = () => {
                 name="productName"
                 id="floating-product-name"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${nameValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${nameValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${nameValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
@@ -859,16 +872,16 @@ const Product: React.FC = () => {
               <label
                 htmlFor="floating-product-name"
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 z-10 origin-[0]
-                          ${nameValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
+                          ${nameValidationError ? "text-red-500" : "text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${nameValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${nameValidationError ? " peer-focus:text-red-500" : " peer-focus:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
                 Product Name*
               </label>
               {nameValidationError && (
-                <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                <p className="text-sm text-red-500 mt-1">
                   {nameValidationError}
                 </p>
               )}
@@ -880,8 +893,7 @@ const Product: React.FC = () => {
                   name="productId"
                   id="floating-product-id"
                   className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                            ${productIdValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                            dark:${productIdValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                            ${productIdValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                             `}
                   placeholder=" "
                   onChange={handleInputChange}
@@ -891,16 +903,16 @@ const Product: React.FC = () => {
                 <label
                   htmlFor="floating-product-id"
                   className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
-                            ${productIdValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
+                            ${productIdValidationError ? "text-red-500" : "text-gray-400"}
                             peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                            ${productIdValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                            ${productIdValidationError ? " peer-focus:text-red-500" : "peer-focus:text-blue-500"}
                             peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                           `}
                 >
                   Product ID*
                 </label>
                 {productIdValidationError && (
-                  <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                  <p className="text-sm text-red-500 mt-1">
                     {productIdValidationError}
                   </p>
                 )}
@@ -910,14 +922,14 @@ const Product: React.FC = () => {
                   type="text"
                   name="brand"
                   id="floating-brand"
-                  className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                  className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer"
                   placeholder=" "
                   onChange={handleInputChange}
                   value={formData.brand}
                 />
                 <label
                   htmlFor="floating-brand"
-                  className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                  className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
                 >
                   Brand
                 </label>
@@ -932,27 +944,25 @@ const Product: React.FC = () => {
                 name="costPrice"
                 id="floating-cost"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${costValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${costValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.costPrice}
-                required
               />
               <label
                 htmlFor="floating-cost"
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
-                          ${costValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
+                          ${costValidationError ? "text-red-500" : "text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${costValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${costValidationError ? " peer-focus:text-red-500" : " peer-focus:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Cost*
+                Cost
               </label>
               {costValidationError && (
-                <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                <p className="text-sm text-red-500 mt-1">
                   {costValidationError}
                 </p>
               )}
@@ -963,27 +973,25 @@ const Product: React.FC = () => {
                 name="sellingPrice"
                 id="floating-selling-price"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${sellingPriceValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${sellingPriceValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.sellingPrice}
-                required
               />
               <label
                 htmlFor="floating-selling-price"
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
-                          ${sellingPriceValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
+                          ${sellingPriceValidationError ? "text-red-500" : "text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${sellingPriceValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${sellingPriceValidationError ? " peer-focus:text-red-500" : "peer-focus:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Selling Price*
+                Selling Price
               </label>
               {sellingPriceValidationError && (
-                <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                <p className="text-sm text-red-500 mt-1">
                   {sellingPriceValidationError}
                 </p>
               )}
@@ -997,27 +1005,25 @@ const Product: React.FC = () => {
                 name="stock"
                 id="floating-stock"
                 className={`block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer
-                          ${stockValidationError ? "border-red-500 text-red-600 focus:border-red-600" : "border-gray-300 text-gray-900 focus:border-blue-600"}
-                          dark:${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
+                          ${stockValidationError ? "border-red-600 text-red-600 focus:border-red-500" : "border-gray-600 text-white focus:border-blue-500"}
                           `}
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.stock}
-                required
               />
               <label
                 htmlFor="floating-stock"
                 className={`absolute text-sm duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0]
-                          ${stockValidationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}
+                          ${stockValidationError ? "text-red-500" : "text-gray-400"}
                           peer-focus:font-medium peer-focus:start-0 rtl:peer-focus:translate-x-1/4
-                          ${stockValidationError ? "peer-focus:text-red-600 peer-focus:dark:text-red-500" : "peer-focus:text-blue-600 peer-focus:dark:text-blue-500"}
+                          ${stockValidationError ? " peer-focus:text-red-500" : " peer-focus:text-blue-500"}
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6
                         `}
               >
-                Stock*
+                Stock
               </label>
               {stockValidationError && (
-                <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                <p className="text-smtext-red-500 mt-1">
                   {stockValidationError}
                 </p>
               )}
@@ -1027,7 +1033,7 @@ const Product: React.FC = () => {
                 <div>
                   <select
                     id="categories"
-                    className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
+                    className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
                     value={formData.category}
                     onChange={(e) =>
                       handleSelectChange("category", e.target.value)
@@ -1042,7 +1048,7 @@ const Product: React.FC = () => {
                 <div>
                   <select
                     id="suppliers"
-                    className={`text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2
+                    className={`text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2
                               ${supplierValidationError ? "border border-red-500" : ""}
                               `}
                     value={formData.supplier}
@@ -1058,7 +1064,7 @@ const Product: React.FC = () => {
                     ))}
                   </select>
                   {supplierValidationError && (
-                    <p className="text-sm text-red-600 dark:text-red-500 mt-1">
+                    <p className="text-sm text-red-500 mt-1">
                       {supplierValidationError}
                     </p>
                   )}
@@ -1073,14 +1079,14 @@ const Product: React.FC = () => {
                 type="text"
                 id="floating-description"
                 name="description"
-                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
               />
               <label
                 htmlFor="floating-description"
-                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Description
               </label>
@@ -1090,7 +1096,7 @@ const Product: React.FC = () => {
                 <select
                   id="rackNumbers"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
                   value={rack}
                   onChange={handleRackChange}
                 >
@@ -1107,7 +1113,7 @@ const Product: React.FC = () => {
                 <select
                   id="rows"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
                   value={row}
                   onChange={handleRowChange}
                 >
@@ -1126,7 +1132,7 @@ const Product: React.FC = () => {
                 <select
                   id="columns"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] dark:placeholder-gray-400 dark:text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
                   value={column}
                   onChange={handleColumnChange}
                 >
@@ -1144,7 +1150,7 @@ const Product: React.FC = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800"
+              className="w-full text-gray-300 bg-[#262626] focus:ring-2 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
               onClick={() => {
                 setEdittingProduct(null);
                 setFormData({
@@ -1176,7 +1182,7 @@ const Product: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-[#303030] bg-white focus:ring-2 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
                 !!nameValidationError ||
                 !!productIdValidationError ||
