@@ -705,6 +705,14 @@ const Product: React.FC = () => {
     }
   };
 
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoading(loading);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   return (
     <div className="product h-auto xl:px-12 px-8 py-2 ">
       {showDeleteModal && (
@@ -958,6 +966,16 @@ const Product: React.FC = () => {
               </div>
             )}
           </>
+        )}
+      </div>
+
+      <div className="w-full flex justify-center items-center py-3">
+        {showLoading && (
+          <div role="status" className="load-animation absolute top-[40%] z-50">
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          </div>
         )}
       </div>
 
