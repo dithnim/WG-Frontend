@@ -52,37 +52,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const { login } = useAuth();
 
   useEffect(() => {
-    // Check for existing token and validate it
-    const validateExistingToken = async () => {
+    // Check for existing token without making API call
+    const checkExistingToken = () => {
       const token = sessionStorage.getItem("token");
-      const refreshToken = localStorage.getItem("refreshToken");
+      const tokenExpiration = localStorage.getItem("tokenExpiration");
+      const user = localStorage.getItem("user");
 
-      if (token) {
-        try {
-          // Validate token by making a test request
-          await apiService.get("/validate-token");
-          navigate("/");
-        } catch (error) {
-          // If token is invalid, remove it
-          sessionStorage.removeItem("token");
-          // If refresh token exists, try to get a new token
-          if (refreshToken) {
-            try {
-              const response = await apiService.post("/refresh-token", {
-                refreshToken,
-              });
-              if (response.token) {
-                sessionStorage.setItem("token", response.token);
-                navigate("/");
-              }
-            } catch (refreshError) {
-              localStorage.removeItem("refreshToken");
-            }
+      // Only redirect if we have a valid token and user data
+      if (token && user) {
+        // Check if token is not expired
+        if (tokenExpiration) {
+          const expirationTime = parseInt(tokenExpiration);
+          if (new Date().getTime() < expirationTime) {
+            // Token is still valid, redirect to home
+            navigate("/");
+            return;
           }
+        } else {
+          // No expiration set, assume valid and redirect
+          navigate("/");
+          return;
         }
       }
+
+      // Clear invalid tokens
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("tokenExpiration");
     };
-    validateExistingToken();
+
+    checkExistingToken();
   }, [navigate]);
 
   useEffect(() => {
