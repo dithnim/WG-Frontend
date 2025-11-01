@@ -174,6 +174,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       login(data);
       if (data.token) {
         sessionStorage.setItem("token", data.token);
+
+        // Store token expiration time (default 15 minutes if not provided)
+        const expiresIn = data.expiresIn || 900; // 15 minutes default
+        const expirationTime = new Date().getTime() + expiresIn * 1000;
+        localStorage.setItem("tokenExpiration", expirationTime.toString());
+
         if (rememberMe && data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
         } else {
