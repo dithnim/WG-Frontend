@@ -156,7 +156,7 @@ const Product: React.FC = () => {
         page: currentPage,
         skip: (currentPage - 1) * LIMIT,
       };
-      
+
       // Add supplier filter if selected
       if (selectedSupplier) {
         params.supplier = selectedSupplier;
@@ -316,7 +316,9 @@ const Product: React.FC = () => {
     setSupplierValidationError("");
   };
 
-  const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextareaChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const { name, value } = event.target;
     if (name === "description") {
       if (value.length > 500) {
