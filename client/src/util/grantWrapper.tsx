@@ -13,8 +13,6 @@ const GrantWrapper: React.FC<GrantWrapperProps> = ({
   const { user } = useAuth();
   // Get user role - the user object directly contains the role
   const userRole = user?.role;
-  console.log("My Role", userRole);
-  console.log("Full User Object", user);
 
   // Check if user has required role
   const hasAccess = userRole && allowedRoles.includes(userRole);

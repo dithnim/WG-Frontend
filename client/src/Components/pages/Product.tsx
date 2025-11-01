@@ -505,6 +505,7 @@ const Product: React.FC = () => {
 
         const updatePayload = {
           product: {
+            productId: formData.productId,
             productName: formData.productName,
             brand: formData.brand || undefined,
             category: formData.category || undefined,

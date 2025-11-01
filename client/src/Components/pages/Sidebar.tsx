@@ -43,7 +43,7 @@ const initialNavigation = [
     id: "inventory",
     href: "/inventory",
     current: false,
-    icon: "bx bx-stats me-2 text-2xl",
+    icon: "bxr bx-package me-2 text-2xl",
   },
 ];
 
@@ -92,6 +92,10 @@ export default function Sidebar({ onLogout }) {
     isBottom
       ? setBottomNav(updatedNavigation)
       : setNavigation(updatedNavigation);
+  };
+
+  const handleNotificationsClick = () => {
+    navigate("/notifications");
   };
 
   const handleLogout = async (e) => {
@@ -270,6 +274,54 @@ export default function Sidebar({ onLogout }) {
                   </span>
                   {hoveredItem === item.id && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent rounded-xl"></div>
+                  )}
+                </button>
+              ) : item.id === "notifications" ? (
+                <button
+                  key={item.name}
+                  onClick={(e) => {
+                    createRipple(e);
+                    handleNotificationsClick();
+                  }}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  className={classNames(
+                    location.pathname === item.href
+                      ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
+                      : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
+                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                  )}
+                  style={{
+                    background:
+                      location.pathname === item.href
+                        ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                        : hoveredItem === item.id
+                          ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                          : "transparent",
+                  }}
+                >
+                  {location.pathname === item.href && (
+                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-r-full shadow-lg active-indicator"></div>
+                  )}
+
+                  <i
+                    className={`${item.icon} transition-all duration-300 ${
+                      hoveredItem === item.id
+                        ? "transform scale-110 rotate-6"
+                        : ""
+                    } ${location.pathname === item.href ? "text-yellow-400" : ""}`}
+                  ></i>
+
+                  <span
+                    className={`transition-all duration-300 ${
+                      hoveredItem === item.id ? "transform translate-x-1" : ""
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+
+                  {hoveredItem === item.id && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl"></div>
                   )}
                 </button>
               ) : (
