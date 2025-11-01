@@ -39,6 +39,7 @@ registerReduxStore(store);
 
 function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
 
   // Get authentication state from Redux using useSelector hook
@@ -84,6 +85,11 @@ function AppContent() {
     dispatch(logoutUser("USER_LOGOUT"));
   };
 
+  // Function to toggle sidebar collapse
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0f0f0f]">
@@ -105,8 +111,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Dashboard />
                 </div>
               </div>
@@ -120,8 +132,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Product />
                 </div>
               </div>
@@ -135,8 +153,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Suppliers />
                 </div>
               </div>
@@ -150,8 +174,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Sales />
                 </div>
               </div>
@@ -165,8 +195,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Stats />
                 </div>
               </div>
@@ -180,8 +216,14 @@ function AppContent() {
           element={
             isAuthenticated ? (
               <div className="flex">
-                <Sidebar onLogout={handleLogout} />
-                <div className="bg-[#0f0f0f] text-white h-auto w-screen">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                >
                   <Notifications />
                 </div>
               </div>

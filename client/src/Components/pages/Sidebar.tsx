@@ -75,14 +75,13 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Sidebar({ onLogout }) {
+export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [navigation, setNavigation] = useState(initialNavigation);
   const [bottomNav, setBottomNav] = useState(bottomNavigation);
   const [menu, setMenu] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleMenuClick = (index, isBottom = false) => {
     const updatedNavigation = isBottom
@@ -156,22 +155,36 @@ export default function Sidebar({ onLogout }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-all duration-500 ease-in-out z-50 w-44 border-e border-[#262626] backdrop-blur-sm ${
-          menu ? "translate-x-0 shadow-2xl" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-52 xl:w-64`}
+        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-all duration-500 ease-in-out z-50 border-e border-[#262626] backdrop-blur-sm ${
+          menu ? "translate-x-0 shadow-2xl w-44" : "-translate-x-full w-44"
+        } md:translate-x-0 md:relative ${isCollapsed ? "md:w-20" : "md:w-52 xl:w-64"}`}
         style={{
           background: "linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%)",
           boxShadow: menu ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "none",
         }}
       >
+        {/* Desktop Toggle Button */}
+        <button
+          onClick={onToggleCollapse}
+          className="hidden md:flex absolute -right-6 top-10 z-50 text-white bg-[#262626] px-3 py-1.5 rounded-full items-center justify-center hover:bg-[#303030] hover:scale-110 transition-all duration-300 shadow-lg border border-[#404040]"
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <i
+            className={`bx ${isCollapsed ? "bx-chevron-right" : "bx-chevron-left"} text-lg`}
+          ></i>
+        </button>
         <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between">
           <div>
             <div className="flex items-center justify-center mb-5">
-              <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">
-                WIJESINGHE
-                <br />
-                GENUINE
-              </h1>
+              {isCollapsed ? (
+                <div className="text-white text-xl font-bold">WG</div>
+              ) : (
+                <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">
+                  WIJESINGHE
+                  <br />
+                  GENUINE
+                </h1>
+              )}
             </div>
 
             <nav className="flex-1 px-3 space-y-2">
@@ -203,7 +216,7 @@ export default function Sidebar({ onLogout }) {
                   >
                     {/* Active indicator */}
                     {location.pathname === item.href && (
-                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#ff6300] to-[#cc4f00] rounded-r-full shadow-lg active-indicator"></div>
+                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
                     )}
 
                     {/* Icon with animation */}
@@ -212,17 +225,21 @@ export default function Sidebar({ onLogout }) {
                         hoveredItem === item.id
                           ? "transform scale-110 rotate-6"
                           : ""
-                      } ${location.pathname === item.href ? "text-blue-400" : ""}`}
+                      } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
                     ></i>
 
                     {/* Text with slide animation */}
-                    <span
-                      className={`transition-all duration-300 ${
-                        hoveredItem === item.id ? "transform translate-x-1" : ""
-                      }`}
-                    >
-                      {item.name}
-                    </span>
+                    {!isCollapsed && (
+                      <span
+                        className={`transition-all duration-300 ${
+                          hoveredItem === item.id
+                            ? "transform translate-x-1"
+                            : ""
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+                    )}
 
                     {/* Hover glow effect */}
                     {hoveredItem === item.id && (
@@ -263,15 +280,17 @@ export default function Sidebar({ onLogout }) {
                       hoveredItem === item.id
                         ? "transform scale-110 text-red-400"
                         : ""
-                    }`}
+                    } ${isCollapsed ? "mx-auto" : ""}`}
                   ></i>
-                  <span
-                    className={`transition-all duration-300 ${
-                      hoveredItem === item.id ? "transform translate-x-1" : ""
-                    }`}
-                  >
-                    {item.name}
-                  </span>
+                  {!isCollapsed && (
+                    <span
+                      className={`transition-all duration-300 ${
+                        hoveredItem === item.id ? "transform translate-x-1" : ""
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                  )}
                   {hoveredItem === item.id && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent rounded-xl"></div>
                   )}
@@ -301,7 +320,7 @@ export default function Sidebar({ onLogout }) {
                   }}
                 >
                   {location.pathname === item.href && (
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-r-full shadow-lg active-indicator"></div>
+                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
                   )}
 
                   <i
@@ -309,16 +328,18 @@ export default function Sidebar({ onLogout }) {
                       hoveredItem === item.id
                         ? "transform scale-110 rotate-6"
                         : ""
-                    } ${location.pathname === item.href ? "text-yellow-400" : ""}`}
+                    } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
                   ></i>
 
-                  <span
-                    className={`transition-all duration-300 ${
-                      hoveredItem === item.id ? "transform translate-x-1" : ""
-                    }`}
-                  >
-                    {item.name}
-                  </span>
+                  {!isCollapsed && (
+                    <span
+                      className={`transition-all duration-300 ${
+                        hoveredItem === item.id ? "transform translate-x-1" : ""
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                  )}
 
                   {hoveredItem === item.id && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl"></div>
@@ -359,16 +380,20 @@ export default function Sidebar({ onLogout }) {
                         hoveredItem === item.id
                           ? "transform scale-110 rotate-6"
                           : ""
-                      } ${location.pathname === item.href ? "text-blue-400" : ""}`}
+                      } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
                     ></i>
 
-                    <span
-                      className={`transition-all duration-300 ${
-                        hoveredItem === item.id ? "transform translate-x-1" : ""
-                      }`}
-                    >
-                      {item.name}
-                    </span>
+                    {!isCollapsed && (
+                      <span
+                        className={`transition-all duration-300 ${
+                          hoveredItem === item.id
+                            ? "transform translate-x-1"
+                            : ""
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+                    )}
 
                     {hoveredItem === item.id && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-xl"></div>
