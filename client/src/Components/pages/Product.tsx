@@ -723,13 +723,19 @@ const Product: React.FC = () => {
     }
   };
 
-  const [showLoading, setShowLoading] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(loading);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [loading]);
+  const wrapWithWbr = (text: string, chunk: number = 24): React.ReactNode => {
+    if (!text) return "";
+    const parts: string[] = [];
+    for (let i = 0; i < text.length; i += chunk) {
+      parts.push(text.slice(i, i + chunk));
+    }
+    return parts.map((p, idx) => (
+      <React.Fragment key={idx}>
+        {p}
+        {idx < parts.length - 1 && <wbr />}
+      </React.Fragment>
+    ));
+  };
 
   return (
     <div className="product h-auto xl:px-12 px-8 py-2 ">
@@ -782,7 +788,7 @@ const Product: React.FC = () => {
         </div>
         <div className="flex flex-col md:flex-row justify-end items-end md:items-center gap-2 mt-5">
           <select
-            className="rounded-lg px-4 py-1 lg:px-4 lg:py-2 font-semibold bg-[#303030] text-white"
+            className="rounded-lg px-2 py-1 font-semibold bg-[#303030] text-white"
             value={selectedSupplier}
             onChange={(e) => {
               setSelectedSupplier(e.target.value);
@@ -828,7 +834,7 @@ const Product: React.FC = () => {
                     Rack Number
                   </th>
                   <th className="px-4 py-2 hidden xl:table-cell">
-                    Purchased Date
+                    Description
                   </th>
                   <th className="px-4 py-2">Cost</th>
                   <th className="px-4 py-2 hidden md:table-cell">
@@ -896,7 +902,7 @@ const Product: React.FC = () => {
                       Rack Number
                     </th>
                     <th className="px-4 py-2 hidden xl:table-cell">
-                      Purchased Date
+                      Description
                     </th>
                     <th className="px-4 py-2">Cost</th>
                     <th className="px-4 py-2 hidden md:table-cell">
@@ -922,9 +928,9 @@ const Product: React.FC = () => {
                   ) : (
                     products.map((product: Product) => (
                       <tr key={product._id} className="border-t">
-                        <td className="px-4 py-2">
-                          {product.productName}
-                          {product.description && (
+                        <td className="px-4 py-2 break-words whitespace-normal">
+                          {wrapWithWbr(product.productName, 24)}
+                          {product.updatedAt && (
                             <div
                               className="relative inline-block"
                               onMouseEnter={() =>
@@ -934,38 +940,38 @@ const Product: React.FC = () => {
                             >
                               <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
                               <div
-                                className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
+                                className={`absolute left-0 bg-neutral-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
                                   hoveredProductId === product._id
                                     ? "scale-100 opacity-100"
                                     : "scale-0 opacity-0"
                                 }`}
                               >
-                                {product.description}
+                                Purchased: {product.updatedAt.slice(0, 10)}
                               </div>
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-2 hidden sm:table-cell">
-                          {product.productId}
+                        <td className="px-4 py-2 hidden sm:table-cell break-all whitespace-normal">
+                          {wrapWithWbr(product.productId, 16)}
                         </td>
-                        <td className="px-4 py-2 hidden md:table-cell">
-                          {product.brand}
+                        <td className="px-4 py-2 hidden md:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.brand || "", 20)}
                         </td>
-                        <td className="px-4 py-2 hidden xl:table-cell">
-                          {product.rackNumber}
+                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.rackNumber || "", 16)}
                         </td>
-                        <td className="px-4 py-2 hidden xl:table-cell">
-                          {product.updatedAt
-                            ? product.updatedAt.slice(0, 10)
-                            : "N/A"}
+                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
+                          {product.description
+                            ? wrapWithWbr(product.description, 40)
+                            : "-"}
                         </td>
                         <td className="px-4 py-2">{product.costPrice || 0}</td>
                         <td className="px-4 py-2 hidden md:table-cell">
                           {product.sellingPrice || 0}
                         </td>
                         <td className="px-4 py-2">{product.stock || 0}</td>
-                        <td className="px-4 py-2 hidden md:table-cell">
-                          {product.supplier}
+                        <td className="px-4 py-2 hidden md:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.supplier || "", 24)}
                         </td>
                         <GrantWrapper allowedRoles={["admin"]}>
                           <td className="px-1 py-2">
@@ -1002,16 +1008,6 @@ const Product: React.FC = () => {
               </div>
             )}
           </>
-        )}
-      </div>
-
-      <div className="w-full flex justify-center items-center py-3">
-        {showLoading && (
-          <div role="status" className="load-animation absolute top-[40%] z-50">
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          </div>
         )}
       </div>
 
