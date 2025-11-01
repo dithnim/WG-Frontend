@@ -1,10 +1,14 @@
 import axios from "axios";
+import type { RootState } from "../store/store";
 
 // Token validation callback - will be set by the app
 let tokenInvalidCallback: ((reason: string) => void) | null = null;
 
-// Store dispatch callback - will be set by the app to dispatch Redux actions
-let storeDispatchCallback: ((action: any) => void) | null = null;
+// Redux store reference - will be set by the app
+let reduxStore: {
+  getState: () => RootState;
+  dispatch: (action: any) => void;
+} | null = null;
 
 // Flag to prevent multiple simultaneous refresh attempts
 let isRefreshing = false;
@@ -17,9 +21,12 @@ export const registerTokenInvalidCallback = (
   tokenInvalidCallback = callback;
 };
 
-// Register Redux store dispatch for handling auth actions
-export const registerStoreDispatch = (dispatch: (action: any) => void) => {
-  storeDispatchCallback = dispatch;
+// Register Redux store for accessing auth state
+export const registerReduxStore = (store: {
+  getState: () => RootState;
+  dispatch: (action: any) => void;
+}) => {
+  reduxStore = store;
 };
 
 // Add subscribers to retry requests after token refresh
@@ -36,11 +43,13 @@ const onRefreshed = (token: string) => {
 // Attempt to refresh the access token
 const refreshAccessToken = async (): Promise<string | null> => {
   try {
-    const refreshToken = localStorage.getItem("refreshToken");
+    const refreshToken = reduxStore
+      ? reduxStore.getState().auth.refreshToken
+      : localStorage.getItem("refreshToken");
+
     if (!refreshToken) {
       return null;
     }
-
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/refresh-token`,
       { refreshToken },
@@ -51,13 +60,28 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
     if (response.data && response.data.token) {
       const newToken = response.data.token;
-      sessionStorage.setItem("token", newToken);
 
-      // Update token expiration if provided
+      // Update storage
+      sessionStorage.setItem("token", newToken);
       if (response.data.expiresIn) {
         const expirationTime =
           new Date().getTime() + response.data.expiresIn * 1000;
         localStorage.setItem("tokenExpiration", expirationTime.toString());
+      }
+      if (response.data.refreshToken) {
+        localStorage.setItem("refreshToken", response.data.refreshToken);
+      }
+
+      // Update Redux store if available
+      if (reduxStore) {
+        const { setToken } = await import("../store/authSlice");
+        reduxStore.dispatch(
+          setToken({
+            token: newToken,
+            refreshToken: response.data.refreshToken,
+            expiresIn: response.data.expiresIn,
+          })
+        );
       }
 
       return newToken;
@@ -101,8 +125,10 @@ api.interceptors.request.use(
       return config;
     }
 
-    // Get token from sessionStorage
-    const token = sessionStorage.getItem("token");
+    // Get token from Redux store or sessionStorage as fallback
+    const token = reduxStore
+      ? reduxStore.getState().auth.token
+      : sessionStorage.getItem("token");
 
     // Check if token exists
     if (!token) {
@@ -119,11 +145,13 @@ api.interceptors.request.use(
     }
 
     // Check if token is expired (basic check)
-    const tokenExpiration = localStorage.getItem("tokenExpiration");
-    if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
+    const tokenExpiration = reduxStore
+      ? reduxStore.getState().auth.tokenExpiration
+      : localStorage.getItem("tokenExpiration")
+        ? parseInt(localStorage.getItem("tokenExpiration")!)
+        : null;
+    if (tokenExpiration && new Date().getTime() > tokenExpiration) {
       // Token is expired - attempt refresh
-      sessionStorage.removeItem("token");
-      localStorage.removeItem("tokenExpiration");
       if (tokenInvalidCallback) {
         tokenInvalidCallback("TOKEN_EXPIRED");
       }
@@ -184,11 +212,11 @@ api.interceptors.response.use(
             // Token refresh failed - logout user
             isRefreshing = false;
 
-            // Clear all authentication data
-            sessionStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
-            localStorage.removeItem("tokenExpiration");
+            // Clear Redux auth state
+            if (reduxStore) {
+              const { clearAuth } = await import("../store/authSlice");
+              reduxStore.dispatch(clearAuth());
+            }
 
             // Notify about token invalidity
             if (tokenInvalidCallback) {
@@ -208,11 +236,11 @@ api.interceptors.response.use(
           // Token refresh failed - logout user
           isRefreshing = false;
 
-          // Clear all authentication data
-          sessionStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
-          localStorage.removeItem("tokenExpiration");
+          // Clear Redux auth state
+          if (reduxStore) {
+            const { clearAuth } = await import("../store/authSlice");
+            reduxStore.dispatch(clearAuth());
+          }
 
           // Notify about token invalidity
           if (tokenInvalidCallback) {
@@ -322,7 +350,9 @@ const apiService = {
   // Validate token - check if current token is valid
   validateToken: async (): Promise<boolean> => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = reduxStore
+        ? reduxStore.getState().auth.token
+        : sessionStorage.getItem("token");
       if (!token) {
         return false;
       }

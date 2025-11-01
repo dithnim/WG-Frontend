@@ -24,49 +24,39 @@ import TokenNotification from "./Components/TokenNotification";
 //Redux
 import { Provider } from "react-redux";
 import { store } from "./store/store";
-import { selectIsAuthenticated } from "./store/authSlice";
+import {
+  selectIsAuthenticated,
+  selectToken,
+  selectTokenExpiration,
+  logoutUser,
+} from "./store/authSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "./store/store";
+import { registerReduxStore } from "./services/api";
 
-// Secure token storage utility
-interface SecureStorage {
-  setToken: (token: string) => void;
-  getToken: () => string | null;
-  removeToken: () => void;
-}
-
-const secureStorage: SecureStorage = {
-  setToken: (token: string) => {
-    sessionStorage.setItem("token", token);
-  },
-  getToken: () => {
-    return sessionStorage.getItem("token");
-  },
-  removeToken: () => {
-    sessionStorage.removeItem("token");
-  },
-};
+// Register Redux store with API service
+registerReduxStore(store);
 
 function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
 
   // Get authentication state from Redux using useSelector hook
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const token = useSelector(selectToken);
+  const tokenExpiration = useSelector(selectTokenExpiration);
 
   // Validate token on initial load and when navigating
   useEffect(() => {
     const validateToken = () => {
-      const token = secureStorage.getToken();
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-
       if (!token) {
         setIsLoading(false);
         return;
       }
 
       // Check if token is expired
-      if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
-        secureStorage.removeToken();
-        localStorage.removeItem("tokenExpiration");
-        localStorage.removeItem("user");
+      if (tokenExpiration && new Date().getTime() > tokenExpiration) {
+        dispatch(logoutUser("TOKEN_EXPIRED"));
         setIsLoading(false);
         return;
       }
@@ -78,40 +68,20 @@ function AppContent() {
 
     // Check token validity periodically (every 30 seconds)
     const interval = setInterval(() => {
-      const token = secureStorage.getToken();
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-
       if (
         !token ||
-        (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration))
+        (tokenExpiration && new Date().getTime() > tokenExpiration)
       ) {
-        secureStorage.removeToken();
-        localStorage.removeItem("tokenExpiration");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        dispatch(logoutUser("TOKEN_EXPIRED"));
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
-
-  // Function to handle login success and store the token
-  const handleLogin = (token: string) => {
-    secureStorage.setToken(token);
-  };
+  }, [token, tokenExpiration, dispatch]);
 
   // Function to handle logout
   const handleLogout = async () => {
-    try {
-      await apiService.post("/logout");
-    } catch (error: any) {
-      console.error("Logout error:", error);
-    } finally {
-      secureStorage.removeToken();
-      localStorage.removeItem("tokenExpiration");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-    }
+    dispatch(logoutUser("USER_LOGOUT"));
   };
 
   if (isLoading) {
@@ -128,13 +98,7 @@ function AppContent() {
       <Routes>
         <Route
           path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
+          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
         />
         <Route
           path="/"

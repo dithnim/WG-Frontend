@@ -68,6 +68,7 @@ const Product: React.FC = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const LIMIT = 10;
   const [formData, setFormData] = useState<FormData>({
     productName: "",
@@ -155,6 +156,11 @@ const Product: React.FC = () => {
         page: currentPage,
         skip: (currentPage - 1) * LIMIT,
       };
+      
+      // Add supplier filter if selected
+      if (selectedSupplier) {
+        params.supplier = selectedSupplier;
+      }
       const data = await apiService.get("/product", params);
       if (data && Array.isArray(data)) {
         // Map the nested response structure to flat Product interface
@@ -310,6 +316,23 @@ const Product: React.FC = () => {
     setSupplierValidationError("");
   };
 
+  const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    if (name === "description") {
+      if (value.length > 500) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          description: value.slice(0, 500),
+        }));
+      } else {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          description: value,
+        }));
+      }
+    }
+  };
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prevFormData) => ({
@@ -391,13 +414,6 @@ const Product: React.FC = () => {
       } else {
         setStockValidationError("");
       }
-    }
-
-    if (name === "description" && value.length > 500) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        description: value.slice(0, 500),
-      }));
     }
   };
 
@@ -534,7 +550,7 @@ const Product: React.FC = () => {
             brand: formData.brand || undefined,
             category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
-            description: formData.description || undefined,
+            description: formData.description || "",
           },
           inventories: [invItem],
           supplierId: selectedSupplier._id,
@@ -601,7 +617,7 @@ const Product: React.FC = () => {
             brand: formData.brand || undefined,
             category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
-            description: formData.description || undefined,
+            description: formData.description || "",
           },
           inventories: [newInvItem],
           supplierId: selectedSupplier._id,
@@ -692,7 +708,7 @@ const Product: React.FC = () => {
       fetchProducts(1, true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedSupplier]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
     const target = event.currentTarget;
@@ -762,17 +778,35 @@ const Product: React.FC = () => {
             style={{ color: "#ff6300" }}
           ></i>
         </div>
-        <div className="flex justify-end items-center mt-5 search">
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
-            value={searchQuery}
-            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-          />
-          <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
-            <i className="bx bx-search-alt-2 text-xl"></i>
-          </button>
+        <div className="flex flex-col md:flex-row justify-end items-end md:items-center gap-2 mt-5">
+          <select
+            className="rounded-lg px-4 py-1 lg:px-4 lg:py-2 font-semibold bg-[#303030] text-white"
+            value={selectedSupplier}
+            onChange={(e) => {
+              setSelectedSupplier(e.target.value);
+              setPage(1);
+              setHasMore(true);
+            }}
+          >
+            <option value="">All Suppliers</option>
+            {suppliers.map((supplier: Supplier) => (
+              <option key={supplier._id} value={supplier.supplierName}>
+                {supplier.supplierName}
+              </option>
+            ))}
+          </select>
+          <div className="flex search">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
+              value={searchQuery}
+              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+            />
+            <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
+              <i className="bx bx-search-alt-2 text-xl"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1201,20 +1235,21 @@ const Product: React.FC = () => {
 
           <div className="grid md:grid-cols-2 md:gap-6 mb-3">
             <div className="relative z-0 w-full mb-5 group">
-              <input
-                type="text"
+              <textarea
                 id="floating-description"
                 name="description"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
+                rows={3}
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer resize-none"
                 placeholder=" "
-                onChange={handleInputChange}
+                onChange={handleTextareaChange}
                 value={formData.description}
+                maxLength={500}
               />
               <label
                 htmlFor="floating-description"
                 className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
-                Description
+                Description ({formData.description.length}/500)
               </label>
             </div>
             <div className="grid md:grid-cols-3 md:gap-2 mb-5">

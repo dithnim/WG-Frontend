@@ -101,30 +101,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Effect to handle token validation on app initialization
   useEffect(() => {
     const validateTokenOnInit = async () => {
-      const token = sessionStorage.getItem("token");
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-
-      // Check if token exists
-      if (!token) {
-        // No token available, clear user
-        if (user) {
-          await logout("TOKEN_NOT_FOUND");
-        }
-        return;
-      }
-
-      // Check if token is expired
-      if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
-        await logout("TOKEN_EXPIRED");
-        return;
-      }
-
-      // Validate token via Redux action
+      // Validate token via Redux action (it will check Redux state)
       await dispatch(validateTokenAction());
     };
 
     validateTokenOnInit();
-  }, [dispatch, logout, user]);
+  }, [dispatch]);
 
   const login = async (userData: any): Promise<boolean> => {
     try {

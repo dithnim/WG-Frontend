@@ -124,21 +124,7 @@ export const useAuthRedux = () => {
   // Validate token on mount
   useEffect(() => {
     const validateTokenOnInit = async () => {
-      const token = sessionStorage.getItem("token");
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-
-      if (!token) {
-        if (user) {
-          await logout("TOKEN_NOT_FOUND");
-        }
-        return;
-      }
-
-      if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
-        await logout("TOKEN_EXPIRED");
-        return;
-      }
-
+      // Validate token via Redux action (checks Redux state)
       await validateToken();
     };
 
