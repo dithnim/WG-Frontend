@@ -4,6 +4,9 @@ import apiService from "../../services/api";
 import Otpinput from "../Otpinput";
 import Progressmenu from "../Progressmenu";
 import { useAuth } from "../../contexts/AuthContext";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../store/store";
+import { loginUser, setToken } from "../../store/authSlice";
 
 interface FormData {
   username: string;
@@ -17,10 +20,6 @@ interface Errors {
   [key: string]: string;
 }
 
-interface LoginProps {
-  onLogin: (token: string) => void;
-}
-
 const validateEmail = (email: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePassword = (password: string): boolean =>
@@ -28,8 +27,9 @@ const validatePassword = (password: string): boolean =>
     password
   );
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<FormData>({
     username: "",
     password: "",
@@ -50,39 +50,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
   const { login } = useAuth();
-
-  useEffect(() => {
-    // Check for existing token without making API call
-    const checkExistingToken = () => {
-      const token = sessionStorage.getItem("token");
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-      const user = localStorage.getItem("user");
-
-      // Only redirect if we have a valid token and user data
-      if (token && user) {
-        // Check if token is not expired
-        if (tokenExpiration) {
-          const expirationTime = parseInt(tokenExpiration);
-          if (new Date().getTime() < expirationTime) {
-            // Token is still valid, redirect to home
-            navigate("/");
-            return;
-          }
-        } else {
-          // No expiration set, assume valid and redirect
-          navigate("/");
-          return;
-        }
-      }
-
-      // Clear invalid tokens
-      sessionStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("tokenExpiration");
-    };
-
-    checkExistingToken();
-  }, [navigate]);
 
   useEffect(() => {
     if (!isForgotMode) {
@@ -172,20 +139,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       });
       login(data);
       if (data.token) {
-        sessionStorage.setItem("token", data.token);
+        // Dispatch login action to Redux store
+        await dispatch(loginUser(data)).unwrap();
 
-        // Store token expiration time (default 15 minutes if not provided)
-        const expiresIn = data.expiresIn || 900; // 15 minutes default
-        const expirationTime = new Date().getTime() + expiresIn * 1000;
-        localStorage.setItem("tokenExpiration", expirationTime.toString());
-
-        if (rememberMe && data.refreshToken) {
-          localStorage.setItem("refreshToken", data.refreshToken);
-        } else {
-          localStorage.removeItem("refreshToken");
+        // Store refresh token only if rememberMe is checked
+        if (!rememberMe) {
+          dispatch(
+            setToken({
+              token: data.token,
+              expiresIn: data.expiresIn,
+            })
+          );
         }
+
         setLoginAttempts(0);
-        onLogin(data.token);
         navigate("/");
       } else {
         setErrors({ server: "Invalid response from server" });

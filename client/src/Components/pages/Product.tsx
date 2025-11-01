@@ -68,6 +68,7 @@ const Product: React.FC = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const LIMIT = 10;
   const [formData, setFormData] = useState<FormData>({
     productName: "",
@@ -155,6 +156,11 @@ const Product: React.FC = () => {
         page: currentPage,
         skip: (currentPage - 1) * LIMIT,
       };
+
+      // Add supplier filter if selected
+      if (selectedSupplier) {
+        params.supplier = selectedSupplier;
+      }
       const data = await apiService.get("/product", params);
       if (data && Array.isArray(data)) {
         // Map the nested response structure to flat Product interface
@@ -310,6 +316,25 @@ const Product: React.FC = () => {
     setSupplierValidationError("");
   };
 
+  const handleTextareaChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    if (name === "description") {
+      if (value.length > 500) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          description: value.slice(0, 500),
+        }));
+      } else {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          description: value,
+        }));
+      }
+    }
+  };
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prevFormData) => ({
@@ -391,13 +416,6 @@ const Product: React.FC = () => {
       } else {
         setStockValidationError("");
       }
-    }
-
-    if (name === "description" && value.length > 500) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        description: value.slice(0, 500),
-      }));
     }
   };
 
@@ -534,7 +552,7 @@ const Product: React.FC = () => {
             brand: formData.brand || undefined,
             category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
-            description: formData.description || undefined,
+            description: formData.description || "",
           },
           inventories: [invItem],
           supplierId: selectedSupplier._id,
@@ -601,7 +619,7 @@ const Product: React.FC = () => {
             brand: formData.brand || undefined,
             category: formData.category || undefined,
             rackNumber: formData.rackNumber || undefined,
-            description: formData.description || undefined,
+            description: formData.description || "",
           },
           inventories: [newInvItem],
           supplierId: selectedSupplier._id,
@@ -692,7 +710,7 @@ const Product: React.FC = () => {
       fetchProducts(1, true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedSupplier]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
     const target = event.currentTarget;
@@ -705,13 +723,19 @@ const Product: React.FC = () => {
     }
   };
 
-  const [showLoading, setShowLoading] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(loading);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [loading]);
+  const wrapWithWbr = (text: string, chunk: number = 24): React.ReactNode => {
+    if (!text) return "";
+    const parts: string[] = [];
+    for (let i = 0; i < text.length; i += chunk) {
+      parts.push(text.slice(i, i + chunk));
+    }
+    return parts.map((p, idx) => (
+      <React.Fragment key={idx}>
+        {p}
+        {idx < parts.length - 1 && <wbr />}
+      </React.Fragment>
+    ));
+  };
 
   return (
     <div className="product h-auto xl:px-12 px-8 py-2 ">
@@ -762,17 +786,35 @@ const Product: React.FC = () => {
             style={{ color: "#ff6300" }}
           ></i>
         </div>
-        <div className="flex justify-end items-center mt-5 search">
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
-            value={searchQuery}
-            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-          />
-          <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
-            <i className="bx bx-search-alt-2 text-xl"></i>
-          </button>
+        <div className="flex flex-col md:flex-row justify-end items-end md:items-center gap-2 mt-5">
+          <select
+            className="rounded-lg px-2 py-1 font-semibold bg-[#303030] text-white"
+            value={selectedSupplier}
+            onChange={(e) => {
+              setSelectedSupplier(e.target.value);
+              setPage(1);
+              setHasMore(true);
+            }}
+          >
+            <option value="">All Suppliers</option>
+            {suppliers.map((supplier: Supplier) => (
+              <option key={supplier._id} value={supplier.supplierName}>
+                {supplier.supplierName}
+              </option>
+            ))}
+          </select>
+          <div className="flex search">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
+              value={searchQuery}
+              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+            />
+            <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
+              <i className="bx bx-search-alt-2 text-xl"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -792,7 +834,7 @@ const Product: React.FC = () => {
                     Rack Number
                   </th>
                   <th className="px-4 py-2 hidden xl:table-cell">
-                    Purchased Date
+                    Description
                   </th>
                   <th className="px-4 py-2">Cost</th>
                   <th className="px-4 py-2 hidden md:table-cell">
@@ -860,7 +902,7 @@ const Product: React.FC = () => {
                       Rack Number
                     </th>
                     <th className="px-4 py-2 hidden xl:table-cell">
-                      Purchased Date
+                      Description
                     </th>
                     <th className="px-4 py-2">Cost</th>
                     <th className="px-4 py-2 hidden md:table-cell">
@@ -886,9 +928,9 @@ const Product: React.FC = () => {
                   ) : (
                     products.map((product: Product) => (
                       <tr key={product._id} className="border-t">
-                        <td className="px-4 py-2">
-                          {product.productName}
-                          {product.description && (
+                        <td className="px-4 py-2 break-words whitespace-normal">
+                          {wrapWithWbr(product.productName, 24)}
+                          {product.updatedAt && (
                             <div
                               className="relative inline-block"
                               onMouseEnter={() =>
@@ -898,38 +940,38 @@ const Product: React.FC = () => {
                             >
                               <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
                               <div
-                                className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
+                                className={`absolute left-0 bg-neutral-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
                                   hoveredProductId === product._id
                                     ? "scale-100 opacity-100"
                                     : "scale-0 opacity-0"
                                 }`}
                               >
-                                {product.description}
+                                Purchased: {product.updatedAt.slice(0, 10)}
                               </div>
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-2 hidden sm:table-cell">
-                          {product.productId}
+                        <td className="px-4 py-2 hidden sm:table-cell break-all whitespace-normal">
+                          {wrapWithWbr(product.productId, 16)}
                         </td>
-                        <td className="px-4 py-2 hidden md:table-cell">
-                          {product.brand}
+                        <td className="px-4 py-2 hidden md:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.brand || "", 20)}
                         </td>
-                        <td className="px-4 py-2 hidden xl:table-cell">
-                          {product.rackNumber}
+                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.rackNumber || "", 16)}
                         </td>
-                        <td className="px-4 py-2 hidden xl:table-cell">
-                          {product.updatedAt
-                            ? product.updatedAt.slice(0, 10)
-                            : "N/A"}
+                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
+                          {product.description
+                            ? wrapWithWbr(product.description, 40)
+                            : "-"}
                         </td>
                         <td className="px-4 py-2">{product.costPrice || 0}</td>
                         <td className="px-4 py-2 hidden md:table-cell">
                           {product.sellingPrice || 0}
                         </td>
                         <td className="px-4 py-2">{product.stock || 0}</td>
-                        <td className="px-4 py-2 hidden md:table-cell">
-                          {product.supplier}
+                        <td className="px-4 py-2 hidden md:table-cell break-words whitespace-normal">
+                          {wrapWithWbr(product.supplier || "", 24)}
                         </td>
                         <GrantWrapper allowedRoles={["admin"]}>
                           <td className="px-1 py-2">
@@ -966,16 +1008,6 @@ const Product: React.FC = () => {
               </div>
             )}
           </>
-        )}
-      </div>
-
-      <div className="w-full flex justify-center items-center py-3">
-        {showLoading && (
-          <div role="status" className="load-animation absolute top-[40%] z-50">
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          </div>
         )}
       </div>
 
@@ -1201,20 +1233,21 @@ const Product: React.FC = () => {
 
           <div className="grid md:grid-cols-2 md:gap-6 mb-3">
             <div className="relative z-0 w-full mb-5 group">
-              <input
-                type="text"
+              <textarea
                 id="floating-description"
                 name="description"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
+                rows={3}
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer resize-none"
                 placeholder=" "
-                onChange={handleInputChange}
+                onChange={handleTextareaChange}
                 value={formData.description}
+                maxLength={500}
               />
               <label
                 htmlFor="floating-description"
                 className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
-                Description
+                Description ({formData.description.length}/500)
               </label>
             </div>
             <div className="grid md:grid-cols-3 md:gap-2 mb-5">

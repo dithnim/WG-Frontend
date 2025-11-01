@@ -9,10 +9,20 @@ const initialState: AuthState = {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   })(),
+  token: (() => {
+    return sessionStorage.getItem("token");
+  })(),
+  refreshToken: (() => {
+    return localStorage.getItem("refreshToken");
+  })(),
+  tokenExpiration: (() => {
+    const expiration = localStorage.getItem("tokenExpiration");
+    return expiration ? parseInt(expiration) : null;
+  })(),
   isAuthenticated: (() => {
-    const savedUser = localStorage.getItem("user");
     const token = sessionStorage.getItem("token");
-    return !!(savedUser && token);
+    const savedUser = localStorage.getItem("user");
+    return !!(token && savedUser);
   })(),
   loading: false,
   error: null,
@@ -47,10 +57,24 @@ export const loginUser = createAsyncThunk(
         ...userData?.userData,
       };
 
-      // Store user data
-      localStorage.setItem("user", JSON.stringify(userWithRole));
+      // Calculate token expiration
+      const expiresIn = userData.expiresIn || 900; // 15 minutes default
+      const expirationTime = new Date().getTime() + expiresIn * 1000;
 
-      return userWithRole;
+      // Store in sessionStorage/localStorage
+      sessionStorage.setItem("token", userData.token);
+      localStorage.setItem("user", JSON.stringify(userWithRole));
+      localStorage.setItem("tokenExpiration", expirationTime.toString());
+      if (userData.refreshToken) {
+        localStorage.setItem("refreshToken", userData.refreshToken);
+      }
+
+      return {
+        user: userWithRole,
+        token: userData.token,
+        refreshToken: userData.refreshToken || null,
+        tokenExpiration: expirationTime,
+      };
     } catch (error: any) {
       return rejectWithValue(error.message || "Login failed");
     }
@@ -71,9 +95,9 @@ export const logoutUser = createAsyncThunk(
         }
       }
 
-      // Clear all auth data
-      localStorage.removeItem("user");
+      // Clear sessionStorage/localStorage
       sessionStorage.removeItem("token");
+      localStorage.removeItem("user");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("tokenExpiration");
 
@@ -86,15 +110,16 @@ export const logoutUser = createAsyncThunk(
 
 export const validateToken = createAsyncThunk(
   "auth/validateToken",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem("token");
+      const state = getState() as { auth: AuthState };
+      const { token, tokenExpiration } = state.auth;
+
       if (!token) {
         return false;
       }
 
-      const tokenExpiration = localStorage.getItem("tokenExpiration");
-      if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
+      if (tokenExpiration && new Date().getTime() > tokenExpiration) {
         return false;
       }
 
@@ -118,13 +143,39 @@ const authSlice = createSlice({
         localStorage.removeItem("user");
       }
     },
+    setToken: (
+      state,
+      action: PayloadAction<{
+        token: string;
+        refreshToken?: string;
+        expiresIn?: number;
+      }>
+    ) => {
+      state.token = action.payload.token;
+      state.refreshToken = action.payload.refreshToken || null;
+      const expiresIn = action.payload.expiresIn || 900;
+      const expirationTime = new Date().getTime() + expiresIn * 1000;
+      state.tokenExpiration = expirationTime;
+
+      // Store in sessionStorage/localStorage
+      sessionStorage.setItem("token", action.payload.token);
+      localStorage.setItem("tokenExpiration", expirationTime.toString());
+      if (action.payload.refreshToken) {
+        localStorage.setItem("refreshToken", action.payload.refreshToken);
+      }
+    },
     clearAuth: (state) => {
       state.user = null;
+      state.token = null;
+      state.refreshToken = null;
+      state.tokenExpiration = null;
       state.isAuthenticated = false;
       state.error = null;
       state.notificationMessage = null;
-      localStorage.removeItem("user");
+
+      // Clear storage
       sessionStorage.removeItem("token");
+      localStorage.removeItem("user");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("tokenExpiration");
     },
@@ -153,7 +204,10 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken;
+        state.tokenExpiration = action.payload.tokenExpiration;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -171,6 +225,9 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.tokenExpiration = null;
         state.isAuthenticated = false;
         state.error = null;
 
@@ -185,6 +242,9 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         // Still clear auth data on error
         state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.tokenExpiration = null;
         state.isAuthenticated = false;
       });
 
@@ -198,12 +258,18 @@ const authSlice = createSlice({
         if (!action.payload) {
           // Token is invalid, clear auth
           state.user = null;
+          state.token = null;
+          state.refreshToken = null;
+          state.tokenExpiration = null;
           state.isAuthenticated = false;
         }
       })
       .addCase(validateToken.rejected, (state) => {
         state.loading = false;
         state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.tokenExpiration = null;
         state.isAuthenticated = false;
       });
   },
@@ -211,6 +277,7 @@ const authSlice = createSlice({
 
 export const {
   setUser,
+  setToken,
   clearAuth,
   setNotificationMessage,
   clearNotificationMessage,
@@ -222,6 +289,11 @@ export default authSlice.reducer;
 
 // Selectors
 export const selectUser = (state: { auth: AuthState }) => state.auth.user;
+export const selectToken = (state: { auth: AuthState }) => state.auth.token;
+export const selectRefreshToken = (state: { auth: AuthState }) =>
+  state.auth.refreshToken;
+export const selectTokenExpiration = (state: { auth: AuthState }) =>
+  state.auth.tokenExpiration;
 export const selectIsAuthenticated = (state: { auth: AuthState }) =>
   state.auth.isAuthenticated;
 export const selectAuthLoading = (state: { auth: AuthState }) =>
