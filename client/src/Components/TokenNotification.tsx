@@ -18,7 +18,7 @@ export const TokenNotification: React.FC = () => {
   const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
-    // Register the notification callback with AuthContext
+    // Register the notification callback with AuthContext (only once on mount)
     registerNotificationCallback((message: string) => {
       console.warn("Token Notification:", message);
 
@@ -29,13 +29,12 @@ export const TokenNotification: React.FC = () => {
       setShowNotification(true);
 
       // Auto-hide after 5 seconds (toast will handle this, but keeping for safety)
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         setShowNotification(false);
       }, 5000);
-
-      return () => clearTimeout(timer);
     });
-  }, [registerNotificationCallback]);
+    // Empty dependency array - only register once on mount
+  }, []);
 
   // This component doesn't render anything itself
   // It just handles notifications through the toast system

@@ -1,4 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "../../store/store";
+import {
+  setSuppliers,
+  addSupplier,
+  updateSupplier,
+  removeSupplier as removeSupplierAction,
+  appendSuppliers,
+} from "../../store/supplierSlice";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
@@ -20,7 +29,10 @@ interface FormData {
 }
 
 const Suppliers: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const suppliers = useSelector(
+    (state: RootState) => state.suppliers.suppliers
+  );
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [edittingSupplier, setEdittingSupplier] = useState<Supplier | null>(
     null
@@ -52,73 +64,70 @@ const Suppliers: React.FC = () => {
     }
   }, [error]);
 
-  const fetchSuppliers = async (opts?: { reset?: boolean }): Promise<void> => {
-    const reset = !!opts?.reset;
-    if (reset) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-    setError(null);
-    try {
-      const currentPage = reset ? 1 : page;
-      const params: Record<string, any> = {
-        search: searchQuery,
-        limit: LIMIT,
-        page: currentPage,
-        skip: (currentPage - 1) * LIMIT,
-      };
-      const data: Supplier[] = await apiService.get("/suppliers", params);
-
+  const fetchSuppliers = useCallback(
+    async (
+      currentSearchQuery: string,
+      currentPage: number,
+      reset: boolean = false
+    ): Promise<void> => {
       if (reset) {
-        setSuppliers(data);
+        setLoading(true);
       } else {
-        setSuppliers((prev: Supplier[]) => {
-          // Prevent duplicates by _id when appending
-          const existingIds = new Set(prev.map((s) => s._id));
-          const merged = [...prev];
-          data.forEach((item) => {
-            if (!existingIds.has(item._id)) merged.push(item);
-          });
-          return merged;
-        });
+        setLoadingMore(true);
       }
+      setError(null);
+      try {
+        const params: Record<string, any> = {
+          search: currentSearchQuery,
+          limit: LIMIT,
+          page: currentPage,
+          skip: (currentPage - 1) * LIMIT,
+        };
+        const data: Supplier[] = await apiService.get("/suppliers", params);
 
-      setHasMore(data.length === LIMIT);
-      setPage((p) => (reset ? 2 : data.length > 0 ? p + 1 : p));
-    } catch (error: any) {
-      console.error("Error fetching suppliers:", error);
-      if (error.response?.status === 403) {
-        setError(
-          "CORS error: Server rejected the request. Check API Gateway CORS configuration."
-        );
-      } else {
-        setError(error.message || "Failed to fetch suppliers");
+        if (reset) {
+          dispatch(setSuppliers(data));
+        } else {
+          dispatch(appendSuppliers(data));
+        }
+
+        setHasMore(data.length === LIMIT);
+        setPage(reset ? 2 : data.length > 0 ? currentPage + 1 : currentPage);
+      } catch (error: any) {
+        console.error("Error fetching suppliers:", error);
+        if (error.response?.status === 403) {
+          setError(
+            "CORS error: Server rejected the request. Check API Gateway CORS configuration."
+          );
+        } else {
+          setError(error.message || "Failed to fetch suppliers");
+        }
+      } finally {
+        if (reset) {
+          setLoading(false);
+        } else {
+          setLoadingMore(false);
+        }
       }
-    } finally {
-      if (reset) {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
-    }
-  };
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
       // Reset pagination on new search and fetch first page
       setPage(1);
       setHasMore(true);
-      fetchSuppliers({ reset: true });
+      fetchSuppliers(searchQuery, 1, true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, fetchSuppliers]);
 
   useEffect(() => {
-    // Initial load (first page)
+    // Initial load (first page) - only run once on mount
     setPage(1);
     setHasMore(true);
-    fetchSuppliers({ reset: true });
+    fetchSuppliers("", 1, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -129,7 +138,7 @@ const Suppliers: React.FC = () => {
       target.scrollTop + target.clientHeight >=
       target.scrollHeight - thresholdPx;
     if (nearBottom && hasMore && !loading && !loadingMore) {
-      fetchSuppliers();
+      fetchSuppliers(searchQuery, page, false);
     }
   };
 
@@ -150,22 +159,17 @@ const Suppliers: React.FC = () => {
 
     // Perform optimistic update and reset form immediately
     if (edittingSupplier) {
-      setSuppliers((prevSuppliers: Supplier[]) =>
-        prevSuppliers.map((s: Supplier) =>
-          s._id === edittingSupplier._id ? { ...s, ...formData } : s
-        )
-      );
+      dispatch(updateSupplier({ ...edittingSupplier, ...formData }));
     } else {
       const newTempId = "temp_" + Date.now();
       setTempSupplierId(newTempId);
-      setSuppliers((prevSuppliers: Supplier[]) => [
-        ...prevSuppliers,
-        {
+      dispatch(
+        addSupplier({
           ...formData,
           _id: newTempId,
           createdAt: new Date().toISOString(),
-        } as Supplier,
-      ]);
+        } as Supplier)
+      );
     }
 
     // Reset form
@@ -191,20 +195,12 @@ const Suppliers: React.FC = () => {
         );
       } else {
         const data: Supplier = await apiService.post("/suppliers", formData);
-        setSuppliers((prevSuppliers: Supplier[]) =>
-          prevSuppliers.map((s: Supplier) =>
-            s._id === tempSupplierId
-              ? {
-                  ...s,
-                  _id: data._id,
-                }
-              : s
-          )
-        );
+        dispatch(removeSupplierAction(tempSupplierId));
+        dispatch(addSupplier(data));
       }
     } catch (error: any) {
       console.error("Error updating/adding supplier:", error);
-      fetchSuppliers(); // Refetch to sync state
+      fetchSuppliers(searchQuery, 1, true); // Refetch to sync state
       if (error.response?.status === 403) {
         setError(
           "CORS error: Server rejected the request. Check API Gateway CORS configuration."
@@ -227,9 +223,7 @@ const Suppliers: React.FC = () => {
       const deletedSupplier = suppliers.find(
         (s: Supplier) => s._id === supplierIdToDelete
       );
-      setSuppliers((prevSuppliers: Supplier[]) =>
-        prevSuppliers.filter((s: Supplier) => s._id !== supplierIdToDelete)
-      );
+      dispatch(removeSupplierAction(supplierIdToDelete));
       closeDeleteModal(); // Close modal immediately
 
       try {
@@ -237,10 +231,9 @@ const Suppliers: React.FC = () => {
         setError(null);
       } catch (error: any) {
         console.error("Error deleting supplier:", error);
-        setSuppliers((prevSuppliers: Supplier[]) => [
-          ...prevSuppliers,
-          deletedSupplier!,
-        ]);
+        if (deletedSupplier) {
+          dispatch(addSupplier(deletedSupplier));
+        }
         if (error.response?.status === 403) {
           setError(
             "CORS error: Server rejected the delete request. Check API Gateway CORS configuration."
