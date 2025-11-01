@@ -3,11 +3,70 @@ import axios from "axios";
 // Token validation callback - will be set by the app
 let tokenInvalidCallback: ((reason: string) => void) | null = null;
 
+// Store dispatch callback - will be set by the app to dispatch Redux actions
+let storeDispatchCallback: ((action: any) => void) | null = null;
+
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
 // Register callback for token validation issues
 export const registerTokenInvalidCallback = (
   callback: (reason: string) => void
 ) => {
   tokenInvalidCallback = callback;
+};
+
+// Register Redux store dispatch for handling auth actions
+export const registerStoreDispatch = (dispatch: (action: any) => void) => {
+  storeDispatchCallback = dispatch;
+};
+
+// Add subscribers to retry requests after token refresh
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+  refreshSubscribers.push(cb);
+};
+
+// Notify all subscribers with new token
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+};
+
+// Attempt to refresh the access token
+const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) {
+      return null;
+    }
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/refresh-token`,
+      { refreshToken },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (response.data && response.data.token) {
+      const newToken = response.data.token;
+      sessionStorage.setItem("token", newToken);
+
+      // Update token expiration if provided
+      if (response.data.expiresIn) {
+        const expirationTime =
+          new Date().getTime() + response.data.expiresIn * 1000;
+        localStorage.setItem("tokenExpiration", expirationTime.toString());
+      }
+
+      return newToken;
+    }
+    return null;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    return null;
+  }
 };
 
 // Create axios instance with default config
@@ -47,28 +106,31 @@ api.interceptors.request.use(
 
     // Check if token exists
     if (!token) {
-      // Token not available
+      // Token not available - silently logout
       if (tokenInvalidCallback) {
-        tokenInvalidCallback("SESSION_NOT_FOUND");
+        tokenInvalidCallback("TOKEN_NOT_FOUND");
       }
+      // Cancel the request and redirect will be handled by callback
       return Promise.reject({
-        message: "No authentication token found. Please log in.",
+        message: "Authentication required",
         reason: "TOKEN_NOT_FOUND",
+        silent: true,
       });
     }
 
     // Check if token is expired (basic check)
     const tokenExpiration = localStorage.getItem("tokenExpiration");
     if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
-      // Token is expired
+      // Token is expired - attempt refresh
       sessionStorage.removeItem("token");
       localStorage.removeItem("tokenExpiration");
       if (tokenInvalidCallback) {
         tokenInvalidCallback("TOKEN_EXPIRED");
       }
       return Promise.reject({
-        message: "Your session has expired. Please log in again.",
+        message: "Session expired",
         reason: "TOKEN_EXPIRED",
+        silent: true,
       });
     }
 
@@ -86,34 +148,86 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config;
+
     // Handle common errors here
     if (error.response) {
       const status = error.response.status;
 
-      // Handle 401 Unauthorized - Token expired or invalid
-      if (status === 401) {
-        console.error("Session expired or unauthorized access");
-
-        // Clear all authentication data
-        sessionStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        localStorage.removeItem("tokenExpiration");
-
-        // Notify about token invalidity
-        if (tokenInvalidCallback) {
-          tokenInvalidCallback("TOKEN_INVALID");
+      // Handle 401 Unauthorized - Try to refresh token
+      if (status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          // If already refreshing, wait for the new token
+          return new Promise((resolve) => {
+            subscribeTokenRefresh((token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            });
+          });
         }
 
-        // Redirect to login page
-        window.location.href = "/login";
+        originalRequest._retry = true;
+        isRefreshing = true;
 
-        // Return a more descriptive error
-        return Promise.reject({
-          ...error,
-          message: "Session expired. Please log in again.",
-          reason: "TOKEN_INVALID",
-        });
+        try {
+          const newToken = await refreshAccessToken();
+
+          if (newToken) {
+            // Token refresh successful
+            isRefreshing = false;
+            onRefreshed(newToken);
+
+            // Retry the original request with new token
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          } else {
+            // Token refresh failed - logout user
+            isRefreshing = false;
+
+            // Clear all authentication data
+            sessionStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
+            localStorage.removeItem("tokenExpiration");
+
+            // Notify about token invalidity
+            if (tokenInvalidCallback) {
+              tokenInvalidCallback("TOKEN_INVALID");
+            }
+
+            // Redirect to login page
+            window.location.href = "/login";
+
+            return Promise.reject({
+              ...error,
+              message: "Session expired. Please log in again.",
+              reason: "TOKEN_INVALID",
+            });
+          }
+        } catch (refreshError) {
+          // Token refresh failed - logout user
+          isRefreshing = false;
+
+          // Clear all authentication data
+          sessionStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          localStorage.removeItem("tokenExpiration");
+
+          // Notify about token invalidity
+          if (tokenInvalidCallback) {
+            tokenInvalidCallback("REFRESH_TOKEN_INVALID");
+          }
+
+          // Redirect to login page
+          window.location.href = "/login";
+
+          return Promise.reject({
+            ...error,
+            message: "Session expired. Please log in again.",
+            reason: "REFRESH_TOKEN_INVALID",
+          });
+        }
       }
 
       // Handle 403 Forbidden - Access denied
@@ -136,12 +250,15 @@ api.interceptors.response.use(
         message: "Network error. Please check your internet connection.",
         reason: "NETWORK_ERROR",
       });
-    } else if (error.reason === "TOKEN_NOT_FOUND") {
-      // Token not found during request setup
-      return Promise.reject(error);
-    } else if (error.reason === "TOKEN_EXPIRED") {
-      // Token expired during request setup
-      return Promise.reject(error);
+    } else if (
+      error.reason === "TOKEN_NOT_FOUND" ||
+      error.reason === "TOKEN_EXPIRED"
+    ) {
+      // Token not found or expired during request setup - silent error
+      return Promise.reject({
+        ...error,
+        silent: true,
+      });
     } else {
       // Something happened in setting up the request that triggered an Error
       console.error("Error:", error.message);

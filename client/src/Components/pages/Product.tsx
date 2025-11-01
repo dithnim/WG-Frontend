@@ -1,25 +1,21 @@
 import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../../store/store";
+import {
+  setProducts,
+  addProduct,
+  updateProduct,
+  removeProduct,
+  replaceProductById,
+  setLoading,
+  setError,
+  setSearchQuery,
+} from "../../store/productSlice";
+import type { Product } from "../../store/productSlice";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
 import ToastSuccess from "../toastSuccess";
-
-interface Product {
-  _id: string;
-  productName: string;
-  productId: string;
-  description?: string;
-  rackNumber?: string;
-  costPrice: number;
-  sellingPrice: number;
-  stock: number;
-  category?: string;
-  brand?: string;
-  supplier: string;
-  updatedAt?: string;
-  inventoryId?: string;
-  supplierId?: string;
-}
 
 interface Supplier {
   _id: string;
@@ -44,15 +40,12 @@ interface FormData {
 }
 
 const Product: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = localStorage.getItem("products");
-    return savedProducts ? JSON.parse(savedProducts) : [];
-  });
+  const dispatch = useDispatch<AppDispatch>();
+  const { products, loading, error, searchQuery } = useSelector(
+    (state: RootState) => state.products
+  );
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [tempProductId, setTempProductId] = useState<string | null>(null);
   const [rack, setRack] = useState<string>("");
   const [row, setRow] = useState<string>("");
@@ -72,6 +65,10 @@ const Product: React.FC = () => {
     useState<string>("");
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [edittingProduct, setEdittingProduct] = useState<Product | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const LIMIT = 10;
   const [formData, setFormData] = useState<FormData>({
     productName: "",
     productId: "",
@@ -85,18 +82,28 @@ const Product: React.FC = () => {
     supplier: "",
   });
 
+  // Load cached products from localStorage on mount
+  useEffect(() => {
+    const savedProducts = localStorage.getItem("products");
+    if (savedProducts && products.length === 0) {
+      try {
+        const parsedProducts = JSON.parse(savedProducts);
+        if (Array.isArray(parsedProducts)) {
+          dispatch(setProducts(parsedProducts));
+        }
+      } catch (error) {
+        console.error("Error parsing cached products:", error);
+      }
+    }
+  }, [dispatch]);
+
   // Clear error messages after 5 seconds
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(null), 5000);
+      const timer = setTimeout(() => dispatch(setError(null)), 5000);
       return () => clearTimeout(timer);
     }
-  }, [error]);
-
-  // Update localStorage whenever products change
-  useEffect(() => {
-    localStorage.setItem("products", JSON.stringify(products));
-  }, [products]);
+  }, [error, dispatch]);
 
   // Fetch suppliers on mount
   useEffect(() => {
@@ -132,12 +139,23 @@ const Product: React.FC = () => {
     setFormData({ ...formData, rackNumber: newRackNumber });
   };
 
-  const fetchProducts = async (preserveData = false) => {
-    if (!preserveData) {
-      setLoading(true);
+  const fetchProducts = async (
+    currentPage: number = 1,
+    reset: boolean = false
+  ) => {
+    if (reset) {
+      dispatch(setLoading(true));
+    } else {
+      setLoadingMore(true);
     }
     try {
-      const data = await apiService.get("/product", { search: searchQuery });
+      const params: Record<string, any> = {
+        search: searchQuery,
+        limit: LIMIT,
+        page: currentPage,
+        skip: (currentPage - 1) * LIMIT,
+      };
+      const data = await apiService.get("/product", params);
       if (data && Array.isArray(data)) {
         // Map the nested response structure to flat Product interface
         const mappedProducts = data.map((item: any) => ({
@@ -157,10 +175,21 @@ const Product: React.FC = () => {
           supplierId: item.suppliers?.[0]?._id || "",
         }));
 
-        setProducts(mappedProducts);
-        // Only update localStorage if the API call was successful
-        localStorage.setItem("products", JSON.stringify(mappedProducts));
-        setError(null);
+        if (reset) {
+          dispatch(setProducts(mappedProducts));
+          // Only update localStorage if the API call was successful
+          localStorage.setItem("products", JSON.stringify(mappedProducts));
+        } else {
+          // Append to existing products for lazy loading
+          const currentProducts = products;
+          const combinedProducts = [...currentProducts, ...mappedProducts];
+          dispatch(setProducts(combinedProducts));
+          localStorage.setItem("products", JSON.stringify(combinedProducts));
+        }
+
+        setHasMore(data.length === LIMIT);
+        setPage(reset ? 2 : data.length > 0 ? currentPage + 1 : currentPage);
+        dispatch(setError(null));
       } else {
         throw new Error("Invalid data format received from server");
       }
@@ -177,8 +206,8 @@ const Product: React.FC = () => {
           try {
             const parsedProducts = JSON.parse(cachedProducts);
             if (Array.isArray(parsedProducts)) {
-              setProducts(parsedProducts);
-              setError("Using cached data. " + errorMessage);
+              dispatch(setProducts(parsedProducts));
+              dispatch(setError("Using cached data. " + errorMessage));
               return; // Exit early since we have cached data
             }
           } catch (parseError) {
@@ -187,32 +216,36 @@ const Product: React.FC = () => {
         }
       }
 
-      setError(errorMessage);
-      setProducts([]);
+      dispatch(setError(errorMessage));
+      if (reset) {
+        dispatch(setProducts([]));
+      }
     } finally {
-      if (!preserveData) {
-        setLoading(false);
+      if (reset) {
+        dispatch(setLoading(false));
+      } else {
+        setLoadingMore(false);
       }
     }
   };
 
   const fetchSuppliers = async () => {
-    setLoading(true);
+    dispatch(setLoading(true));
     try {
       const data = await apiService.get("/suppliers", { search: searchQuery });
       if (data && Array.isArray(data)) {
         setSuppliers(data);
-        setError(null);
+        dispatch(setError(null));
       } else {
         throw new Error("Invalid data format received from server");
       }
     } catch (error: any) {
       console.error("Error fetching suppliers:", error);
       const errorMessage = error.message || "Failed to load suppliers";
-      setError(errorMessage);
+      dispatch(setError(errorMessage));
       setSuppliers([]);
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -231,28 +264,23 @@ const Product: React.FC = () => {
       const deletedProduct = products.find(
         (p: Product) => p._id === productIdToDelete
       );
-      setProducts((prevProducts: Product[]) =>
-        prevProducts.filter((p: Product) => p._id !== productIdToDelete)
-      );
+      dispatch(removeProduct(productIdToDelete));
 
       try {
         await apiService.delete(`/product/all?id=${productIdToDelete}`);
         closeDeleteModal();
-        setError(null);
+        dispatch(setError(null));
         // Show success message with product name
-        const productName =
-          products.find((p: Product) => p._id === productIdToDelete)
-            ?.productName || "Product";
+        const productName = deletedProduct?.productName || "Product";
         setSuccessMessage(`${productName} has been deleted successfully`);
       } catch (error: any) {
         console.error("Error deleting product:", error);
-        setProducts((prevProducts: Product[]) => [
-          ...prevProducts,
-          deletedProduct!,
-        ]);
+        if (deletedProduct) {
+          dispatch(addProduct(deletedProduct));
+        }
         const errorMessage =
           error.message || "Failed to delete product. Please try again.";
-        setError(errorMessage);
+        dispatch(setError(errorMessage));
       }
     }
   };
@@ -481,18 +509,14 @@ const Product: React.FC = () => {
         }
 
         // Optimistic update
-        setProducts((prevProducts: Product[]) =>
-          prevProducts.map((p: Product) =>
-            p._id === edittingProduct._id
-              ? {
-                  ...p,
-                  ...formData,
-                  costPrice: Number(formData.costPrice),
-                  sellingPrice: Number(formData.sellingPrice),
-                  stock: Number(formData.stock),
-                }
-              : p
-          )
+        dispatch(
+          updateProduct({
+            ...edittingProduct,
+            ...formData,
+            costPrice: Number(formData.costPrice),
+            sellingPrice: Number(formData.sellingPrice),
+            stock: Number(formData.stock),
+          })
         );
 
         // Restructure payload for /product/all endpoint
@@ -533,12 +557,8 @@ const Product: React.FC = () => {
 
         // Update the product list with the response data if available
         if (response.data) {
-          setProducts((prevProducts) =>
-            prevProducts.map((p) =>
-              p._id === edittingProduct._id
-                ? { ...response.data, _id: edittingProduct._id }
-                : p
-            )
+          dispatch(
+            updateProduct({ ...response.data, _id: edittingProduct._id })
           );
         }
       } else {
@@ -555,17 +575,16 @@ const Product: React.FC = () => {
         }
 
         // Optimistic update
-        setProducts((prevProducts: Product[]) => [
-          ...prevProducts,
-          {
+        dispatch(
+          addProduct({
             ...formData,
             _id: newTempId,
             updatedAt: new Date().toISOString(),
             costPrice: Number(formData.costPrice),
             sellingPrice: Number(formData.sellingPrice),
             stock: Number(formData.stock),
-          } as Product,
-        ]);
+          } as Product)
+        );
 
         // Restructure payload for /products/all endpoint
         const newInvItem: any = {};
@@ -602,18 +621,15 @@ const Product: React.FC = () => {
 
         // Update the product list with the response data
         if (response.data) {
-          setProducts((prevProducts) =>
-            prevProducts.map((p) =>
-              p._id === newTempId
-                ? { ...response.data, _id: response.data._id }
-                : p
-            )
+          dispatch(
+            replaceProductById({
+              oldId: newTempId,
+              newProduct: { ...response.data, _id: response.data._id },
+            })
           );
         } else {
           // If no data in response, revert the optimistic update
-          setProducts((prevProducts) =>
-            prevProducts.filter((p) => p._id !== newTempId)
-          );
+          dispatch(removeProduct(newTempId));
           throw new Error("No data received from server");
         }
         setTempProductId(null);
@@ -636,7 +652,7 @@ const Product: React.FC = () => {
       setRack("");
       setRow("");
       setColumn("");
-      setError(null);
+      dispatch(setError(null));
       setNameValidationError("");
       setProductIdValidationError("");
       setCostValidationError("");
@@ -645,44 +661,49 @@ const Product: React.FC = () => {
       setSupplierValidationError("");
 
       // Refresh the product list
-      await fetchProducts(true);
+      setPage(1);
+      setHasMore(true);
+      await fetchProducts(1, true);
     } catch (error: any) {
       console.error("Error updating/adding product:", error);
 
       // Revert optimistic updates
       if (edittingProduct) {
-        await fetchProducts();
+        setPage(1);
+        setHasMore(true);
+        await fetchProducts(1, true);
       } else {
-        setProducts((prevProducts: Product[]) =>
-          prevProducts.filter((p: Product) => p._id !== tempProductId)
-        );
+        if (tempProductId) {
+          dispatch(removeProduct(tempProductId));
+        }
         setTempProductId(null);
       }
 
       const errorMessage =
         error.message || "Failed to save product. Please try again.";
-      setError(errorMessage);
+      dispatch(setError(errorMessage));
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery.trim() === "") {
-        fetchProducts();
-      } else {
-        fetchProducts();
-      }
+      setPage(1);
+      setHasMore(true);
+      fetchProducts(1, true);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const [showLoading, setShowLoading] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(loading);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [loading]);
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
+    const target = event.currentTarget;
+    const thresholdPx = 48;
+    const nearBottom =
+      target.scrollTop + target.clientHeight >=
+      target.scrollHeight - thresholdPx;
+    if (nearBottom && hasMore && !loading && !loadingMore) {
+      fetchProducts(page, false);
+    }
+  };
 
   return (
     <div className="product h-auto xl:px-12 px-8 py-2 ">
@@ -719,7 +740,9 @@ const Product: React.FC = () => {
         </div>
       )}
 
-      {error && <Toast message={error} onClose={() => setError(null)} />}
+      {error && (
+        <Toast message={error} onClose={() => dispatch(setError(null))} />
+      )}
 
       <div className="flex items-center justify-end md:justify-between">
         <div className="flex items-center gap-2">
@@ -737,7 +760,7 @@ const Product: React.FC = () => {
             placeholder="Search products..."
             className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           />
           <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
             <i className="bx bx-search-alt-2 text-xl"></i>
@@ -745,112 +768,196 @@ const Product: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto">
-        <div className="overflow-x-auto">
-          <table className="table-auto min-w-[600px] w-full">
-            <thead className="sticky top-0 bg-gray-100 table-head">
-              <tr>
-                <th className="px-4 py-2">Product Name</th>
-                <th className="px-4 py-2 hidden sm:table-cell">Product ID</th>
-                <th className="px-4 py-2 hidden md:table-cell">Brand</th>
-                <th className="px-4 py-2 hidden xl:table-cell">Rack Number</th>
-                <th className="px-4 py-2 hidden xl:table-cell">
-                  Purchased Date
-                </th>
-                <th className="px-4 py-2">Cost</th>
-                <th className="px-4 py-2 hidden md:table-cell">
-                  Selling Price
-                </th>
-                <th className="px-4 py-2">In Stock</th>
-                <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
-                <GrantWrapper allowedRoles={["admin"]}>
-                  <th className="px-4 py-2">Edit</th>
-                </GrantWrapper>
-              </tr>
-            </thead>
-            <tbody id="product-table-body">
-              {products.length === 0 ? (
+      <div
+        className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto"
+        onScroll={handleScroll}
+      >
+        {loading ? (
+          <div className="w-full">
+            <table className="table-auto min-w-[600px] w-full">
+              <thead className="sticky top-0 bg-transparent table-head">
                 <tr>
-                  <td
-                    colSpan={10}
-                    className="px-4 py-4 text-center text-gray-400"
-                  >
-                    No products available
-                  </td>
+                  <th className="px-4 py-2">Product Name</th>
+                  <th className="px-4 py-2 hidden sm:table-cell">Product ID</th>
+                  <th className="px-4 py-2 hidden md:table-cell">Brand</th>
+                  <th className="px-4 py-2 hidden xl:table-cell">
+                    Rack Number
+                  </th>
+                  <th className="px-4 py-2 hidden xl:table-cell">
+                    Purchased Date
+                  </th>
+                  <th className="px-4 py-2">Cost</th>
+                  <th className="px-4 py-2 hidden md:table-cell">
+                    Selling Price
+                  </th>
+                  <th className="px-4 py-2">In Stock</th>
+                  <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
+                  <th className="px-4 py-2">Edit</th>
                 </tr>
-              ) : (
-                products.map((product: Product) => (
-                  <tr key={product._id} className="border-t">
-                    <td className="px-4 py-2">
-                      {product.productName}
-                      {product.description && (
-                        <div
-                          className="relative inline-block"
-                          onMouseEnter={() => setHoveredProductId(product._id)}
-                          onMouseLeave={() => setHoveredProductId(null)}
-                        >
-                          <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
-                          <div
-                            className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
-                              hoveredProductId === product._id
-                                ? "scale-100 opacity-100"
-                                : "scale-0 opacity-0"
-                            }`}
-                          >
-                            {product.description}
-                          </div>
-                        </div>
-                      )}
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <tr key={idx} className="select-none border-t">
+                    <td className="px-4 py-6">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-3/4" />
                     </td>
-                    <td className="px-4 py-2 hidden sm:table-cell">
-                      {product.productId}
+                    <td className="px-4 py-6 hidden sm:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-2/3" />
                     </td>
-                    <td className="px-4 py-2 hidden md:table-cell">
-                      {product.brand}
+                    <td className="px-4 py-6 hidden md:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-1/2" />
                     </td>
-                    <td className="px-4 py-2 hidden xl:table-cell">
-                      {product.rackNumber}
+                    <td className="px-4 py-6 hidden xl:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-1/3" />
                     </td>
-                    <td className="px-4 py-2 hidden xl:table-cell">
-                      {product.updatedAt
-                        ? product.updatedAt.slice(0, 10)
-                        : "N/A"}
+                    <td className="px-4 py-6 hidden xl:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-1/2" />
                     </td>
-                    <td className="px-4 py-2">{product.costPrice || 0}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">
-                      {product.sellingPrice || 0}
+                    <td className="px-4 py-6">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-16" />
                     </td>
-                    <td className="px-4 py-2">{product.stock || 0}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">
-                      {product.supplier}
+                    <td className="px-4 py-6 hidden md:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-16" />
                     </td>
+                    <td className="px-4 py-6">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-12" />
+                    </td>
+                    <td className="px-4 py-6 hidden md:table-cell">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-2/3" />
+                    </td>
+                    <td className="px-4 py-6">
+                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-12" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex justify-center items-center h-full text-gray-400">
+            No products available
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="table-auto min-w-[600px] w-full">
+                <thead className="sticky top-0 bg-gray-100 table-head">
+                  <tr>
+                    <th className="px-4 py-2">Product Name</th>
+                    <th className="px-4 py-2 hidden sm:table-cell">
+                      Product ID
+                    </th>
+                    <th className="px-4 py-2 hidden md:table-cell">Brand</th>
+                    <th className="px-4 py-2 hidden xl:table-cell">
+                      Rack Number
+                    </th>
+                    <th className="px-4 py-2 hidden xl:table-cell">
+                      Purchased Date
+                    </th>
+                    <th className="px-4 py-2">Cost</th>
+                    <th className="px-4 py-2 hidden md:table-cell">
+                      Selling Price
+                    </th>
+                    <th className="px-4 py-2">In Stock</th>
+                    <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
                     <GrantWrapper allowedRoles={["admin"]}>
-                      <td className="px-1 py-2">
-                        <i
-                          className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
-                          onClick={() => handleEdit(product)}
-                        ></i>
-                        <i
-                          className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
-                          onClick={() => openDeleteModal(product._id)}
-                        ></i>
-                      </td>
+                      <th className="px-4 py-2">Edit</th>
                     </GrantWrapper>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="w-full flex justify-center items-center py-3">
-        {showLoading && (
-          <div role="status" className="load-animation absolute top-[40%] z-50">
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </thead>
+                <tbody id="product-table-body">
+                  {products.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-4 py-4 text-center text-gray-400"
+                      >
+                        No products available
+                      </td>
+                    </tr>
+                  ) : (
+                    products.map((product: Product) => (
+                      <tr key={product._id} className="border-t">
+                        <td className="px-4 py-2">
+                          {product.productName}
+                          {product.description && (
+                            <div
+                              className="relative inline-block"
+                              onMouseEnter={() =>
+                                setHoveredProductId(product._id)
+                              }
+                              onMouseLeave={() => setHoveredProductId(null)}
+                            >
+                              <i className="bx bx-help-circle text-xs text-gray-500 align-text-top cursor-pointer"></i>
+                              <div
+                                className={`absolute left-0 bg-gray-800 text-white rounded-lg p-1 text-xs mt-1 w-40 z-10 transform transition-transform duration-200 ${
+                                  hoveredProductId === product._id
+                                    ? "scale-100 opacity-100"
+                                    : "scale-0 opacity-0"
+                                }`}
+                              >
+                                {product.description}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 hidden sm:table-cell">
+                          {product.productId}
+                        </td>
+                        <td className="px-4 py-2 hidden md:table-cell">
+                          {product.brand}
+                        </td>
+                        <td className="px-4 py-2 hidden xl:table-cell">
+                          {product.rackNumber}
+                        </td>
+                        <td className="px-4 py-2 hidden xl:table-cell">
+                          {product.updatedAt
+                            ? product.updatedAt.slice(0, 10)
+                            : "N/A"}
+                        </td>
+                        <td className="px-4 py-2">{product.costPrice || 0}</td>
+                        <td className="px-4 py-2 hidden md:table-cell">
+                          {product.sellingPrice || 0}
+                        </td>
+                        <td className="px-4 py-2">{product.stock || 0}</td>
+                        <td className="px-4 py-2 hidden md:table-cell">
+                          {product.supplier}
+                        </td>
+                        <GrantWrapper allowedRoles={["admin"]}>
+                          <td className="px-1 py-2">
+                            <i
+                              className="bx bxs-pencil text-lg ms-5 edit cursor-pointer"
+                              onClick={() => handleEdit(product)}
+                            ></i>
+                            <i
+                              className="bx bxs-trash text-lg ms-1 delete cursor-pointer"
+                              onClick={() => openDeleteModal(product._id)}
+                            ></i>
+                          </td>
+                        </GrantWrapper>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
+            {loadingMore && (
+              <div className="flex justify-center items-center py-4 gap-1">
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 

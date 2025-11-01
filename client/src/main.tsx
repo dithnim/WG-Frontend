@@ -44,43 +44,58 @@ const secureStorage: SecureStorage = {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Validate token on initial load
+  // Get authentication state from Redux
+  const isAuthenticated = store.getState().auth.isAuthenticated;
+
+  // Validate token on initial load and when navigating
   useEffect(() => {
-    const validateToken = async () => {
+    const validateToken = () => {
       const token = secureStorage.getToken();
+      const tokenExpiration = localStorage.getItem("tokenExpiration");
+
       if (!token) {
-        setIsAuthenticated(false);
         setIsLoading(false);
         return;
       }
 
-      try {
-        // Try to make a request to a protected endpoint
-        // await apiService.get('/products');
-        // If we get here, the token is valid
-        setIsAuthenticated(true);
-      } catch (error: any) {
-        console.error("Token validation error:", error);
-        // Remove token if it's an authentication error
-        if (error.response?.status === 401) {
-          secureStorage.removeToken();
-        }
-        setIsAuthenticated(false);
-      } finally {
+      // Check if token is expired
+      if (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration)) {
+        secureStorage.removeToken();
+        localStorage.removeItem("tokenExpiration");
+        localStorage.removeItem("user");
         setIsLoading(false);
+        return;
       }
+
+      setIsLoading(false);
     };
 
     validateToken();
+
+    // Check token validity periodically (every 30 seconds)
+    const interval = setInterval(() => {
+      const token = secureStorage.getToken();
+      const tokenExpiration = localStorage.getItem("tokenExpiration");
+
+      if (
+        !token ||
+        (tokenExpiration && new Date().getTime() > parseInt(tokenExpiration))
+      ) {
+        secureStorage.removeToken();
+        localStorage.removeItem("tokenExpiration");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Function to handle login success and store the token
   const handleLogin = (token: string) => {
     secureStorage.setToken(token);
-    setIsAuthenticated(true);
   };
 
   // Function to handle logout
@@ -91,7 +106,9 @@ function App() {
       console.error("Logout error:", error);
     } finally {
       secureStorage.removeToken();
-      setIsAuthenticated(false);
+      localStorage.removeItem("tokenExpiration");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
     }
   };
 
