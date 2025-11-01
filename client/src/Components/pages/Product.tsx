@@ -894,15 +894,15 @@ const Product: React.FC = () => {
                 <thead className="sticky top-0 bg-gray-100 table-head">
                   <tr>
                     <th className="px-4 py-2">Product Name</th>
+                    <th className="px-4 py-2 hidden xl:table-cell">
+                      Description
+                    </th>
                     <th className="px-4 py-2 hidden sm:table-cell">
                       Product ID
                     </th>
                     <th className="px-4 py-2 hidden md:table-cell">Brand</th>
                     <th className="px-4 py-2 hidden xl:table-cell">
                       Rack Number
-                    </th>
-                    <th className="px-4 py-2 hidden xl:table-cell">
-                      Description
                     </th>
                     <th className="px-4 py-2">Cost</th>
                     <th className="px-4 py-2 hidden md:table-cell">
@@ -951,6 +951,11 @@ const Product: React.FC = () => {
                             </div>
                           )}
                         </td>
+                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
+                          {product.description
+                            ? wrapWithWbr(product.description, 40)
+                            : "-"}
+                        </td>
                         <td className="px-4 py-2 hidden sm:table-cell break-all whitespace-normal">
                           {wrapWithWbr(product.productId, 16)}
                         </td>
@@ -959,11 +964,6 @@ const Product: React.FC = () => {
                         </td>
                         <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
                           {wrapWithWbr(product.rackNumber || "", 16)}
-                        </td>
-                        <td className="px-4 py-2 hidden xl:table-cell break-words whitespace-normal">
-                          {product.description
-                            ? wrapWithWbr(product.description, 40)
-                            : "-"}
                         </td>
                         <td className="px-4 py-2">{product.costPrice || 0}</td>
                         <td className="px-4 py-2 hidden md:table-cell">
