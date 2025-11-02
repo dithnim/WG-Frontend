@@ -27,7 +27,6 @@ import { store } from "./store/store";
 import {
   selectIsAuthenticated,
   selectToken,
-  selectTokenExpiration,
   logoutUser,
 } from "./store/authSlice";
 import { useDispatch } from "react-redux";
@@ -45,40 +44,11 @@ function AppContent() {
   // Get authentication state from Redux using useSelector hook
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const token = useSelector(selectToken);
-  const tokenExpiration = useSelector(selectTokenExpiration);
 
-  // Validate token on initial load and when navigating
+  // Validate token on initial load
   useEffect(() => {
-    const validateToken = () => {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if token is expired
-      if (tokenExpiration && new Date().getTime() > tokenExpiration) {
-        dispatch(logoutUser("TOKEN_EXPIRED"));
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(false);
-    };
-
-    validateToken();
-
-    // Check token validity periodically (every 30 seconds)
-    const interval = setInterval(() => {
-      if (
-        !token ||
-        (tokenExpiration && new Date().getTime() > tokenExpiration)
-      ) {
-        dispatch(logoutUser("TOKEN_EXPIRED"));
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [token, tokenExpiration, dispatch]);
+    setIsLoading(false);
+  }, []);
 
   // Function to handle logout
   const handleLogout = async () => {

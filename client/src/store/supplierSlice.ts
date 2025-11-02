@@ -9,16 +9,32 @@ interface Supplier {
   createdAt?: string;
 }
 
+export interface FormData {
+  supplierName: string;
+  description?: string;
+  contact?: string;
+  contactPerson?: string;
+}
+
 interface SupplierState {
   suppliers: Supplier[];
   loading: boolean;
   error: string | null;
+  formData: FormData;
 }
+
+const initialFormData: FormData = {
+  supplierName: "",
+  description: "",
+  contact: "",
+  contactPerson: "",
+};
 
 const initialState: SupplierState = {
   suppliers: [],
   loading: false,
   error: null,
+  formData: initialFormData,
 };
 
 const supplierSlice = createSlice({
@@ -58,6 +74,18 @@ const supplierSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    setFormData: (state, action: PayloadAction<FormData>) => {
+      state.formData = action.payload;
+    },
+    updateFormField: (
+      state,
+      action: PayloadAction<{ field: keyof FormData; value: string }>
+    ) => {
+      state.formData[action.payload.field] = action.payload.value;
+    },
+    resetFormData: (state) => {
+      state.formData = initialFormData;
+    },
   },
 });
 
@@ -69,5 +97,8 @@ export const {
   appendSuppliers,
   setLoading,
   setError,
+  setFormData,
+  updateFormField,
+  resetFormData,
 } = supplierSlice.actions;
 export default supplierSlice.reducer;

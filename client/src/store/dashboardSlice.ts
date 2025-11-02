@@ -18,6 +18,10 @@ interface DashboardCounts {
 interface DashboardState {
   products: DashboardCounts;
   sales: DashboardCounts;
+  product30DayData: {
+    counts: number[];
+    currentCount: number;
+  };
   supplier30DayData: {
     counts: number[];
     currentCount: number;
@@ -37,6 +41,10 @@ const initialCounts: DashboardCounts = {
 const initialState: DashboardState = {
   products: initialCounts,
   sales: initialCounts,
+  product30DayData: {
+    counts: [],
+    currentCount: 0,
+  },
   supplier30DayData: {
     counts: [],
     currentCount: 0,
@@ -47,6 +55,23 @@ const initialState: DashboardState = {
 };
 
 // Async thunks
+export const fetchProduct30DayData = createAsyncThunk(
+  "dashboard/fetchProduct30DayData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await apiService.get("/product/count/30days");
+      return {
+        counts: Array.isArray(data.counts) ? data.counts : [],
+        currentCount: data.currentCount || 0,
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Failed to fetch 30-day product data"
+      );
+    }
+  }
+);
+
 export const fetchSupplier30DayData = createAsyncThunk(
   "dashboard/fetchSupplier30DayData",
   async (_, { rejectWithValue }) => {
@@ -127,6 +152,25 @@ const dashboardSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Product 30-day data
+    builder
+      .addCase(fetchProduct30DayData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProduct30DayData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.product30DayData = action.payload;
+      })
+      .addCase(fetchProduct30DayData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.product30DayData = {
+          counts: [],
+          currentCount: 0,
+        };
+      });
+
     // Supplier 30-day data
     builder
       .addCase(fetchSupplier30DayData.pending, (state) => {
@@ -225,5 +269,7 @@ export const selectProducts = (state: { dashboard: DashboardState }) =>
   state.dashboard.products;
 export const selectSales = (state: { dashboard: DashboardState }) =>
   state.dashboard.sales;
+export const selectProduct30DayData = (state: { dashboard: DashboardState }) =>
+  state.dashboard.product30DayData;
 export const selectSupplier30DayData = (state: { dashboard: DashboardState }) =>
   state.dashboard.supplier30DayData;

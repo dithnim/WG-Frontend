@@ -7,7 +7,12 @@ import {
   updateSupplier,
   removeSupplier as removeSupplierAction,
   appendSuppliers,
+  setFormData,
+  updateFormField,
+  resetFormData,
+  setLoading,
 } from "../../store/supplierSlice";
+import type { FormData as SupplierFormData } from "../../store/supplierSlice";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
@@ -21,35 +26,22 @@ interface Supplier {
   createdAt?: string;
 }
 
-interface FormData {
-  supplierName: string;
-  description?: string;
-  contact?: string;
-  contactPerson?: string;
-}
-
 const Suppliers: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const suppliers = useSelector(
-    (state: RootState) => state.suppliers.suppliers
+  const { suppliers, formData, loading } = useSelector(
+    (state: RootState) => state.suppliers
   );
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [edittingSupplier, setEdittingSupplier] = useState<Supplier | null>(
     null
   );
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const LIMIT = 8;
-  const [formData, setFormData] = useState<FormData>({
-    supplierName: "",
-    description: "",
-    contact: "",
-    contactPerson: "",
-  });
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [supplierIdToDelete, setSupplierIdToDelete] = useState<string | null>(
     null
@@ -68,11 +60,12 @@ const Suppliers: React.FC = () => {
     async (
       currentSearchQuery: string,
       currentPage: number,
-      reset: boolean = false
+      reset: boolean = false,
+      showLoading: boolean = false
     ): Promise<void> => {
-      if (reset) {
-        setLoading(true);
-      } else {
+      if (showLoading && reset) {
+        dispatch(setLoading(true));
+      } else if (!reset) {
         setLoadingMore(true);
       }
       setError(null);
@@ -103,9 +96,9 @@ const Suppliers: React.FC = () => {
           setError(error.message || "Failed to fetch suppliers");
         }
       } finally {
-        if (reset) {
-          setLoading(false);
-        } else {
+        if (showLoading && reset) {
+          dispatch(setLoading(false));
+        } else if (!reset) {
           setLoadingMore(false);
         }
       }
@@ -118,16 +111,19 @@ const Suppliers: React.FC = () => {
       // Reset pagination on new search and fetch first page
       setPage(1);
       setHasMore(true);
-      fetchSuppliers(searchQuery, 1, true);
+      fetchSuppliers(searchQuery, 1, true, false);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery, fetchSuppliers]);
 
   useEffect(() => {
     // Initial load (first page) - only run once on mount
-    setPage(1);
-    setHasMore(true);
-    fetchSuppliers("", 1, true);
+    if (isInitialLoad) {
+      setPage(1);
+      setHasMore(true);
+      fetchSuppliers("", 1, true, true);
+      setIsInitialLoad(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -174,12 +170,7 @@ const Suppliers: React.FC = () => {
 
     // Reset form
     setEdittingSupplier(null);
-    setFormData({
-      supplierName: "",
-      description: "",
-      contact: "",
-      contactPerson: "",
-    });
+    dispatch(resetFormData());
     setTempSupplierId(null);
 
     try {
@@ -196,11 +187,12 @@ const Suppliers: React.FC = () => {
       } else {
         const data: Supplier = await apiService.post("/suppliers", formData);
         dispatch(removeSupplierAction(tempSupplierId));
-        dispatch(addSupplier(data));
       }
+      // Refetch suppliers after successful operation
+      fetchSuppliers(searchQuery, 1, true, false);
     } catch (error: any) {
       console.error("Error updating/adding supplier:", error);
-      fetchSuppliers(searchQuery, 1, true); // Refetch to sync state
+      fetchSuppliers(searchQuery, 1, true, false); // Refetch to sync state
       if (error.response?.status === 403) {
         setError(
           "CORS error: Server rejected the request. Check API Gateway CORS configuration."
@@ -252,22 +244,21 @@ const Suppliers: React.FC = () => {
   const handleEdit = (supplier: Supplier): void => {
     console.log("Editing supplier:", supplier);
     setEdittingSupplier(supplier);
-    setFormData({
-      supplierName: supplier.supplierName || "",
-      description: supplier.description || "",
-      contact: supplier.contact || "",
-      contactPerson: supplier.contactPerson || "",
-    });
+    dispatch(
+      setFormData({
+        supplierName: supplier.supplierName || "",
+        description: supplier.description || "",
+        contact: supplier.contact || "",
+        contactPerson: supplier.contactPerson || "",
+      })
+    );
   };
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const { name, value } = event.target;
-    setFormData((prevFormData: FormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
+    dispatch(updateFormField({ field: name as keyof SupplierFormData, value }));
   };
 
   return (
@@ -524,12 +515,7 @@ const Suppliers: React.FC = () => {
               className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 mb-2 focus:outline-none focus:ring-blue-800"
               onClick={() => {
                 setEdittingSupplier(null);
-                setFormData({
-                  supplierName: "",
-                  description: "",
-                  contact: "",
-                  contactPerson: "",
-                });
+                dispatch(resetFormData());
               }}
               disabled={submitting}
             >
