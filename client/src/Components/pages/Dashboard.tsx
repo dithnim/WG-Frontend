@@ -5,12 +5,12 @@ import Piechart from "../Charts/Piechart";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store/store";
 import {
-  fetchAllDashboardData,
+  fetchProductCount,
+  fetchSaleCount,
   fetchSupplier30DayData,
   setTimeframe,
   selectProducts,
   selectSales,
-  selectRevenue,
   selectTimeframe,
   selectDashboardLoading,
   selectSupplier30DayData,
@@ -24,7 +24,6 @@ const Dashboard: React.FC = () => {
   // Get data from Redux store
   const products = useSelector(selectProducts);
   const sales = useSelector(selectSales);
-  const revenue = useSelector(selectRevenue);
   const timeframe = useSelector(selectTimeframe);
   const loading = useSelector(selectDashboardLoading);
   const supplier30DayData = useSelector(selectSupplier30DayData);
@@ -70,10 +69,11 @@ const Dashboard: React.FC = () => {
     dispatch(fetchSupplier30DayData());
   }, [dispatch]);
 
-  // Fetch all dashboard data on mount and when timeframe changes
+  // Fetch dashboard data on mount and when timeframe changes
   useEffect(() => {
     if (timeframe) {
-      dispatch(fetchAllDashboardData(timeframe));
+      dispatch(fetchProductCount(timeframe));
+      dispatch(fetchSaleCount(timeframe));
     }
   }, [dispatch, timeframe]);
 
@@ -85,16 +85,6 @@ const Dashboard: React.FC = () => {
       return [0, sales.countList[0].count];
     } else {
       return sales.countList.map((item: CountListItem) => item.count);
-    }
-  };
-
-  const getRevenueChartData = (): number[] => {
-    if (!revenue.countList || revenue.countList.length === 0) {
-      return [50126, 49356, 51264, 54629, 53426]; // Default placeholder data
-    } else if (revenue.countList.length === 1) {
-      return [0, revenue.countList[0].count];
-    } else {
-      return revenue.countList.map((item: CountListItem) => item.count);
     }
   };
 
@@ -114,7 +104,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}
           chart_data={getSalesChartData()}
@@ -135,13 +125,6 @@ const Dashboard: React.FC = () => {
           Title={"Suppliers"}
           count={supplier30DayData.currentCount}
           growth={getSupplierGrowthPercentage()}
-        />
-        <Smalltile
-          color={"#bbff00"}
-          chart_data={getRevenueChartData()}
-          Title={"Total revenue"}
-          count={revenue.current}
-          growth={revenue.percentage}
         />
       </div>
 

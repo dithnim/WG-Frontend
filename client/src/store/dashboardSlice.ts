@@ -18,7 +18,6 @@ interface DashboardCounts {
 interface DashboardState {
   products: DashboardCounts;
   sales: DashboardCounts;
-  revenue: DashboardCounts;
   supplier30DayData: {
     counts: number[];
     currentCount: number;
@@ -38,7 +37,6 @@ const initialCounts: DashboardCounts = {
 const initialState: DashboardState = {
   products: initialCounts,
   sales: initialCounts,
-  revenue: initialCounts,
   supplier30DayData: {
     counts: [],
     currentCount: 0,
@@ -106,36 +104,6 @@ export const fetchSaleCount = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch sale count");
     }
-  }
-);
-
-export const fetchRevenueCount = createAsyncThunk(
-  "dashboard/fetchRevenueCount",
-  async (timeframe: string, { rejectWithValue }) => {
-    try {
-      const data = await apiService.get(`/sales/revenue`, {
-        search: timeframe,
-      });
-
-      return {
-        current: data.totalRevenue || 0,
-        previous: data.prevTotalRevenue || 0,
-      };
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch revenue");
-    }
-  }
-);
-
-// Fetch all dashboard data
-export const fetchAllDashboardData = createAsyncThunk(
-  "dashboard/fetchAllData",
-  async (timeframe: string, { dispatch }) => {
-    await Promise.all([
-      dispatch(fetchProductCount(timeframe)),
-      dispatch(fetchSaleCount(timeframe)),
-      dispatch(fetchRevenueCount(timeframe)),
-    ]);
   }
 );
 
@@ -239,40 +207,6 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-
-    // Revenue Count
-    builder
-      .addCase(fetchRevenueCount.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchRevenueCount.fulfilled, (state, action) => {
-        state.loading = false;
-        state.revenue.current = action.payload.current;
-        state.revenue.previous = action.payload.previous;
-        state.revenue.percentage = calculatePercentage(
-          action.payload.current,
-          action.payload.previous
-        );
-      })
-      .addCase(fetchRevenueCount.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // Fetch All Data
-    builder
-      .addCase(fetchAllDashboardData.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchAllDashboardData.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(fetchAllDashboardData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Failed to fetch dashboard data";
-      });
   },
 });
 
@@ -291,7 +225,5 @@ export const selectProducts = (state: { dashboard: DashboardState }) =>
   state.dashboard.products;
 export const selectSales = (state: { dashboard: DashboardState }) =>
   state.dashboard.sales;
-export const selectRevenue = (state: { dashboard: DashboardState }) =>
-  state.dashboard.revenue;
 export const selectSupplier30DayData = (state: { dashboard: DashboardState }) =>
   state.dashboard.supplier30DayData;
