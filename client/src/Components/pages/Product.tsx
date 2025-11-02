@@ -622,7 +622,7 @@ const Product: React.FC = () => {
         setTempProductId(null);
       }
 
-      // Reset form and states on success
+      // Reset form and states on success (preserve supplier and category)
       setEdittingProduct(null);
       setFormData({
         productName: "",
@@ -632,9 +632,9 @@ const Product: React.FC = () => {
         costPrice: "",
         sellingPrice: "",
         stock: "",
-        category: "",
+        category: formData.category, // Preserve category
         brand: "",
-        supplier: "",
+        supplier: formData.supplier, // Preserve supplier
       });
       setRack("");
       setRow("");
