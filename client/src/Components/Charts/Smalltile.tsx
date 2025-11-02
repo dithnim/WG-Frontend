@@ -79,7 +79,7 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
         chart.destroy();
       };
     }
-  }, []);
+  }, [chart_data, color, Title]);
 
   return (
     <div className="rounded-xl bg-[#171717] p-3 w-full h-[120px] mb-4">

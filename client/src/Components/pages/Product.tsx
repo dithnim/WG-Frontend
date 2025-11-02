@@ -1219,7 +1219,7 @@ const Product: React.FC = () => {
                 Description ({formData.description.length}/500)
               </label>
             </div>
-            <div className="grid md:grid-cols-3 md:gap-2 mb-5">
+            <div className="grid md:grid-cols-3 md:gap-2 mt-9">
               <div>
                 <select
                   id="rackNumbers"

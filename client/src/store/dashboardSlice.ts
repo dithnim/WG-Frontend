@@ -16,10 +16,13 @@ interface DashboardCounts {
 }
 
 interface DashboardState {
-  suppliers: DashboardCounts;
   products: DashboardCounts;
   sales: DashboardCounts;
   revenue: DashboardCounts;
+  supplier30DayData: {
+    counts: number[];
+    currentCount: number;
+  };
   timeframe: string;
   loading: boolean;
   error: string | null;
@@ -33,37 +36,32 @@ const initialCounts: DashboardCounts = {
 };
 
 const initialState: DashboardState = {
-  suppliers: initialCounts,
   products: initialCounts,
   sales: initialCounts,
   revenue: initialCounts,
+  supplier30DayData: {
+    counts: [],
+    currentCount: 0,
+  },
   timeframe: "month",
   loading: false,
   error: null,
 };
 
 // Async thunks
-export const fetchSupplierCount = createAsyncThunk(
-  "dashboard/fetchSupplierCount",
-  async (timeframe: string, { rejectWithValue }) => {
+export const fetchSupplier30DayData = createAsyncThunk(
+  "dashboard/fetchSupplier30DayData",
+  async (_, { rejectWithValue }) => {
     try {
-      const data = await apiService.get(`/suppliers/count`, {
-        search: timeframe,
-      });
-
-      const today = new Date().toISOString().split("T")[0];
-      const newCount: CountListItem = {
-        count: data.totalCount || 0,
-        date: today,
-        updatedAt: new Date().toISOString(),
-      };
-
+      const data = await apiService.get("/supplier/count/30days");
       return {
-        current: data.totalCount || 0,
-        newCount,
+        counts: Array.isArray(data.counts) ? data.counts : [],
+        currentCount: data.currentCount || 0,
       };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch supplier count");
+      return rejectWithValue(
+        error.message || "Failed to fetch 30-day supplier data"
+      );
     }
   }
 );
@@ -134,7 +132,6 @@ export const fetchAllDashboardData = createAsyncThunk(
   "dashboard/fetchAllData",
   async (timeframe: string, { dispatch }) => {
     await Promise.all([
-      dispatch(fetchSupplierCount(timeframe)),
       dispatch(fetchProductCount(timeframe)),
       dispatch(fetchSaleCount(timeframe)),
       dispatch(fetchRevenueCount(timeframe)),
@@ -162,46 +159,23 @@ const dashboardSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Supplier Count
+    // Supplier 30-day data
     builder
-      .addCase(fetchSupplierCount.pending, (state) => {
+      .addCase(fetchSupplier30DayData.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSupplierCount.fulfilled, (state, action) => {
+      .addCase(fetchSupplier30DayData.fulfilled, (state, action) => {
         state.loading = false;
-        state.suppliers.current = action.payload.current;
-
-        // Update count list
-        const updatedList = [...state.suppliers.countList];
-        const existingIndex = updatedList.findIndex(
-          (item) => item.date === action.payload.newCount.date
-        );
-
-        if (existingIndex !== -1) {
-          updatedList[existingIndex] = action.payload.newCount;
-        } else {
-          updatedList.push(action.payload.newCount);
-        }
-
-        // Keep only last 30 days
-        state.suppliers.countList = updatedList.slice(-30);
-
-        // Calculate previous count and percentage
-        state.suppliers.previous =
-          state.suppliers.countList.length > 0
-            ? state.suppliers.countList[0].count
-            : 0;
-        state.suppliers.percentage = calculatePercentage(
-          state.suppliers.current,
-          state.suppliers.previous
-        );
+        state.supplier30DayData = action.payload;
       })
-      .addCase(fetchSupplierCount.rejected, (state, action) => {
+      .addCase(fetchSupplier30DayData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.suppliers.current = 0;
-        state.suppliers.previous = 0;
+        state.supplier30DayData = {
+          counts: [],
+          currentCount: 0,
+        };
       });
 
     // Product Count
@@ -313,11 +287,11 @@ export const selectDashboardError = (state: { dashboard: DashboardState }) =>
   state.dashboard.error;
 export const selectTimeframe = (state: { dashboard: DashboardState }) =>
   state.dashboard.timeframe;
-export const selectSuppliers = (state: { dashboard: DashboardState }) =>
-  state.dashboard.suppliers;
 export const selectProducts = (state: { dashboard: DashboardState }) =>
   state.dashboard.products;
 export const selectSales = (state: { dashboard: DashboardState }) =>
   state.dashboard.sales;
 export const selectRevenue = (state: { dashboard: DashboardState }) =>
   state.dashboard.revenue;
+export const selectSupplier30DayData = (state: { dashboard: DashboardState }) =>
+  state.dashboard.supplier30DayData;
