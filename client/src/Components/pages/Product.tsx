@@ -83,21 +83,6 @@ const Product: React.FC = () => {
     supplier: "",
   });
 
-  // Load cached products from localStorage on mount
-  useEffect(() => {
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts && products.length === 0) {
-      try {
-        const parsedProducts = JSON.parse(savedProducts);
-        if (Array.isArray(parsedProducts)) {
-          dispatch(setProducts(parsedProducts));
-        }
-      } catch (error) {
-        console.error("Error parsing cached products:", error);
-      }
-    }
-  }, [dispatch]);
-
   // Clear error messages after 5 seconds
   useEffect(() => {
     if (error) {
@@ -142,11 +127,12 @@ const Product: React.FC = () => {
 
   const fetchProducts = async (
     currentPage: number = 1,
-    reset: boolean = false
+    reset: boolean = false,
+    showSkeleton: boolean = true
   ) => {
-    if (reset) {
+    if (reset && showSkeleton) {
       dispatch(setLoading(true));
-    } else {
+    } else if (!reset) {
       setLoadingMore(true);
     }
     try {
@@ -183,14 +169,11 @@ const Product: React.FC = () => {
 
         if (reset) {
           dispatch(setProducts(mappedProducts));
-          // Only update localStorage if the API call was successful
-          localStorage.setItem("products", JSON.stringify(mappedProducts));
         } else {
           // Append to existing products for lazy loading
           const currentProducts = products;
           const combinedProducts = [...currentProducts, ...mappedProducts];
           dispatch(setProducts(combinedProducts));
-          localStorage.setItem("products", JSON.stringify(combinedProducts));
         }
 
         setHasMore(data.length === LIMIT);
@@ -204,32 +187,14 @@ const Product: React.FC = () => {
 
       // Use error message from API service if available
       const errorMessage = error.message || "Failed to load products";
-
-      // Try to get cached data only for network errors (not auth errors)
-      if (error.response?.status !== 401 && error.response?.status !== 403) {
-        const cachedProducts = localStorage.getItem("products");
-        if (cachedProducts) {
-          try {
-            const parsedProducts = JSON.parse(cachedProducts);
-            if (Array.isArray(parsedProducts)) {
-              dispatch(setProducts(parsedProducts));
-              dispatch(setError("Using cached data. " + errorMessage));
-              return; // Exit early since we have cached data
-            }
-          } catch (parseError) {
-            console.error("Error parsing cached products:", parseError);
-          }
-        }
-      }
-
       dispatch(setError(errorMessage));
       if (reset) {
         dispatch(setProducts([]));
       }
     } finally {
-      if (reset) {
+      if (reset && showSkeleton) {
         dispatch(setLoading(false));
-      } else {
+      } else if (!reset) {
         setLoadingMore(false);
       }
     }
@@ -270,11 +235,15 @@ const Product: React.FC = () => {
       const deletedProduct = products.find(
         (p: Product) => p._id === productIdToDelete
       );
+
+      // Close modal immediately
+      closeDeleteModal();
+
+      // Optimistically remove from UI
       dispatch(removeProduct(productIdToDelete));
 
       try {
         await apiService.delete(`/product/all?id=${productIdToDelete}`);
-        closeDeleteModal();
         dispatch(setError(null));
         // Show success message with product name
         const productName = deletedProduct?.productName || "Product";
@@ -681,7 +650,7 @@ const Product: React.FC = () => {
       // Refresh the product list
       setPage(1);
       setHasMore(true);
-      await fetchProducts(1, true);
+      await fetchProducts(1, true, false);
     } catch (error: any) {
       console.error("Error updating/adding product:", error);
 
@@ -689,7 +658,7 @@ const Product: React.FC = () => {
       if (edittingProduct) {
         setPage(1);
         setHasMore(true);
-        await fetchProducts(1, true);
+        await fetchProducts(1, true, false);
       } else {
         if (tempProductId) {
           dispatch(removeProduct(tempProductId));
