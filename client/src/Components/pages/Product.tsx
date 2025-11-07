@@ -10,8 +10,12 @@ import {
   setLoading,
   setError,
   setSearchQuery,
+  setFormData,
+  updateFormField,
+  resetFormData,
+  resetFormDataPreserveSupplierCategory,
 } from "../../store/productSlice";
-import type { Product } from "../../store/productSlice";
+import type { Product, FormData } from "../../store/productSlice";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
@@ -26,22 +30,9 @@ interface Supplier {
   createdAt?: string;
 }
 
-interface FormData {
-  productName: string;
-  productId: string;
-  description: string;
-  rackNumber: string;
-  costPrice: string;
-  sellingPrice: string;
-  stock: string;
-  category: string;
-  brand: string;
-  supplier: string;
-}
-
 const Product: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { products, loading, error, searchQuery } = useSelector(
+  const { products, loading, error, searchQuery, formData } = useSelector(
     (state: RootState) => state.products
   );
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -70,18 +61,6 @@ const Product: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const CHUNK_SIZE = 10;
-  const [formData, setFormData] = useState<FormData>({
-    productName: "",
-    productId: "",
-    description: "",
-    rackNumber: "",
-    costPrice: "",
-    sellingPrice: "",
-    stock: "",
-    category: "",
-    brand: "",
-    supplier: "",
-  });
 
   // Clear error messages after 5 seconds
   useEffect(() => {
@@ -89,7 +68,7 @@ const Product: React.FC = () => {
       const timer = setTimeout(() => dispatch(setError(null)), 5000);
       return () => clearTimeout(timer);
     }
-  }, [error, dispatch]);
+  }, [error]);
 
   // Fetch suppliers on mount
   useEffect(() => {
@@ -122,7 +101,7 @@ const Product: React.FC = () => {
   ) => {
     const newRackNumber =
       newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
-    setFormData({ ...formData, rackNumber: newRackNumber });
+    dispatch(updateFormField({ field: "rackNumber", value: newRackNumber }));
   };
 
   const fetchProducts = async (
@@ -181,6 +160,15 @@ const Product: React.FC = () => {
           reset ? 2 : data.products.length > 0 ? currentPage + 1 : currentPage
         );
         dispatch(setError(null));
+
+        // Use setTimeout to ensure state updates are processed
+        setTimeout(() => {
+          if (reset && showSkeleton) {
+            dispatch(setLoading(false));
+          } else if (!reset) {
+            setLoadingMore(false);
+          }
+        }, 0);
       } else {
         throw new Error("Invalid data format received from server");
       }
@@ -193,17 +181,19 @@ const Product: React.FC = () => {
       if (reset) {
         dispatch(setProducts([]));
       }
-    } finally {
-      if (reset && showSkeleton) {
-        dispatch(setLoading(false));
-      } else if (!reset) {
-        setLoadingMore(false);
-      }
+
+      // Set loading to false on error
+      setTimeout(() => {
+        if (reset && showSkeleton) {
+          dispatch(setLoading(false));
+        } else if (!reset) {
+          setLoadingMore(false);
+        }
+      }, 0);
     }
   };
 
   const fetchSuppliers = async () => {
-    dispatch(setLoading(true));
     try {
       const data = await apiService.get("/suppliers", { search: searchQuery });
       if (data && Array.isArray(data)) {
@@ -217,8 +207,6 @@ const Product: React.FC = () => {
       const errorMessage = error.message || "Failed to load suppliers";
       dispatch(setError(errorMessage));
       setSuppliers([]);
-    } finally {
-      dispatch(setLoading(false));
     }
   };
 
@@ -264,18 +252,20 @@ const Product: React.FC = () => {
 
   const handleEdit = (product: Product) => {
     setEdittingProduct(product);
-    setFormData({
-      productName: product.productName,
-      productId: product.productId,
-      description: product.description || "",
-      rackNumber: product.rackNumber || "",
-      costPrice: product.costPrice.toString(),
-      sellingPrice: product.sellingPrice.toString(),
-      stock: product.stock.toString(),
-      category: product.category || "",
-      brand: product.brand || "",
-      supplier: product.supplier,
-    });
+    dispatch(
+      setFormData({
+        productName: product.productName,
+        productId: product.productId,
+        description: product.description || "",
+        rackNumber: product.rackNumber || "",
+        costPrice: product.costPrice.toString(),
+        sellingPrice: product.sellingPrice.toString(),
+        stock: product.stock.toString(),
+        category: product.category || "",
+        brand: product.brand || "",
+        supplier: product.supplier,
+      })
+    );
     setRack(product.rackNumber ? product.rackNumber.slice(0, 2) : "");
     setRow(product.rackNumber ? product.rackNumber.slice(2, 3) : "");
     setColumn(product.rackNumber ? product.rackNumber.slice(3, 4) : "");
@@ -292,26 +282,14 @@ const Product: React.FC = () => {
   ) => {
     const { name, value } = event.target;
     if (name === "description") {
-      if (value.length > 500) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          description: value.slice(0, 500),
-        }));
-      } else {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          description: value,
-        }));
-      }
+      const trimmedValue = value.length > 500 ? value.slice(0, 500) : value;
+      dispatch(updateFormField({ field: "description", value: trimmedValue }));
     }
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
+    dispatch(updateFormField({ field: name as keyof FormData, value }));
 
     if (name === "productName") {
       if (value.trim() === "") {
@@ -391,10 +369,7 @@ const Product: React.FC = () => {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
+    dispatch(updateFormField({ field: name as keyof FormData, value }));
 
     if (name === "supplier") {
       if (value === "") {
@@ -497,6 +472,9 @@ const Product: React.FC = () => {
           throw new Error("Supplier not found");
         }
 
+        // Reset form data before optimistic update (preserve supplier and category)
+        dispatch(resetFormDataPreserveSupplierCategory());
+
         // Optimistic update
         dispatch(
           updateProduct({
@@ -542,13 +520,6 @@ const Product: React.FC = () => {
         // Check if response exists and has data
         if (!response) {
           throw new Error("No response received from server");
-        }
-
-        // Update the product list with the response data if available
-        if (response.data) {
-          dispatch(
-            updateProduct({ ...response.data, _id: edittingProduct._id })
-          );
         }
       } else {
         const newTempId = "temp_" + Date.now();
@@ -626,18 +597,6 @@ const Product: React.FC = () => {
 
       // Reset form and states on success
       setEdittingProduct(null);
-      setFormData({
-        productName: "",
-        productId: "",
-        description: "",
-        rackNumber: "",
-        costPrice: "",
-        sellingPrice: "",
-        stock: "",
-        category: "",
-        brand: "",
-        supplier: "",
-      });
       setRack("");
       setRow("");
       setColumn("");
@@ -1283,18 +1242,7 @@ const Product: React.FC = () => {
               className="w-full text-gray-300 bg-[#262626] focus:ring-2 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
               onClick={() => {
                 setEdittingProduct(null);
-                setFormData({
-                  productName: "",
-                  productId: "",
-                  description: "",
-                  rackNumber: "",
-                  costPrice: "",
-                  sellingPrice: "",
-                  stock: "",
-                  category: "",
-                  brand: "",
-                  supplier: "",
-                });
+                dispatch(resetFormData());
                 setRack("");
                 setRow("");
                 setColumn("");

@@ -1,21 +1,22 @@
 import React, { useEffect } from "react";
 import Smalltile from "../Charts/Smalltile";
 import Largetile from "../Charts/Largetile";
-import Piechart from "../Charts/Piechart";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store/store";
 import {
-  fetchAllDashboardData,
+  fetchProductCount,
+  fetchSaleCount,
+  fetchProduct30DayData,
   fetchSupplier30DayData,
   setTimeframe,
   selectProducts,
   selectSales,
   selectTimeframe,
   selectDashboardLoading,
+  selectProduct30DayData,
   selectSupplier30DayData,
   CountListItem,
 } from "../../store/dashboardSlice";
-import { get } from "http";
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -25,17 +26,18 @@ const Dashboard: React.FC = () => {
   const sales = useSelector(selectSales);
   const timeframe = useSelector(selectTimeframe);
   const loading = useSelector(selectDashboardLoading);
+  const product30DayData = useSelector(selectProduct30DayData);
   const supplier30DayData = useSelector(selectSupplier30DayData);
 
   // Helper functions to format data for charts
   const getProductChartData = (): number[] => {
-    if (!products.countList || products.countList.length === 0) {
-      return [0, 0, 0, 0, 0];
-    } else if (products.countList.length === 1) {
-      return [0, products.countList[0].count];
-    } else {
-      return products.countList.map((item: CountListItem) => item.count);
+    // Use the 30-day API data from Redux
+    if (product30DayData.counts && product30DayData.counts.length > 0) {
+      return product30DayData.counts;
     }
+
+    // Fallback to default
+    return [0, 0, 0, 0, 0];
   };
 
   const getSupplierChartData = (): number[] => {
@@ -46,6 +48,21 @@ const Dashboard: React.FC = () => {
 
     // Fallback to default
     return [0, 0, 0, 0, 0];
+  };
+
+  const getProductGrowthPercentage = (): string => {
+    if (product30DayData.counts && product30DayData.counts.length > 0) {
+      // Compare first count (30 days ago) with last count (most recent)
+      const firstCount = product30DayData.counts[0];
+      const lastCount =
+        product30DayData.counts[product30DayData.counts.length - 1];
+
+      if (firstCount === 0) return "0.00";
+
+      const percentage = ((lastCount - firstCount) / firstCount) * 100;
+      return percentage.toFixed(2);
+    }
+    return "0.00";
   };
 
   const getSupplierGrowthPercentage = (): string => {
@@ -63,15 +80,17 @@ const Dashboard: React.FC = () => {
     return "0.00";
   };
 
-  // Fetch supplier 30-day data on mount
+  // Fetch 30-day data on mount
   useEffect(() => {
+    dispatch(fetchProduct30DayData());
     dispatch(fetchSupplier30DayData());
   }, [dispatch]);
 
-  // Fetch all dashboard data on mount and when timeframe changes
+  // Fetch dashboard data on mount and when timeframe changes
   useEffect(() => {
     if (timeframe) {
-      dispatch(fetchAllDashboardData(timeframe));
+      dispatch(fetchProductCount(timeframe));
+      dispatch(fetchSaleCount(timeframe));
     }
   }, [dispatch, timeframe]);
 
@@ -102,7 +121,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}
           chart_data={getSalesChartData()}
@@ -114,8 +133,8 @@ const Dashboard: React.FC = () => {
           color={"#ff5e00"}
           chart_data={getProductChartData()}
           Title={"Products"}
-          count={products.current}
-          growth={products.percentage}
+          count={product30DayData.currentCount}
+          growth={getProductGrowthPercentage()}
         />
         <Smalltile
           color={"#29eaff"}

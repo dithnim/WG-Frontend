@@ -17,18 +17,46 @@ export interface Product {
   supplierId?: string;
 }
 
+export interface FormData {
+  productName: string;
+  productId: string;
+  description: string;
+  rackNumber: string;
+  costPrice: string;
+  sellingPrice: string;
+  stock: string;
+  category: string;
+  brand: string;
+  supplier: string;
+}
+
 interface ProductState {
   products: Product[];
   loading: boolean;
   error: string | null;
   searchQuery: string;
+  formData: FormData;
 }
+
+const initialFormData: FormData = {
+  productName: "",
+  productId: "",
+  description: "",
+  rackNumber: "",
+  costPrice: "",
+  sellingPrice: "",
+  stock: "",
+  category: "",
+  brand: "",
+  supplier: "",
+};
 
 const initialState: ProductState = {
   products: [],
   loading: false,
   error: null,
   searchQuery: "",
+  formData: initialFormData,
 };
 
 const productSlice = createSlice({
@@ -74,6 +102,22 @@ const productSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    setFormData: (state, action: PayloadAction<FormData>) => {
+      state.formData = action.payload;
+    },
+    updateFormField: (
+      state,
+      action: PayloadAction<{ field: keyof FormData; value: string }>
+    ) => {
+      state.formData[action.payload.field] = action.payload.value;
+    },
+    resetFormData: (state) => {
+      state.formData = initialFormData;
+    },
+    resetFormDataPreserveSupplierCategory: (state) => {
+      const { supplier, category } = state.formData;
+      state.formData = { ...initialFormData, supplier, category };
+    },
   },
 });
 
@@ -86,6 +130,10 @@ export const {
   setLoading,
   setError,
   setSearchQuery,
+  setFormData,
+  updateFormField,
+  resetFormData,
+  resetFormDataPreserveSupplierCategory,
 } = productSlice.actions;
 
 export default productSlice.reducer;

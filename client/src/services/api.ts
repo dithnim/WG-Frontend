@@ -51,7 +51,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
       return null;
     }
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/refresh-token`,
+      `${import.meta.env.VITE_API_URL}/refresh-token`,
       { refreshToken },
       {
         headers: { "Content-Type": "application/json" },
@@ -63,11 +63,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
       // Update storage
       sessionStorage.setItem("token", newToken);
-      if (response.data.expiresIn) {
-        const expirationTime =
-          new Date().getTime() + response.data.expiresIn * 1000;
-        localStorage.setItem("tokenExpiration", expirationTime.toString());
-      }
       if (response.data.refreshToken) {
         localStorage.setItem("refreshToken", response.data.refreshToken);
       }
@@ -95,7 +90,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -140,24 +135,6 @@ api.interceptors.request.use(
       return Promise.reject({
         message: "Authentication required",
         reason: "TOKEN_NOT_FOUND",
-        silent: true,
-      });
-    }
-
-    // Check if token is expired (basic check)
-    const tokenExpiration = reduxStore
-      ? reduxStore.getState().auth.tokenExpiration
-      : localStorage.getItem("tokenExpiration")
-        ? parseInt(localStorage.getItem("tokenExpiration")!)
-        : null;
-    if (tokenExpiration && new Date().getTime() > tokenExpiration) {
-      // Token is expired - attempt refresh
-      if (tokenInvalidCallback) {
-        tokenInvalidCallback("TOKEN_EXPIRED");
-      }
-      return Promise.reject({
-        message: "Session expired",
-        reason: "TOKEN_EXPIRED",
         silent: true,
       });
     }
@@ -278,11 +255,8 @@ api.interceptors.response.use(
         message: "Network error. Please check your internet connection.",
         reason: "NETWORK_ERROR",
       });
-    } else if (
-      error.reason === "TOKEN_NOT_FOUND" ||
-      error.reason === "TOKEN_EXPIRED"
-    ) {
-      // Token not found or expired during request setup - silent error
+    } else if (error.reason === "TOKEN_NOT_FOUND") {
+      // Token not found during request setup - silent error
       return Promise.reject({
         ...error,
         silent: true,

@@ -15,10 +15,6 @@ const initialState: AuthState = {
   refreshToken: (() => {
     return localStorage.getItem("refreshToken");
   })(),
-  tokenExpiration: (() => {
-    const expiration = localStorage.getItem("tokenExpiration");
-    return expiration ? parseInt(expiration) : null;
-  })(),
   isAuthenticated: (() => {
     const token = sessionStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -57,14 +53,9 @@ export const loginUser = createAsyncThunk(
         ...userData?.userData,
       };
 
-      // Calculate token expiration
-      const expiresIn = userData.expiresIn || 900; // 15 minutes default
-      const expirationTime = new Date().getTime() + expiresIn * 1000;
-
       // Store in sessionStorage/localStorage
       sessionStorage.setItem("token", userData.token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
-      localStorage.setItem("tokenExpiration", expirationTime.toString());
       if (userData.refreshToken) {
         localStorage.setItem("refreshToken", userData.refreshToken);
       }
@@ -73,7 +64,6 @@ export const loginUser = createAsyncThunk(
         user: userWithRole,
         token: userData.token,
         refreshToken: userData.refreshToken || null,
-        tokenExpiration: expirationTime,
       };
     } catch (error: any) {
       return rejectWithValue(error.message || "Login failed");
@@ -99,7 +89,6 @@ export const logoutUser = createAsyncThunk(
       sessionStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("refreshToken");
-      localStorage.removeItem("tokenExpiration");
 
       return { reason };
     } catch (error: any) {
@@ -113,13 +102,9 @@ export const validateToken = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { auth: AuthState };
-      const { token, tokenExpiration } = state.auth;
+      const { token } = state.auth;
 
       if (!token) {
-        return false;
-      }
-
-      if (tokenExpiration && new Date().getTime() > tokenExpiration) {
         return false;
       }
 
@@ -153,13 +138,9 @@ const authSlice = createSlice({
     ) => {
       state.token = action.payload.token;
       state.refreshToken = action.payload.refreshToken || null;
-      const expiresIn = action.payload.expiresIn || 900;
-      const expirationTime = new Date().getTime() + expiresIn * 1000;
-      state.tokenExpiration = expirationTime;
 
       // Store in sessionStorage/localStorage
       sessionStorage.setItem("token", action.payload.token);
-      localStorage.setItem("tokenExpiration", expirationTime.toString());
       if (action.payload.refreshToken) {
         localStorage.setItem("refreshToken", action.payload.refreshToken);
       }
@@ -168,7 +149,6 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.refreshToken = null;
-      state.tokenExpiration = null;
       state.isAuthenticated = false;
       state.error = null;
       state.notificationMessage = null;
@@ -177,7 +157,6 @@ const authSlice = createSlice({
       sessionStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("refreshToken");
-      localStorage.removeItem("tokenExpiration");
     },
     setNotificationMessage: (state, action: PayloadAction<string | null>) => {
       state.notificationMessage = action.payload;
@@ -207,7 +186,6 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
-        state.tokenExpiration = action.payload.tokenExpiration;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -227,7 +205,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.refreshToken = null;
-        state.tokenExpiration = null;
         state.isAuthenticated = false;
         state.error = null;
 
@@ -244,7 +221,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.refreshToken = null;
-        state.tokenExpiration = null;
         state.isAuthenticated = false;
       });
 
@@ -260,7 +236,6 @@ const authSlice = createSlice({
           state.user = null;
           state.token = null;
           state.refreshToken = null;
-          state.tokenExpiration = null;
           state.isAuthenticated = false;
         }
       })
@@ -269,7 +244,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.refreshToken = null;
-        state.tokenExpiration = null;
         state.isAuthenticated = false;
       });
   },
@@ -292,8 +266,6 @@ export const selectUser = (state: { auth: AuthState }) => state.auth.user;
 export const selectToken = (state: { auth: AuthState }) => state.auth.token;
 export const selectRefreshToken = (state: { auth: AuthState }) =>
   state.auth.refreshToken;
-export const selectTokenExpiration = (state: { auth: AuthState }) =>
-  state.auth.tokenExpiration;
 export const selectIsAuthenticated = (state: { auth: AuthState }) =>
   state.auth.isAuthenticated;
 export const selectAuthLoading = (state: { auth: AuthState }) =>
