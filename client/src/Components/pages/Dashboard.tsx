@@ -10,7 +10,6 @@ import {
   setTimeframe,
   selectProducts,
   selectSales,
-  selectRevenue,
   selectTimeframe,
   selectDashboardLoading,
   selectSupplier30DayData,
@@ -24,7 +23,6 @@ const Dashboard: React.FC = () => {
   // Get data from Redux store
   const products = useSelector(selectProducts);
   const sales = useSelector(selectSales);
-  const revenue = useSelector(selectRevenue);
   const timeframe = useSelector(selectTimeframe);
   const loading = useSelector(selectDashboardLoading);
   const supplier30DayData = useSelector(selectSupplier30DayData);
@@ -88,16 +86,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getRevenueChartData = (): number[] => {
-    if (!revenue.countList || revenue.countList.length === 0) {
-      return [50126, 49356, 51264, 54629, 53426]; // Default placeholder data
-    } else if (revenue.countList.length === 1) {
-      return [0, revenue.countList[0].count];
-    } else {
-      return revenue.countList.map((item: CountListItem) => item.count);
-    }
-  };
-
   // Handle timeframe change
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -135,13 +123,6 @@ const Dashboard: React.FC = () => {
           Title={"Suppliers"}
           count={supplier30DayData.currentCount}
           growth={getSupplierGrowthPercentage()}
-        />
-        <Smalltile
-          color={"#bbff00"}
-          chart_data={getRevenueChartData()}
-          Title={"Total revenue"}
-          count={revenue.current}
-          growth={revenue.percentage}
         />
       </div>
 

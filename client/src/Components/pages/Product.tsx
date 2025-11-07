@@ -69,7 +69,7 @@ const Product: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
-  const LIMIT = 10;
+  const CHUNK_SIZE = 10;
   const [formData, setFormData] = useState<FormData>({
     productName: "",
     productId: "",
@@ -138,9 +138,8 @@ const Product: React.FC = () => {
     try {
       const params: Record<string, any> = {
         search: searchQuery,
-        limit: LIMIT,
-        page: currentPage,
-        skip: (currentPage - 1) * LIMIT,
+        chunkSize: CHUNK_SIZE,
+        skip: (currentPage - 1) * CHUNK_SIZE,
       };
 
       // Add supplier filter if selected
@@ -148,9 +147,9 @@ const Product: React.FC = () => {
         params.supplier = selectedSupplier;
       }
       const data = await apiService.get("/product", params);
-      if (data && Array.isArray(data)) {
+      if (data && data.products && Array.isArray(data.products)) {
         // Map the nested response structure to flat Product interface
-        const mappedProducts = data.map((item: any) => ({
+        const mappedProducts = data.products.map((item: any) => ({
           _id: item._id,
           productName: item.productName,
           productId: item.productId,
@@ -176,8 +175,11 @@ const Product: React.FC = () => {
           dispatch(setProducts(combinedProducts));
         }
 
-        setHasMore(data.length === LIMIT);
-        setPage(reset ? 2 : data.length > 0 ? currentPage + 1 : currentPage);
+        // Use pagination metadata from response
+        setHasMore(data.pagination?.hasMore || false);
+        setPage(
+          reset ? 2 : data.products.length > 0 ? currentPage + 1 : currentPage
+        );
         dispatch(setError(null));
       } else {
         throw new Error("Invalid data format received from server");
