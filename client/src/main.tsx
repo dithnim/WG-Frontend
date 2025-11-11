@@ -14,6 +14,7 @@ import Login from "./Components/pages/Login";
 import Product from "./Components/pages/Product";
 import Dashboard from "./Components/pages/Dashboard";
 import Suppliers from "./Components/pages/Suppliers";
+import Inventory from "./Components/pages/Inventory";
 import Sales from "./Components/pages/Sales";
 import Stats from "./Components/pages/Stats";
 import Notifications from "./Components/pages/Notifications";
@@ -161,7 +162,7 @@ function AppContent() {
           }
         />
         <Route
-          path="/stats"
+          path="/inventory"
           element={
             isAuthenticated ? (
               <div className="flex">
@@ -173,7 +174,7 @@ function AppContent() {
                 <div
                   className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
                 >
-                  <Stats />
+                  <Inventory />
                 </div>
               </div>
             ) : (
