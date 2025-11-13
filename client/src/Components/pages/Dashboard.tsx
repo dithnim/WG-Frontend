@@ -115,12 +115,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 lg:p-12">
-      {loading && (
-        <div className="text-center mt-8 text-gray-400">
-          Loading dashboard data...
-        </div>
-      )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}

@@ -59,7 +59,7 @@ export const fetchProduct30DayData = createAsyncThunk(
   "dashboard/fetchProduct30DayData",
   async (_, { rejectWithValue }) => {
     try {
-      const data = await apiService.get("/product/count/30days");
+      const data = await apiService.get("/products/count/30days");
       return {
         counts: Array.isArray(data.counts) ? data.counts : [],
         currentCount: data.currentCount || 0,
