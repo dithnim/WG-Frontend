@@ -125,53 +125,99 @@ const Product: React.FC = () => {
       if (selectedSupplier) {
         params.supplier = selectedSupplier;
       }
-      const data = await apiService.get("/product", params);
-      if (data && data.products && Array.isArray(data.products)) {
-        // Map the nested response structure to flat Product interface
-        const mappedProducts = data.products.map((item: any) => ({
-          _id: item._id,
-          productName: item.productName,
-          productId: item.productId,
-          description: item.description,
-          rackNumber: item.rackNumber,
-          costPrice: item.inventories?.[0]?.cost || 0,
-          sellingPrice: item.inventories?.[0]?.sellingPrice || 0,
-          stock: item.inventories?.[0]?.stock || 0,
-          category: item.category,
-          brand: item.brand,
-          supplier: item.suppliers?.[0]?.supplierName || "",
-          updatedAt: item.updatedAt,
-          inventoryId: item.inventories?.[0]?._id || "",
-          supplierId: item.suppliers?.[0]?._id || "",
-        }));
 
-        if (reset) {
-          dispatch(setProducts(mappedProducts));
-        } else {
-          // Append to existing products for lazy loading
-          const currentProducts = products;
-          const combinedProducts = [...currentProducts, ...mappedProducts];
-          dispatch(setProducts(combinedProducts));
-        }
+      // Call the API - assuming it returns products directly or in a wrapper
+      const response = await apiService.get("/product", params);
 
-        // Use pagination metadata from response
-        setHasMore(data.pagination?.hasMore || false);
-        setPage(
-          reset ? 2 : data.products.length > 0 ? currentPage + 1 : currentPage
-        );
-        dispatch(setError(null));
+      // Handle different possible response structures
+      let productsArray: any[] = [];
+      let hasMoreData = false;
 
-        // Use setTimeout to ensure state updates are processed
-        setTimeout(() => {
-          if (reset && showSkeleton) {
-            dispatch(setLoading(false));
-          } else if (!reset) {
-            setLoadingMore(false);
-          }
-        }, 0);
+      // Case 1: Response is { products: [...], pagination: {...} }
+      if (response && response.products && Array.isArray(response.products)) {
+        productsArray = response.products;
+        hasMoreData =
+          response.pagination?.hasMore ||
+          response.products.length === CHUNK_SIZE;
+      }
+      // Case 2: Response is directly an array of products
+      else if (Array.isArray(response)) {
+        productsArray = response;
+        hasMoreData = response.length === CHUNK_SIZE;
+      }
+      // Case 3: Response is { data: { products: [...] } }
+      else if (
+        response &&
+        response.data &&
+        Array.isArray(response.data.products)
+      ) {
+        productsArray = response.data.products;
+        hasMoreData =
+          response.data.pagination?.hasMore ||
+          response.data.products.length === CHUNK_SIZE;
+      }
+      // Case 4: Response is { data: [...] }
+      else if (response && Array.isArray(response.data)) {
+        productsArray = response.data;
+        hasMoreData = response.data.length === CHUNK_SIZE;
       } else {
         throw new Error("Invalid data format received from server");
       }
+
+      // Map the products to match the frontend Product interface
+      const mappedProducts = productsArray.map((item: any) => ({
+        _id: item._id,
+        productName: item.productName,
+        productId: item.productId,
+        description: item.description || "",
+        rackNumber: item.rackNumber || "",
+        // Handle different possible inventory structures
+        costPrice:
+          item.inventories?.[0]?.cost || item.cost || item.costPrice || 0,
+        sellingPrice:
+          item.inventories?.[0]?.sellingPrice || item.sellingPrice || 0,
+        stock: item.inventories?.[0]?.stock || item.stock || 0,
+        category: item.category || "",
+        brand: item.brand || "",
+        // Handle different possible supplier structures
+        supplier:
+          item.suppliers?.[0]?.supplierName ||
+          item.supplier?.supplierName ||
+          item.supplierName ||
+          "",
+        updatedAt: item.updatedAt || new Date().toISOString(),
+        inventoryId: item.inventories?.[0]?._id || item.inventoryId || "",
+        supplierId:
+          item.suppliers?.[0]?._id ||
+          item.supplier?._id ||
+          item.supplierId ||
+          "",
+      }));
+
+      if (reset) {
+        dispatch(setProducts(mappedProducts));
+      } else {
+        // Append to existing products for lazy loading
+        const currentProducts = products;
+        const combinedProducts = [...currentProducts, ...mappedProducts];
+        dispatch(setProducts(combinedProducts));
+      }
+
+      // Set pagination state
+      setHasMore(hasMoreData);
+      setPage(
+        reset ? 2 : mappedProducts.length > 0 ? currentPage + 1 : currentPage
+      );
+      dispatch(setError(null));
+
+      // Use setTimeout to ensure state updates are processed
+      setTimeout(() => {
+        if (reset && showSkeleton) {
+          dispatch(setLoading(false));
+        } else if (!reset) {
+          setLoadingMore(false);
+        }
+      }, 0);
     } catch (error: any) {
       console.error("Error fetching products:", error);
 
@@ -772,7 +818,9 @@ const Product: React.FC = () => {
                   </th>
                   <th className="px-4 py-2">In Stock</th>
                   <th className="px-4 py-2 hidden md:table-cell">Supplier</th>
-                  <th className="px-4 py-2">Edit</th>
+                  <GrantWrapper allowedRoles={["admin"]}>
+                    <th className="px-4 py-2">Edit</th>
+                  </GrantWrapper>{" "}
                 </tr>
               </thead>
               <tbody>
@@ -805,9 +853,11 @@ const Product: React.FC = () => {
                     <td className="px-4 py-6 hidden md:table-cell">
                       <div className="h-6 bg-neutral-700 rounded animate-pulse w-2/3" />
                     </td>
-                    <td className="px-4 py-6">
-                      <div className="h-6 bg-neutral-700 rounded animate-pulse w-12" />
-                    </td>
+                    <GrantWrapper allowedRoles={["admin"]}>
+                      <td className="px-4 py-6">
+                        <div className="h-6 bg-neutral-700 rounded animate-pulse w-12" />
+                      </td>
+                    </GrantWrapper>
                   </tr>
                 ))}
               </tbody>
