@@ -49,6 +49,16 @@ function AppContent() {
   // Validate token on initial load
   useEffect(() => {
     setIsLoading(false);
+    
+    // Check if there's a redirect path from 404 page
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectPath');
+      // Use setTimeout to allow React Router to initialize
+      setTimeout(() => {
+        window.history.replaceState(null, '', redirectPath);
+      }, 0);
+    }
   }, []);
 
   // Function to handle logout
