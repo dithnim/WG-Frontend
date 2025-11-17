@@ -221,9 +221,31 @@ const Product: React.FC = () => {
     } catch (error: any) {
       console.error("Error fetching products:", error);
 
-      // Use error message from API service if available
-      const errorMessage = error.message || "Failed to load products";
-      dispatch(setError(errorMessage));
+      // Don't show error if request was intentionally canceled
+      if (error.code === "ERR_CANCELED" || error.message === "canceled") {
+        console.log(
+          "Request was canceled (component unmounted or search changed)"
+        );
+      } else {
+        // Provide specific error messages based on error type
+        let errorMessage = "Failed to load products";
+
+        if (error.reason === "REQUEST_CANCELED") {
+          errorMessage =
+            "Request canceled. This may be a CORS configuration issue. Please contact support.";
+        } else if (error.reason === "TIMEOUT") {
+          errorMessage =
+            "Request timeout. Server is taking too long to respond. Please try again.";
+        } else if (error.reason === "NETWORK_ERROR") {
+          errorMessage =
+            "Network error. Please check your internet connection.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        dispatch(setError(errorMessage));
+      }
+
       if (reset) {
         dispatch(setProducts([]));
       }
@@ -680,12 +702,20 @@ const Product: React.FC = () => {
   };
 
   useEffect(() => {
+    // Create an abort controller to cancel pending requests
+    const abortController = new AbortController();
+
     const timer = setTimeout(() => {
       setPage(1);
       setHasMore(true);
       fetchProducts(1, true);
     }, 500);
-    return () => clearTimeout(timer);
+
+    return () => {
+      clearTimeout(timer);
+      // Cancel any pending requests when search changes or component unmounts
+      abortController.abort();
+    };
   }, [searchQuery, selectedSupplier]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {

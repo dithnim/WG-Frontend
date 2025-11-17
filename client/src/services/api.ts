@@ -91,10 +91,12 @@ const refreshAccessToken = async (): Promise<string | null> => {
 // Create axios instance with default config
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds to prevent premature cancellation
   headers: {
     "Content-Type": "application/json",
   },
+  // Enable credentials for CORS
+  withCredentials: false,
 });
 
 // Request interceptor
@@ -154,6 +156,27 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Handle request cancellation (CORS/preflight issues)
+    if (error.code === "ERR_CANCELED" || error.message === "canceled") {
+      console.error("Request was canceled - likely CORS or preflight issue");
+      return Promise.reject({
+        ...error,
+        message:
+          "Request canceled. This may be a CORS issue. Please check API Gateway CORS settings.",
+        reason: "REQUEST_CANCELED",
+      });
+    }
+
+    // Handle network timeout
+    if (error.code === "ECONNABORTED") {
+      console.error("Request timeout");
+      return Promise.reject({
+        ...error,
+        message: "Request timeout. The server took too long to respond.",
+        reason: "TIMEOUT",
+      });
+    }
 
     // Handle common errors here
     if (error.response) {
@@ -269,56 +292,82 @@ api.interceptors.response.use(
   }
 );
 
+// Retry logic with exponential backoff
+const retryRequest = async <T = any>(
+  requestFn: () => Promise<any>,
+  maxRetries: number = 2,
+  retryDelay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await requestFn();
+      return response.data;
+    } catch (error: any) {
+      lastError = error;
+
+      // Don't retry on authentication errors or user cancellation
+      const shouldNotRetry =
+        error.response?.status === 401 ||
+        error.response?.status === 403 ||
+        error.reason === "TOKEN_NOT_FOUND" ||
+        error.reason === "TOKEN_INVALID" ||
+        error.reason === "ACCESS_DENIED" ||
+        error.silent;
+
+      if (shouldNotRetry || attempt === maxRetries) {
+        throw error;
+      }
+
+      // Only retry on network errors, timeouts, or server errors (5xx)
+      const shouldRetry =
+        !error.response || // Network error
+        error.code === "ECONNABORTED" || // Timeout
+        error.code === "ERR_NETWORK" || // Network error
+        (error.response?.status >= 500 && error.response?.status < 600); // Server error
+
+      if (!shouldRetry) {
+        throw error;
+      }
+
+      // Exponential backoff
+      const delay = retryDelay * Math.pow(2, attempt);
+      console.log(
+        `Request failed, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+};
+
 // API methods
 const apiService = {
   // GET request
   get: async <T = any>(url: string, params: any = {}): Promise<T> => {
-    try {
-      const response = await api.get(url, { params });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    return retryRequest(() => api.get(url, { params }));
   },
 
   // POST request
   post: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    try {
-      const response = await api.post(url, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    return retryRequest(() => api.post(url, data));
   },
 
   // PUT request
   put: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    try {
-      const response = await api.put(url, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    return retryRequest(() => api.put(url, data));
   },
 
   // DELETE request
   delete: async <T = any>(url: string): Promise<T> => {
-    try {
-      const response = await api.delete(url);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    return retryRequest(() => api.delete(url));
   },
 
   // PATCH request (for partial updates)
   patch: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    try {
-      const response = await api.patch(url, data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    return retryRequest(() => api.patch(url, data));
   },
 
   // Validate token - check if current token is valid
