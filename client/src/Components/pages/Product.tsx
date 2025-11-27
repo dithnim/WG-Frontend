@@ -65,9 +65,25 @@ const Product: React.FC = () => {
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [edittingProduct, setEdittingProduct] = useState<Product | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
+  const [localSearch, setLocalSearch] = useState(searchQuery);
   const CHUNK_SIZE = 10;
 
-  // Clear error messages after 5 seconds
+  // Sync localSearch with searchQuery from Redux on mount/update
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== searchQuery) {
+        dispatch(setSearchQuery(localSearch));
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, dispatch, searchQuery]);
+
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => dispatch(setError(null)), 5000);
@@ -562,20 +578,14 @@ const Product: React.FC = () => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch(
-        fetchProducts({
-          page: 1,
-          search: searchQuery,
-          supplier: selectedSupplier,
-          reset: true,
-        })
-      );
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
+    dispatch(
+      fetchProducts({
+        page: 1,
+        search: searchQuery,
+        supplier: selectedSupplier,
+        reset: true,
+      })
+    );
   }, [searchQuery, selectedSupplier, dispatch]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
@@ -679,11 +689,15 @@ const Product: React.FC = () => {
               type="text"
               placeholder="Search products..."
               className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
-              value={searchQuery}
-              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
             />
             <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
-              <i className="bx bx-search-alt-2 text-xl"></i>
+              {localSearch !== searchQuery || loading ? (
+                <Spinner size="sm" color="text-white" />
+              ) : (
+                <i className="bx bx-search-alt-2 text-xl"></i>
+              )}
             </button>
           </div>
         </div>
