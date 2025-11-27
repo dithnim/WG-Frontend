@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import apiService from "../../services/api";
 import GrantWrapper from "../../util/grantWrapper";
+import AuthLoading from "../AuthLoading";
 import "../../styles/sidebar.css";
 
 const initialNavigation = [
@@ -82,6 +83,7 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
   const [bottomNav, setBottomNav] = useState(bottomNavigation);
   const [menu, setMenu] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleMenuClick = (index, isBottom = false) => {
     const updatedNavigation = isBottom
@@ -99,16 +101,22 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
 
   const handleLogout = async (e) => {
     e.preventDefault();
-    try {
-      await apiService.post("/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Always call onLogout to clear the local state
-      if (onLogout) {
-        onLogout();
+    setIsLoggingOut(true);
+
+    // Add a small delay to show the animation
+    setTimeout(async () => {
+      try {
+        await apiService.post("/logout");
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        // Always call onLogout to clear the local state
+        if (onLogout) {
+          onLogout();
+        }
+        setIsLoggingOut(false);
       }
-    }
+    }, 1500);
   };
 
   // Add ripple effect
@@ -133,6 +141,7 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
 
   return (
     <div className="flex">
+      {isLoggingOut && <AuthLoading message="Logging out..." />}
       {/* Menu Button for Small Screens */}
       <button
         onClick={() => setMenu(!menu)}

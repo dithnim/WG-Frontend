@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/api";
 import Otpinput from "../Otpinput";
-import Progressmenu from "../Progressmenu";
+import AuthLoading from "../AuthLoading";
 import { useAuth } from "../../contexts/AuthContext";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../store/store";
@@ -306,7 +306,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center xl:justify-between bg-[#0f0f0f] w-screen h-screen xl:p-20 lg:p-10 md:p-8 sm:p-5 p-10 relative">
-      {isLoading && <Progressmenu message="Processing your request..." />}
+      {isLoading && <AuthLoading message="Authenticating..." />}
       {isForgotMode ? (
         <>
           <div className="rounded-full xl:w-40 xl:h-40 lg:w-30 lg:h-30 w-20 h-20 absolute top-[70vh] right-2 z-0 login-circle3"></div>

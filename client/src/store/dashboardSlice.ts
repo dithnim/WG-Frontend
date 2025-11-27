@@ -29,6 +29,10 @@ interface DashboardState {
   timeframe: string;
   loading: boolean;
   error: string | null;
+  lastFetchedProduct30Day: number | null;
+  lastFetchedSupplier30Day: number | null;
+  lastFetchedProductCount: number | null;
+  lastFetchedSaleCount: number | null;
 }
 
 const initialCounts: DashboardCounts = {
@@ -52,6 +56,10 @@ const initialState: DashboardState = {
   timeframe: "month",
   loading: false,
   error: null,
+  lastFetchedProduct30Day: null,
+  lastFetchedSupplier30Day: null,
+  lastFetchedProductCount: null,
+  lastFetchedSaleCount: null,
 };
 
 // Async thunks
@@ -69,6 +77,20 @@ export const fetchProduct30DayData = createAsyncThunk(
         error.message || "Failed to fetch 30-day product data"
       );
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedProduct30Day } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedProduct30Day &&
+        Date.now() - lastFetchedProduct30Day < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
   }
 );
 
@@ -86,6 +108,20 @@ export const fetchSupplier30DayData = createAsyncThunk(
         error.message || "Failed to fetch 30-day supplier data"
       );
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedSupplier30Day } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedSupplier30Day &&
+        Date.now() - lastFetchedSupplier30Day < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
   }
 );
 
@@ -111,6 +147,20 @@ export const fetchProductCount = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch product count");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedProductCount } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedProductCount &&
+        Date.now() - lastFetchedProductCount < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
   }
 );
 
@@ -129,6 +179,20 @@ export const fetchSaleCount = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch sale count");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedSaleCount } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedSaleCount &&
+        Date.now() - lastFetchedSaleCount < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
   }
 );
 
@@ -161,6 +225,7 @@ const dashboardSlice = createSlice({
       .addCase(fetchProduct30DayData.fulfilled, (state, action) => {
         state.loading = false;
         state.product30DayData = action.payload;
+        state.lastFetchedProduct30Day = Date.now();
       })
       .addCase(fetchProduct30DayData.rejected, (state, action) => {
         state.loading = false;
@@ -180,6 +245,7 @@ const dashboardSlice = createSlice({
       .addCase(fetchSupplier30DayData.fulfilled, (state, action) => {
         state.loading = false;
         state.supplier30DayData = action.payload;
+        state.lastFetchedSupplier30Day = Date.now();
       })
       .addCase(fetchSupplier30DayData.rejected, (state, action) => {
         state.loading = false;
@@ -224,6 +290,7 @@ const dashboardSlice = createSlice({
           state.products.current,
           state.products.previous
         );
+        state.lastFetchedProductCount = Date.now();
       })
       .addCase(fetchProductCount.rejected, (state, action) => {
         state.loading = false;
@@ -246,6 +313,7 @@ const dashboardSlice = createSlice({
           action.payload.current,
           action.payload.previous
         );
+        state.lastFetchedSaleCount = Date.now();
       })
       .addCase(fetchSaleCount.rejected, (state, action) => {
         state.loading = false;

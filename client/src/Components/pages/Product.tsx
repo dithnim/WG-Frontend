@@ -14,12 +14,14 @@ import {
   updateFormField,
   resetFormData,
   resetFormDataPreserveSupplierCategory,
+  fetchProducts,
 } from "../../store/productSlice";
 import type { Product, FormData } from "../../store/productSlice";
 import apiService from "../../services/api";
 import Toast from "../toastDanger";
 import GrantWrapper from "../../util/grantWrapper";
 import ToastSuccess from "../toastSuccess";
+import Spinner from "../Spinner";
 
 interface Supplier {
   _id: string;
@@ -32,9 +34,15 @@ interface Supplier {
 
 const Product: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { products, loading, error, searchQuery, formData } = useSelector(
-    (state: RootState) => state.products
-  );
+  const {
+    products,
+    loading,
+    error,
+    searchQuery,
+    formData,
+    hasMore,
+    currentPage,
+  } = useSelector((state: RootState) => state.products);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [tempProductId, setTempProductId] = useState<string | null>(null);
@@ -56,9 +64,6 @@ const Product: React.FC = () => {
     useState<string>("");
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [edittingProduct, setEdittingProduct] = useState<Product | null>(null);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [page, setPage] = useState<number>(1);
-  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const CHUNK_SIZE = 10;
 
@@ -102,163 +107,6 @@ const Product: React.FC = () => {
     const newRackNumber =
       newRack && newRow && newColumn ? `${newRack}${newRow}${newColumn}` : "";
     dispatch(updateFormField({ field: "rackNumber", value: newRackNumber }));
-  };
-
-  const fetchProducts = async (
-    currentPage: number = 1,
-    reset: boolean = false,
-    showSkeleton: boolean = true
-  ) => {
-    if (reset && showSkeleton) {
-      dispatch(setLoading(true));
-    } else if (!reset) {
-      setLoadingMore(true);
-    }
-    try {
-      const params: Record<string, any> = {
-        search: searchQuery,
-        chunkSize: CHUNK_SIZE,
-        skip: (currentPage - 1) * CHUNK_SIZE,
-      };
-
-      // Add supplier filter if selected
-      if (selectedSupplier) {
-        params.supplier = selectedSupplier;
-      }
-
-      // Call the API - assuming it returns products directly or in a wrapper
-      const response = await apiService.get("/product", params);
-
-      // Handle different possible response structures
-      let productsArray: any[] = [];
-      let hasMoreData = false;
-
-      // Case 1: Response is { products: [...], pagination: {...} }
-      if (response && response.products && Array.isArray(response.products)) {
-        productsArray = response.products;
-        hasMoreData =
-          response.pagination?.hasMore ||
-          response.products.length === CHUNK_SIZE;
-      }
-      // Case 2: Response is directly an array of products
-      else if (Array.isArray(response)) {
-        productsArray = response;
-        hasMoreData = response.length === CHUNK_SIZE;
-      }
-      // Case 3: Response is { data: { products: [...] } }
-      else if (
-        response &&
-        response.data &&
-        Array.isArray(response.data.products)
-      ) {
-        productsArray = response.data.products;
-        hasMoreData =
-          response.data.pagination?.hasMore ||
-          response.data.products.length === CHUNK_SIZE;
-      }
-      // Case 4: Response is { data: [...] }
-      else if (response && Array.isArray(response.data)) {
-        productsArray = response.data;
-        hasMoreData = response.data.length === CHUNK_SIZE;
-      } else {
-        throw new Error("Invalid data format received from server");
-      }
-
-      // Map the products to match the frontend Product interface
-      const mappedProducts = productsArray.map((item: any) => ({
-        _id: item._id,
-        productName: item.productName,
-        productId: item.productId,
-        description: item.description || "",
-        rackNumber: item.rackNumber || "",
-        // Handle different possible inventory structures
-        costPrice:
-          item.inventories?.[0]?.cost || item.cost || item.costPrice || 0,
-        sellingPrice:
-          item.inventories?.[0]?.sellingPrice || item.sellingPrice || 0,
-        stock: item.inventories?.[0]?.stock || item.stock || 0,
-        category: item.category || "",
-        brand: item.brand || "",
-        // Handle different possible supplier structures
-        supplier:
-          item.suppliers?.[0]?.supplierName ||
-          item.supplier?.supplierName ||
-          item.supplierName ||
-          "",
-        updatedAt: item.updatedAt || new Date().toISOString(),
-        inventoryId: item.inventories?.[0]?._id || item.inventoryId || "",
-        supplierId:
-          item.suppliers?.[0]?._id ||
-          item.supplier?._id ||
-          item.supplierId ||
-          "",
-      }));
-
-      if (reset) {
-        dispatch(setProducts(mappedProducts));
-      } else {
-        // Append to existing products for lazy loading
-        const currentProducts = products;
-        const combinedProducts = [...currentProducts, ...mappedProducts];
-        dispatch(setProducts(combinedProducts));
-      }
-
-      // Set pagination state
-      setHasMore(hasMoreData);
-      setPage(
-        reset ? 2 : mappedProducts.length > 0 ? currentPage + 1 : currentPage
-      );
-      dispatch(setError(null));
-
-      // Use setTimeout to ensure state updates are processed
-      setTimeout(() => {
-        if (reset && showSkeleton) {
-          dispatch(setLoading(false));
-        } else if (!reset) {
-          setLoadingMore(false);
-        }
-      }, 0);
-    } catch (error: any) {
-      console.error("Error fetching products:", error);
-
-      // Don't show error if request was intentionally canceled
-      if (error.code === "ERR_CANCELED" || error.message === "canceled") {
-        console.log(
-          "Request was canceled (component unmounted or search changed)"
-        );
-      } else {
-        // Provide specific error messages based on error type
-        let errorMessage = "Failed to load products";
-
-        if (error.reason === "REQUEST_CANCELED") {
-          errorMessage =
-            "Request canceled. This may be a CORS configuration issue. Please contact support.";
-        } else if (error.reason === "TIMEOUT") {
-          errorMessage =
-            "Request timeout. Server is taking too long to respond. Please try again.";
-        } else if (error.reason === "NETWORK_ERROR") {
-          errorMessage =
-            "Network error. Please check your internet connection.";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-
-        dispatch(setError(errorMessage));
-      }
-
-      if (reset) {
-        dispatch(setProducts([]));
-      }
-
-      // Set loading to false on error
-      setTimeout(() => {
-        if (reset && showSkeleton) {
-          dispatch(setLoading(false));
-        } else if (!reset) {
-          setLoadingMore(false);
-        }
-      }, 0);
-    }
   };
 
   const fetchSuppliers = async () => {
@@ -677,17 +525,29 @@ const Product: React.FC = () => {
       setSupplierValidationError("");
 
       // Refresh the product list
-      setPage(1);
-      setHasMore(true);
-      await fetchProducts(1, true, false);
+      dispatch(
+        fetchProducts({
+          page: 1,
+          search: searchQuery,
+          supplier: selectedSupplier,
+          reset: true,
+          force: true,
+        })
+      );
     } catch (error: any) {
       console.error("Error updating/adding product:", error);
 
       // Revert optimistic updates
       if (edittingProduct) {
-        setPage(1);
-        setHasMore(true);
-        await fetchProducts(1, true, false);
+        dispatch(
+          fetchProducts({
+            page: 1,
+            search: searchQuery,
+            supplier: selectedSupplier,
+            reset: true,
+            force: true,
+          })
+        );
       } else {
         if (tempProductId) {
           dispatch(removeProduct(tempProductId));
@@ -702,21 +562,21 @@ const Product: React.FC = () => {
   };
 
   useEffect(() => {
-    // Create an abort controller to cancel pending requests
-    const abortController = new AbortController();
-
     const timer = setTimeout(() => {
-      setPage(1);
-      setHasMore(true);
-      fetchProducts(1, true);
+      dispatch(
+        fetchProducts({
+          page: 1,
+          search: searchQuery,
+          supplier: selectedSupplier,
+          reset: true,
+        })
+      );
     }, 500);
 
     return () => {
       clearTimeout(timer);
-      // Cancel any pending requests when search changes or component unmounts
-      abortController.abort();
     };
-  }, [searchQuery, selectedSupplier]);
+  }, [searchQuery, selectedSupplier, dispatch]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>): void => {
     const target = event.currentTarget;
@@ -724,8 +584,14 @@ const Product: React.FC = () => {
     const nearBottom =
       target.scrollTop + target.clientHeight >=
       target.scrollHeight - thresholdPx;
-    if (nearBottom && hasMore && !loading && !loadingMore) {
-      fetchProducts(page, false);
+    if (nearBottom && hasMore && !loading) {
+      dispatch(
+        fetchProducts({
+          page: currentPage + 1,
+          search: searchQuery,
+          supplier: selectedSupplier,
+        })
+      );
     }
   };
 
@@ -798,8 +664,7 @@ const Product: React.FC = () => {
             value={selectedSupplier}
             onChange={(e) => {
               setSelectedSupplier(e.target.value);
-              setPage(1);
-              setHasMore(true);
+              setSelectedSupplier(e.target.value);
             }}
           >
             <option value="">All Suppliers</option>
@@ -828,7 +693,7 @@ const Product: React.FC = () => {
         className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto"
         onScroll={handleScroll}
       >
-        {loading ? (
+        {loading && products.length === 0 ? (
           <div className="w-full">
             <table className="table-auto min-w-[600px] w-full">
               <thead className="sticky top-0 bg-transparent table-head">
@@ -893,7 +758,7 @@ const Product: React.FC = () => {
               </tbody>
             </table>
           </div>
-        ) : products.length === 0 ? (
+        ) : products.length === 0 && !loading ? (
           <div className="flex justify-center items-center h-full text-gray-400">
             No products available
           </div>
@@ -1001,20 +866,9 @@ const Product: React.FC = () => {
                 </tbody>
               </table>
             </div>
-            {loadingMore && (
-              <div className="flex justify-center items-center py-4 gap-1">
-                <div
-                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <div
-                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <div
-                  className="w-2 h-2 bg-neutral-500 rounded-full animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
+            {loading && products.length > 0 && (
+              <div className="w-full flex justify-center py-4">
+                <Spinner size="md" color="text-white" />
               </div>
             )}
           </>
