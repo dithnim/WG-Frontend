@@ -28,6 +28,10 @@ interface DashboardState {
   };
   timeframe: string;
   loading: boolean;
+  loadingProduct30Day: boolean;
+  loadingSupplier30Day: boolean;
+  loadingProductCount: boolean;
+  loadingSaleCount: boolean;
   error: string | null;
   lastFetchedProduct30Day: number | null;
   lastFetchedSupplier30Day: number | null;
@@ -55,6 +59,10 @@ const initialState: DashboardState = {
   },
   timeframe: "month",
   loading: false,
+  loadingProduct30Day: false,
+  loadingSupplier30Day: false,
+  loadingProductCount: false,
+  loadingSaleCount: false,
   error: null,
   lastFetchedProduct30Day: null,
   lastFetchedSupplier30Day: null,
@@ -219,16 +227,16 @@ const dashboardSlice = createSlice({
     // Product 30-day data
     builder
       .addCase(fetchProduct30DayData.pending, (state) => {
-        state.loading = true;
+        state.loadingProduct30Day = true;
         state.error = null;
       })
       .addCase(fetchProduct30DayData.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingProduct30Day = false;
         state.product30DayData = action.payload;
         state.lastFetchedProduct30Day = Date.now();
       })
       .addCase(fetchProduct30DayData.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingProduct30Day = false;
         state.error = action.payload as string;
         state.product30DayData = {
           counts: [],
@@ -239,16 +247,16 @@ const dashboardSlice = createSlice({
     // Supplier 30-day data
     builder
       .addCase(fetchSupplier30DayData.pending, (state) => {
-        state.loading = true;
+        state.loadingSupplier30Day = true;
         state.error = null;
       })
       .addCase(fetchSupplier30DayData.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingSupplier30Day = false;
         state.supplier30DayData = action.payload;
         state.lastFetchedSupplier30Day = Date.now();
       })
       .addCase(fetchSupplier30DayData.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingSupplier30Day = false;
         state.error = action.payload as string;
         state.supplier30DayData = {
           counts: [],
@@ -259,11 +267,11 @@ const dashboardSlice = createSlice({
     // Product Count
     builder
       .addCase(fetchProductCount.pending, (state) => {
-        state.loading = true;
+        state.loadingProductCount = true;
         state.error = null;
       })
       .addCase(fetchProductCount.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingProductCount = false;
         state.products.current = action.payload.current;
 
         // Update count list
@@ -293,7 +301,7 @@ const dashboardSlice = createSlice({
         state.lastFetchedProductCount = Date.now();
       })
       .addCase(fetchProductCount.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingProductCount = false;
         state.error = action.payload as string;
         state.products.current = 0;
         state.products.previous = 0;
@@ -302,11 +310,11 @@ const dashboardSlice = createSlice({
     // Sale Count
     builder
       .addCase(fetchSaleCount.pending, (state) => {
-        state.loading = true;
+        state.loadingSaleCount = true;
         state.error = null;
       })
       .addCase(fetchSaleCount.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingSaleCount = false;
         state.sales.current = action.payload.current;
         state.sales.previous = action.payload.previous;
         state.sales.percentage = calculatePercentage(
@@ -316,7 +324,7 @@ const dashboardSlice = createSlice({
         state.lastFetchedSaleCount = Date.now();
       })
       .addCase(fetchSaleCount.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingSaleCount = false;
         state.error = action.payload as string;
       });
   },
@@ -328,7 +336,16 @@ export default dashboardSlice.reducer;
 
 // Selectors
 export const selectDashboardLoading = (state: { dashboard: DashboardState }) =>
-  state.dashboard.loading;
+  state.dashboard.loadingProduct30Day ||
+  state.dashboard.loadingSupplier30Day ||
+  state.dashboard.loadingProductCount ||
+  state.dashboard.loadingSaleCount;
+export const selectLoadingProduct30Day = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.loadingProduct30Day;
+export const selectLoadingSupplier30Day = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.loadingSupplier30Day;
 export const selectDashboardError = (state: { dashboard: DashboardState }) =>
   state.dashboard.error;
 export const selectTimeframe = (state: { dashboard: DashboardState }) =>
