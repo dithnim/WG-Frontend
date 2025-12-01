@@ -40,6 +40,13 @@ const initialNavigation = [
     icon: "bx bxs-user-check me-2 text-2xl",
   },
   {
+    name: "Sales Report",
+    id: "sales-report",
+    href: "/sales/report",
+    current: false,
+    icon: "bx bxs-report me-2 text-xl",
+  },
+  {
     name: "Inventory",
     id: "inventory",
     href: "/inventory",
@@ -166,7 +173,7 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
       <div
         className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-all duration-500 ease-in-out z-50 border-e border-[#262626] backdrop-blur-sm ${
           menu ? "translate-x-0 shadow-2xl w-44" : "-translate-x-full w-44"
-        } md:translate-x-0 md:relative ${isCollapsed ? "md:w-20" : "md:w-52 xl:w-64"}`}
+        } md:translate-x-0 md:sticky md:top-0 md:h-screen md:flex-shrink-0 ${isCollapsed ? "md:w-20" : "md:w-52 xl:w-64"}`}
         style={{
           background: "linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%)",
           boxShadow: menu ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "none",
@@ -182,7 +189,7 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
             className={`bx ${isCollapsed ? "bx-chevron-right" : "bx-chevron-left"} text-lg`}
           ></i>
         </button>
-        <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between">
+        <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between overflow-y-auto">
           <div>
             <div className="flex items-center justify-center mb-5">
               {isCollapsed ? (

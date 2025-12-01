@@ -16,6 +16,7 @@ import Dashboard from "./Components/pages/Dashboard";
 import Suppliers from "./Components/pages/Suppliers";
 import Inventory from "./Components/pages/Inventory";
 import Sales from "./Components/pages/Sales";
+import SalesReport from "./Components/pages/SalesReport";
 import Stats from "./Components/pages/Stats";
 import Notifications from "./Components/pages/Notifications";
 import NotFound from "./Components/pages/NotFound";
@@ -49,14 +50,14 @@ function AppContent() {
   // Validate token on initial load
   useEffect(() => {
     setIsLoading(false);
-    
+
     // Check if there's a redirect path from 404 page
-    const redirectPath = sessionStorage.getItem('redirectPath');
+    const redirectPath = sessionStorage.getItem("redirectPath");
     if (redirectPath) {
-      sessionStorage.removeItem('redirectPath');
+      sessionStorage.removeItem("redirectPath");
       // Use setTimeout to allow React Router to initialize
       setTimeout(() => {
-        window.history.replaceState(null, '', redirectPath);
+        window.history.replaceState(null, "", redirectPath);
       }, 0);
     }
   }, []);
@@ -91,14 +92,14 @@ function AppContent() {
           path="/"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Dashboard />
                 </div>
@@ -112,14 +113,14 @@ function AppContent() {
           path="/products"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Product />
                 </div>
@@ -133,14 +134,14 @@ function AppContent() {
           path="/suppliers"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Suppliers />
                 </div>
@@ -154,16 +155,37 @@ function AppContent() {
           path="/sales"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Sales />
+                </div>
+              </div>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/sales/report"
+          element={
+            isAuthenticated ? (
+              <div className="flex h-screen overflow-hidden">
+                <Sidebar
+                  onLogout={handleLogout}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={handleToggleSidebar}
+                />
+                <div
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
+                >
+                  <SalesReport />
                 </div>
               </div>
             ) : (
@@ -175,14 +197,14 @@ function AppContent() {
           path="/inventory"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Inventory />
                 </div>
@@ -196,14 +218,14 @@ function AppContent() {
           path="/notifications"
           element={
             isAuthenticated ? (
-              <div className="flex">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar
                   onLogout={handleLogout}
                   isCollapsed={isSidebarCollapsed}
                   onToggleCollapse={handleToggleSidebar}
                 />
                 <div
-                  className={`bg-[#0f0f0f] text-white h-auto transition-all duration-500 ${isSidebarCollapsed ? "w-[calc(100vw-4rem)]" : "w-screen"}`}
+                  className={`bg-[#0f0f0f] text-white flex-1 overflow-y-auto transition-all duration-500`}
                 >
                   <Notifications />
                 </div>
