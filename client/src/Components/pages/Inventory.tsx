@@ -766,6 +766,7 @@ const Inventory = () => {
       {showAddInventoryModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setShowAddInventoryModal(false);
             if (e.key === "Enter" && !e.shiftKey) {
@@ -800,6 +801,7 @@ const Inventory = () => {
                 <input
                   type="number"
                   step="0.01"
+                  autoFocus
                   value={newInventory.cost}
                   onChange={(e) =>
                     setNewInventory({ ...newInventory, cost: e.target.value })
@@ -865,6 +867,7 @@ const Inventory = () => {
       {editingInventory && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               setEditingInventory(null);
@@ -898,6 +901,7 @@ const Inventory = () => {
                 <input
                   type="number"
                   step="0.01"
+                  autoFocus
                   value={newInventory.cost}
                   onChange={(e) =>
                     setNewInventory({ ...newInventory, cost: e.target.value })
@@ -966,6 +970,7 @@ const Inventory = () => {
       {showAddProductModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setShowAddProductModal(false);
             if (
@@ -997,6 +1002,7 @@ const Inventory = () => {
                   </label>
                   <input
                     type="text"
+                    autoFocus
                     value={newProduct.productId}
                     onChange={(e) =>
                       setNewProduct({
@@ -1114,6 +1120,7 @@ const Inventory = () => {
       {showEditProductModal && selectedProduct && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") setShowEditProductModal(false);
             if (
@@ -1159,6 +1166,7 @@ const Inventory = () => {
                 </label>
                 <input
                   type="text"
+                  autoFocus
                   value={editProduct.productName}
                   onChange={(e) =>
                     setEditProduct({
