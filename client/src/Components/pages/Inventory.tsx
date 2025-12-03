@@ -764,7 +764,16 @@ const Inventory = () => {
 
       {/* Add Inventory Modal */}
       {showAddInventoryModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowAddInventoryModal(false);
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleAddInventory();
+            }
+          }}
+        >
           <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Add Inventory Entry</h3>
@@ -854,7 +863,19 @@ const Inventory = () => {
 
       {/* Edit Inventory Modal */}
       {editingInventory && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setEditingInventory(null);
+              setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+            }
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleUpdateInventory();
+            }
+          }}
+        >
           <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Edit Inventory Entry</h3>
@@ -943,7 +964,20 @@ const Inventory = () => {
 
       {/* Add Product Modal */}
       {showAddProductModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowAddProductModal(false);
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              e.target instanceof HTMLInputElement
+            ) {
+              e.preventDefault();
+              handleAddProduct();
+            }
+          }}
+        >
           <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Add New Product</h3>
@@ -1078,7 +1112,20 @@ const Inventory = () => {
 
       {/* Edit Product Modal */}
       {showEditProductModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowEditProductModal(false);
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              e.target instanceof HTMLInputElement
+            ) {
+              e.preventDefault();
+              handleUpdateProduct();
+            }
+          }}
+        >
           <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Edit Product</h3>
