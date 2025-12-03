@@ -79,6 +79,28 @@ const Inventory = () => {
     dispatch(fetchProductsWithInventories());
   }, [dispatch]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+P: Open Add Product modal
+      if (e.ctrlKey && e.key === "p") {
+        e.preventDefault();
+        setShowAddProductModal(true);
+      }
+      // Ctrl+I: Open Add Inventory modal (only if a product is selected)
+      if (e.ctrlKey && e.key === "i") {
+        e.preventDefault();
+        if (selectedProduct) {
+          setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+          setShowAddInventoryModal(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedProduct]);
+
   // Update selected product when productsWithInventories changes
   useEffect(() => {
     if (selectedProduct) {
