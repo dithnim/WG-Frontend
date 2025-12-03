@@ -693,6 +693,8 @@ const Inventory = () => {
                       </thead>
                       <tbody>
                         {selectedProduct.inventories.map((inventory, index) => {
+                          // Debug: log inventory to see if createdAt exists
+                          console.log("Inventory item:", inventory);
                           const profitMargin =
                             ((inventory.sellingPrice - inventory.cost) /
                               inventory.cost) *
@@ -736,12 +738,15 @@ const Inventory = () => {
                                 </span>
                               </td>
                               <td className="py-3 px-2 text-gray-400 text-sm">
-                                {inventory.createdAt &&
-                                new Date(inventory.createdAt).getTime() > 0
+                                {inventory.createdAt
                                   ? new Date(
                                       inventory.createdAt
                                     ).toLocaleDateString()
-                                  : "N/A"}
+                                  : selectedProduct.createdAt
+                                    ? new Date(
+                                        selectedProduct.createdAt
+                                      ).toLocaleDateString()
+                                    : "N/A"}
                               </td>
                               <td className="py-3 px-2">
                                 <div className="flex gap-2">
