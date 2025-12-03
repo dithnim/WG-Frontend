@@ -3,6 +3,7 @@ import supplierReducer from "./supplierSlice";
 import productReducer from "./productSlice";
 import authReducer from "./authSlice";
 import dashboardReducer from "./dashboardSlice";
+import inventoryReducer from "./inventorySlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     suppliers: supplierReducer,
     products: productReducer,
     dashboard: dashboardReducer,
+    inventory: inventoryReducer,
   },
 });
 

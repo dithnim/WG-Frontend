@@ -1,21 +1,1186 @@
+import React, { useEffect, useState, useCallback } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  fetchProductsWithInventories,
+  createInventoryForProduct,
+  updateInventory,
+  deleteInventory,
+  createProduct,
+  updateProduct,
+  searchProductByProductId,
+  optimisticUpdateInventory,
+  optimisticAddInventory,
+  optimisticDeleteInventory,
+  replaceTempInventory,
+  revertInventoryState,
+  Inventory as InventoryType,
+  ProductWithInventories,
+} from "../../store/inventorySlice";
+
+interface NewInventoryForm {
+  cost: string;
+  sellingPrice: string;
+  stock: string;
+}
+
+interface NewProductForm {
+  productId: string;
+  productName: string;
+  brand: string;
+  category: string;
+  rackNumber: string;
+  description: string;
+}
+
 const Inventory = () => {
+  const dispatch = useAppDispatch();
+  const { productsWithInventories, loading, error } = useAppSelector(
+    (state) => state.inventory
+  );
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const [apiSearchDone, setApiSearchDone] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductWithInventories | null>(null);
+  const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [editingInventory, setEditingInventory] =
+    useState<InventoryType | null>(null);
+
+  const [newInventory, setNewInventory] = useState<NewInventoryForm>({
+    cost: "",
+    sellingPrice: "",
+    stock: "",
+  });
+
+  const [newProduct, setNewProduct] = useState<NewProductForm>({
+    productId: "",
+    productName: "",
+    brand: "",
+    category: "",
+    rackNumber: "",
+    description: "",
+  });
+
+  const [editProduct, setEditProduct] = useState<NewProductForm>({
+    productId: "",
+    productName: "",
+    brand: "",
+    category: "",
+    rackNumber: "",
+    description: "",
+  });
+
+  // Load all data on mount
+  useEffect(() => {
+    dispatch(fetchProductsWithInventories());
+  }, [dispatch]);
+
+  // Update selected product when productsWithInventories changes
+  useEffect(() => {
+    if (selectedProduct) {
+      const updated = productsWithInventories.find(
+        (p) => p._id === selectedProduct._id
+      );
+      if (updated) {
+        setSelectedProduct(updated);
+      }
+    }
+  }, [productsWithInventories]);
+
+  const filteredProducts = productsWithInventories.filter((product) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    const productName = (product.productName || "").toLowerCase();
+    const productId = (product.productId || "").toLowerCase();
+    const brand = (product.brand || "").toLowerCase();
+    const category = (product.category || "").toLowerCase();
+
+    return (
+      productName.includes(query) ||
+      productId.includes(query) ||
+      brand.includes(query) ||
+      category.includes(query)
+    );
+  });
+
+  // Debounced API search when no local results found
+  useEffect(() => {
+    const query = searchQuery.trim();
+
+    // Reset API search state when query changes
+    setApiSearchDone(false);
+
+    // Don't search if query is empty or too short
+    if (!query || query.length < 2) {
+      setIsSearchingApi(false);
+      return;
+    }
+
+    // Check if we have local results by filtering again (to avoid dependency on filteredProducts)
+    const hasLocalResults = productsWithInventories.some((product) => {
+      const q = query.toLowerCase();
+      const productName = (product.productName || "").toLowerCase();
+      const productId = (product.productId || "").toLowerCase();
+      const brand = (product.brand || "").toLowerCase();
+      const category = (product.category || "").toLowerCase();
+
+      return (
+        productName.includes(q) ||
+        productId.includes(q) ||
+        brand.includes(q) ||
+        category.includes(q)
+      );
+    });
+
+    // If we have local results, don't search API
+    if (hasLocalResults) {
+      setIsSearchingApi(false);
+      return;
+    }
+
+    // Debounce the API call
+    const timeoutId = setTimeout(async () => {
+      setIsSearchingApi(true);
+      try {
+        await dispatch(searchProductByProductId(query)).unwrap();
+      } catch (err) {
+        // Error is handled by the slice
+      } finally {
+        setIsSearchingApi(false);
+        setApiSearchDone(true);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, productsWithInventories, dispatch]);
+
+  const handleAddInventory = async () => {
+    if (!selectedProduct) return;
+
+    const cost = parseFloat(newInventory.cost);
+    const sellingPrice = parseFloat(newInventory.sellingPrice);
+    const stock = parseInt(newInventory.stock);
+
+    if (isNaN(cost) || isNaN(sellingPrice) || isNaN(stock)) {
+      alert("Please enter valid numbers for all fields");
+      return;
+    }
+
+    // Store previous state for rollback
+    const previousState = [...productsWithInventories];
+
+    // Create a temporary inventory object for optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const tempInventory: InventoryType = {
+      _id: tempId,
+      cost,
+      sellingPrice,
+      stock,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistically add the inventory
+    dispatch(
+      optimisticAddInventory({
+        productId: selectedProduct._id,
+        inventory: tempInventory,
+      })
+    );
+
+    // Close modal immediately
+    setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+    setShowAddInventoryModal(false);
+
+    // Perform API call in background
+    try {
+      const result = await dispatch(
+        createInventoryForProduct({
+          productId: selectedProduct._id,
+          cost,
+          sellingPrice,
+          stock,
+        })
+      ).unwrap();
+
+      // Debug: Log API response to see what we're getting
+      console.log("Create inventory API result:", result);
+      console.log("Inventory from API:", result.inventory);
+      console.log("createdAt value:", result.inventory?.createdAt);
+
+      // Replace temp inventory with real one (no refetch needed)
+      dispatch(
+        replaceTempInventory({
+          productId: selectedProduct._id,
+          tempId,
+          realInventory: {
+            ...result.inventory,
+            createdAt: result.inventory.createdAt || new Date().toISOString(),
+          },
+        })
+      );
+    } catch (err) {
+      // Revert on failure
+      dispatch(revertInventoryState(previousState));
+      alert("Failed to add inventory. Please try again.");
+    }
+  };
+
+  const handleUpdateInventory = async () => {
+    if (!editingInventory || !selectedProduct) return;
+
+    const cost = parseFloat(newInventory.cost);
+    const sellingPrice = parseFloat(newInventory.sellingPrice);
+    const stock = parseInt(newInventory.stock);
+
+    if (isNaN(cost) || isNaN(sellingPrice) || isNaN(stock)) {
+      alert("Please enter valid numbers for all fields");
+      return;
+    }
+
+    // Store previous state for rollback
+    const previousState = [
+      ...productsWithInventories.map((p) => ({
+        ...p,
+        inventories: [...p.inventories.map((inv) => ({ ...inv }))],
+      })),
+    ];
+
+    // Optimistically update the UI
+    dispatch(
+      optimisticUpdateInventory({
+        productId: selectedProduct._id,
+        inventoryId: editingInventory._id,
+        cost,
+        sellingPrice,
+        stock,
+      })
+    );
+
+    // Close modal immediately
+    setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+    setEditingInventory(null);
+
+    // Perform API call in background
+    try {
+      await dispatch(
+        updateInventory({
+          inventoryId: editingInventory._id,
+          cost,
+          sellingPrice,
+          stock,
+        })
+      ).unwrap();
+    } catch (err) {
+      // Revert on failure
+      dispatch(revertInventoryState(previousState));
+      alert("Failed to update inventory. Please try again.");
+    }
+  };
+
+  const handleDeleteInventory = async (inventory: InventoryType) => {
+    if (!selectedProduct) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this inventory entry?"
+    );
+    if (!confirmed) return;
+
+    // Store previous state for rollback
+    const previousState = [
+      ...productsWithInventories.map((p) => ({
+        ...p,
+        inventories: [...p.inventories.map((inv) => ({ ...inv }))],
+      })),
+    ];
+
+    // Optimistically delete from UI
+    dispatch(
+      optimisticDeleteInventory({
+        productId: selectedProduct._id,
+        inventoryId: inventory._id,
+      })
+    );
+
+    // Perform API call in background
+    try {
+      await dispatch(
+        deleteInventory({
+          inventoryId: inventory._id,
+          linkId: inventory.linkId,
+        })
+      ).unwrap();
+    } catch (err) {
+      // Revert on failure
+      dispatch(revertInventoryState(previousState));
+      alert("Failed to delete inventory. Please try again.");
+    }
+  };
+
+  const handleAddProduct = async () => {
+    if (!newProduct.productId || !newProduct.productName) {
+      alert("Product ID and Product Name are required");
+      return;
+    }
+
+    await dispatch(createProduct(newProduct));
+
+    // Refresh data
+    await dispatch(fetchProductsWithInventories());
+
+    setNewProduct({
+      productId: "",
+      productName: "",
+      brand: "",
+      category: "",
+      rackNumber: "",
+      description: "",
+    });
+    setShowAddProductModal(false);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!selectedProduct) return;
+
+    await dispatch(
+      updateProduct({
+        _id: selectedProduct._id,
+        productName: editProduct.productName,
+        brand: editProduct.brand,
+        category: editProduct.category,
+        rackNumber: editProduct.rackNumber,
+        description: editProduct.description,
+      })
+    );
+
+    // Refresh data
+    await dispatch(fetchProductsWithInventories());
+
+    setShowEditProductModal(false);
+  };
+
+  const openEditProductModal = () => {
+    if (!selectedProduct) return;
+
+    setEditProduct({
+      productId: selectedProduct.productId,
+      productName: selectedProduct.productName,
+      brand: selectedProduct.brand || "",
+      category: selectedProduct.category || "",
+      rackNumber: selectedProduct.rackNumber || "",
+      description: selectedProduct.description || "",
+    });
+    setShowEditProductModal(true);
+  };
+
+  const openEditInventoryModal = (inventory: InventoryType) => {
+    setEditingInventory(inventory);
+    setNewInventory({
+      cost: inventory.cost.toString(),
+      sellingPrice: inventory.sellingPrice.toString(),
+      stock: inventory.stock.toString(),
+    });
+  };
+
+  const getTotalStock = (inventories: InventoryType[]) => {
+    return inventories.reduce((sum, inv) => sum + inv.stock, 0);
+  };
+
+  const getAverageCost = (inventories: InventoryType[]) => {
+    if (inventories.length === 0) return 0;
+    const totalCost = inventories.reduce((sum, inv) => sum + inv.cost, 0);
+    return totalCost / inventories.length;
+  };
+
+  const getAverageSellingPrice = (inventories: InventoryType[]) => {
+    if (inventories.length === 0) return 0;
+    const totalPrice = inventories.reduce(
+      (sum, inv) => sum + inv.sellingPrice,
+      0
+    );
+    return totalPrice / inventories.length;
+  };
+
   return (
-    <div className="h-auto xl:px-12 xl:py-6 px-8 py-2 ">
-      <div className="head bg-neutral-800 py-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold hidden md:flex xl:flex">
-            Inventory Manager{" "}
-          </h1>
-          <i
-            className="bx bxs-fire-alt text-2xl"
-            style={{ color: "#ff6300" }}
-          ></i>
+    <div className="h-full xl:px-12 px-8 py-2 overflow-y-auto">
+      {/* Header */}
+      <div className="head py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold hidden md:flex xl:flex">
+              Inventory Manager
+            </h1>
+            <i
+              className="bx bxs-package text-2xl"
+              style={{ color: "#ff6300" }}
+            ></i>
+          </div>
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            className="bg-white text-[#303030] hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold"
+          >
+            <i className="bx bx-plus"></i>
+            Add Product
+          </button>
         </div>
       </div>
 
-      <div className="body bg-neutral-800 mt-4 py-3">
-        <p>jsdk</p>
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg mt-4">
+          {error}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="body mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Products List */}
+        <div className="lg:col-span-1 bg-[#171717] rounded-lg p-4">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-3">Products</h2>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <i className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+
+          {loading && !productsWithInventories.length ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product._id}
+                  onClick={() => setSelectedProduct(product)}
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedProduct?._id === product._id
+                      ? "bg-[#303030] border border-gray-500"
+                      : "bg-[#262626] hover:bg-[#303030]"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{product.productName}</h3>
+                      <p className="text-sm text-gray-400">
+                        ID: {product.productId}
+                      </p>
+                      {product.brand && (
+                        <p className="text-xs text-gray-500">
+                          Brand: {product.brand}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`text-xs px-1 rounded ${
+                          product.inventories.length > 0
+                            ? "bg-blue-600/30 text-blue-400"
+                            : "bg-gray-600/30 text-gray-400"
+                        }`}
+                      >
+                        {product.inventories.length} entries
+                      </span>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Stock: {getTotalStock(product.inventories)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {filteredProducts.length === 0 && (
+                <div className="text-center text-gray-400 py-8">
+                  {isSearchingApi ? (
+                    <div className="flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mb-2"></div>
+                      <p>Searching database...</p>
+                    </div>
+                  ) : searchQuery.trim() && apiSearchDone ? (
+                    <div>
+                      <i className="bx bx-search-alt text-3xl mb-2"></i>
+                      <p>No products found for "{searchQuery}"</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Try a different search term
+                      </p>
+                    </div>
+                  ) : (
+                    "No products found"
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Product Details & Inventories */}
+        <div className="lg:col-span-2 bg-[#171717] rounded-lg p-4">
+          {selectedProduct ? (
+            <>
+              {/* Product Info Header */}
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-700">
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {selectedProduct.productName}
+                  </h2>
+                  <p className="text-gray-400">
+                    Product ID: {selectedProduct.productId}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedProduct.brand && (
+                      <span className="bg-purple-600/30 text-purple-400 px-2 py-1 rounded text-sm">
+                        {selectedProduct.brand}
+                      </span>
+                    )}
+                    {selectedProduct.category && (
+                      <span className="bg-blue-600/30 text-blue-400 px-2 py-1 rounded text-sm">
+                        {selectedProduct.category}
+                      </span>
+                    )}
+                    {selectedProduct.rackNumber && (
+                      <span className="bg-orange-600/30 text-orange-400 px-2 py-1 rounded text-sm">
+                        Rack: {selectedProduct.rackNumber}
+                      </span>
+                    )}
+                  </div>
+                  {selectedProduct.description && (
+                    <p className="text-sm text-gray-400 mt-2">
+                      {selectedProduct.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={openEditProductModal}
+                    className="bg-[#303030] hover:bg-[#404040] text-white px-3 py-2 rounded-lg transition-colors"
+                  >
+                    <i className="bx bx-edit"></i>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNewInventory({
+                        cost: "",
+                        sellingPrice: "",
+                        stock: "",
+                      });
+                      setShowAddInventoryModal(true);
+                    }}
+                    className="bg-white text-[#303030] hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold"
+                  >
+                    <i className="bx bx-plus"></i>
+                    Add Inventory
+                  </button>
+                </div>
+              </div>
+
+              {/* Inventory Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm">Total Stock</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {getTotalStock(selectedProduct.inventories)}
+                  </p>
+                </div>
+                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm">Inventory Entries</p>
+                  <p className="text-2xl font-bold text-blue-400">
+                    {selectedProduct.inventories.length}
+                  </p>
+                </div>
+                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm">Avg. Cost</p>
+                  <p className="text-2xl font-bold text-yellow-400">
+                    Rs.{getAverageCost(selectedProduct.inventories).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm">Avg. Selling Price</p>
+                  <p className="text-2xl font-bold text-purple-400">
+                    Rs.
+                    {getAverageSellingPrice(
+                      selectedProduct.inventories
+                    ).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Inventory Table */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">
+                  Inventory Entries
+                </h3>
+                {selectedProduct.inventories.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-gray-400 border-b border-gray-700">
+                          <th className="pb-3 px-2">#</th>
+                          <th className="pb-3 px-2">Cost</th>
+                          <th className="pb-3 px-2">Selling Price</th>
+                          <th className="pb-3 px-2">Stock</th>
+                          <th className="pb-3 px-2">Profit Margin</th>
+                          <th className="pb-3 px-2">Created</th>
+                          <th className="pb-3 px-2">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedProduct.inventories.map((inventory, index) => {
+                          const profitMargin =
+                            ((inventory.sellingPrice - inventory.cost) /
+                              inventory.cost) *
+                            100;
+                          return (
+                            <tr
+                              key={inventory._id}
+                              className="border-b border-gray-700 hover:bg-[#262626]/50"
+                            >
+                              <td className="py-3 px-2">{index + 1}</td>
+                              <td className="py-3 px-2">
+                                Rs.{inventory.cost.toFixed(2)}
+                              </td>
+                              <td className="py-3 px-2">
+                                Rs.{inventory.sellingPrice.toFixed(2)}
+                              </td>
+                              <td className="py-3 px-2">
+                                <span
+                                  className={`px-2 py-1 rounded ${
+                                    inventory.stock > 1
+                                      ? "text-green-400"
+                                      : inventory.stock > 0
+                                        ? "text-yellow-400"
+                                        : "text-red-400"
+                                  }`}
+                                >
+                                  {inventory.stock}
+                                </span>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span
+                                  className={`${
+                                    profitMargin > 2
+                                      ? "text-green-400"
+                                      : profitMargin > 0
+                                        ? "text-yellow-400"
+                                        : "text-red-400"
+                                  }`}
+                                >
+                                  {profitMargin.toFixed(1)}%
+                                </span>
+                              </td>
+                              <td className="py-3 px-2 text-gray-400 text-sm">
+                                {inventory.createdAt &&
+                                new Date(inventory.createdAt).getTime() > 0
+                                  ? new Date(
+                                      inventory.createdAt
+                                    ).toLocaleDateString()
+                                  : "N/A"}
+                              </td>
+                              <td className="py-3 px-2">
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() =>
+                                      openEditInventoryModal(inventory)
+                                    }
+                                    className="text-gray-300 hover:text-white transition-colors"
+                                    title="Edit"
+                                  >
+                                    <i className="bx bx-edit"></i>
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteInventory(inventory)
+                                    }
+                                    className="text-[#a10000] hover:text-red-500 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <i className="bx bx-trash"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8 bg-[#262626] rounded-lg">
+                    <i className="bx bx-package text-4xl mb-2"></i>
+                    <p>No inventory entries for this product</p>
+                    <p className="text-sm">
+                      Click "Add Inventory" to create one
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
+              <i className="bx bx-select-multiple text-6xl mb-4"></i>
+              <p className="text-xl">Select a product to view inventories</p>
+              <p className="text-sm">
+                Choose a product from the list on the left
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Add Inventory Modal */}
+      {showAddInventoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Add Inventory Entry</h3>
+              <button
+                onClick={() => setShowAddInventoryModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <i className="bx bx-x text-2xl"></i>
+              </button>
+            </div>
+
+            <p className="text-gray-400 mb-4">
+              Adding inventory for:{" "}
+              <span className="text-white font-semibold">
+                {selectedProduct?.productName}
+              </span>
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Cost Price (Rs)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newInventory.cost}
+                  onChange={(e) =>
+                    setNewInventory({ ...newInventory, cost: e.target.value })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Selling Price ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newInventory.sellingPrice}
+                  onChange={(e) =>
+                    setNewInventory({
+                      ...newInventory,
+                      sellingPrice: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Stock Quantity
+                </label>
+                <input
+                  type="number"
+                  value={newInventory.stock}
+                  onChange={(e) =>
+                    setNewInventory({ ...newInventory, stock: e.target.value })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddInventoryModal(false)}
+                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddInventory}
+                disabled={loading}
+                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Adding..." : "Add Inventory"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Inventory Modal */}
+      {editingInventory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Edit Inventory Entry</h3>
+              <button
+                onClick={() => {
+                  setEditingInventory(null);
+                  setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <i className="bx bx-x text-2xl"></i>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Cost Price ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newInventory.cost}
+                  onChange={(e) =>
+                    setNewInventory({ ...newInventory, cost: e.target.value })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Selling Price ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newInventory.sellingPrice}
+                  onChange={(e) =>
+                    setNewInventory({
+                      ...newInventory,
+                      sellingPrice: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Stock Quantity
+                </label>
+                <input
+                  type="number"
+                  value={newInventory.stock}
+                  onChange={(e) =>
+                    setNewInventory({ ...newInventory, stock: e.target.value })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setEditingInventory(null);
+                  setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+                }}
+                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateInventory}
+                disabled={loading}
+                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Inventory"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Product Modal */}
+      {showAddProductModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Add New Product</h3>
+              <button
+                onClick={() => setShowAddProductModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <i className="bx bx-x text-2xl"></i>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Product ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.productId}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        productId: e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="SKU-001"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.productName}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        productName: e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Product Name"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Brand
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.brand}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, brand: e.target.value })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Brand Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.category}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, category: e.target.value })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Category"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Rack Number
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.rackNumber}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, rackNumber: e.target.value })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="A-01"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                  placeholder="Product description..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddProductModal(false)}
+                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddProduct}
+                disabled={loading}
+                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Creating..." : "Create Product"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {showEditProductModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Edit Product</h3>
+              <button
+                onClick={() => setShowEditProductModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <i className="bx bx-x text-2xl"></i>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Product ID
+                </label>
+                <input
+                  type="text"
+                  value={editProduct.productId}
+                  disabled
+                  className="w-full bg-[#303030] text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Product ID cannot be changed
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  value={editProduct.productName}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      productName: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Brand
+                  </label>
+                  <input
+                    type="text"
+                    value={editProduct.brand}
+                    onChange={(e) =>
+                      setEditProduct({ ...editProduct, brand: e.target.value })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={editProduct.category}
+                    onChange={(e) =>
+                      setEditProduct({
+                        ...editProduct,
+                        category: e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Rack Number
+                </label>
+                <input
+                  type="text"
+                  value={editProduct.rackNumber}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      rackNumber: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editProduct.description}
+                  onChange={(e) =>
+                    setEditProduct({
+                      ...editProduct,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEditProductModal(false)}
+                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateProduct}
+                disabled={loading}
+                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Product"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
