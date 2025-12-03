@@ -13,6 +13,7 @@ import {
   optimisticDeleteInventory,
   replaceTempInventory,
   revertInventoryState,
+  optimisticUpdateProduct,
   Inventory as InventoryType,
   ProductWithInventories,
 } from "../../store/inventorySlice";
@@ -345,9 +346,18 @@ const Inventory = () => {
   const handleUpdateProduct = async () => {
     if (!selectedProduct) return;
 
-    await dispatch(
-      updateProduct({
-        _id: selectedProduct._id,
+    // Store previous state for rollback
+    const previousState = [
+      ...productsWithInventories.map((p) => ({
+        ...p,
+        inventories: [...p.inventories.map((inv) => ({ ...inv }))],
+      })),
+    ];
+
+    // Optimistically update the UI
+    dispatch(
+      optimisticUpdateProduct({
+        productId: selectedProduct._id,
         productName: editProduct.productName,
         brand: editProduct.brand,
         category: editProduct.category,
@@ -356,10 +366,26 @@ const Inventory = () => {
       })
     );
 
-    // Refresh data
-    await dispatch(fetchProductsWithInventories());
-
+    // Close modal immediately
     setShowEditProductModal(false);
+
+    // Perform API call in background
+    try {
+      await dispatch(
+        updateProduct({
+          _id: selectedProduct._id,
+          productName: editProduct.productName,
+          brand: editProduct.brand,
+          category: editProduct.category,
+          rackNumber: editProduct.rackNumber,
+          description: editProduct.description,
+        })
+      ).unwrap();
+    } catch (err) {
+      // Revert on failure
+      dispatch(revertInventoryState(previousState));
+      alert("Failed to update product. Please try again.");
+    }
   };
 
   const openEditProductModal = () => {

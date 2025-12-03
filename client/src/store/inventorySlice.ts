@@ -331,6 +331,37 @@ const inventorySlice = createSlice({
     ) => {
       state.productsWithInventories = action.payload;
     },
+    // Optimistic update for product
+    optimisticUpdateProduct: (
+      state,
+      action: PayloadAction<{
+        productId: string;
+        productName?: string;
+        brand?: string;
+        category?: string;
+        rackNumber?: string;
+        description?: string;
+      }>
+    ) => {
+      const {
+        productId,
+        productName,
+        brand,
+        category,
+        rackNumber,
+        description,
+      } = action.payload;
+      const product = state.productsWithInventories.find(
+        (p) => p._id === productId
+      );
+      if (product) {
+        if (productName !== undefined) product.productName = productName;
+        if (brand !== undefined) product.brand = brand;
+        if (category !== undefined) product.category = category;
+        if (rackNumber !== undefined) product.rackNumber = rackNumber;
+        if (description !== undefined) product.description = description;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -448,6 +479,7 @@ export const {
   optimisticDeleteInventory,
   replaceTempInventory,
   revertInventoryState,
+  optimisticUpdateProduct,
 } = inventorySlice.actions;
 
 export default inventorySlice.reducer;
