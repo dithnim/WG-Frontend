@@ -74,6 +74,9 @@ const Inventory = () => {
     description: "",
   });
 
+  // Ref for search input
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
   // Load all data on mount
   useEffect(() => {
     dispatch(fetchProductsWithInventories());
@@ -94,6 +97,12 @@ const Inventory = () => {
           setNewInventory({ cost: "", sellingPrice: "", stock: "" });
           setShowAddInventoryModal(true);
         }
+      }
+      // Ctrl+S: Focus search box
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
       }
     };
 
@@ -491,6 +500,7 @@ const Inventory = () => {
             <h2 className="text-xl font-semibold mb-3">Products</h2>
             <div className="relative">
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
