@@ -477,7 +477,7 @@ const Inventory = () => {
           </div>
           <button
             onClick={() => setShowAddProductModal(true)}
-            className="bg-white text-[#303030] hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold"
+            className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
           >
             <i className="bx bx-plus"></i>
             Add Product
@@ -507,7 +507,7 @@ const Inventory = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <i className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400"></i>
             </div>
           </div>
 
@@ -523,18 +523,18 @@ const Inventory = () => {
                   onClick={() => setSelectedProduct(product)}
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedProduct?._id === product._id
-                      ? "bg-[#303030] border border-gray-500"
+                      ? "bg-[#303030] border border-neutral-500"
                       : "bg-[#262626] hover:bg-[#303030]"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium">{product.productName}</h3>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-neutral-400">
                         ID: {product.productId}
                       </p>
                       {product.brand && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-neutral-500">
                           Brand: {product.brand}
                         </p>
                       )}
@@ -543,13 +543,13 @@ const Inventory = () => {
                       <span
                         className={`text-xs px-1 rounded ${
                           product.inventories.length > 0
-                            ? "bg-blue-600/30 text-blue-400"
-                            : "bg-gray-600/30 text-gray-400"
+                            ? "bg-blue-600/30 border border-blue-600/60 text-blue-400 rounded-full"
+                            : "bg-neutral-600/30 border border-neutral-600/60 text-neutral-400 rounded-full"
                         }`}
                       >
                         {product.inventories.length} entries
                       </span>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-neutral-400 mt-1">
                         Stock: {getTotalStock(product.inventories)}
                       </p>
                     </div>
@@ -558,7 +558,7 @@ const Inventory = () => {
               ))}
 
               {filteredProducts.length === 0 && (
-                <div className="text-center text-gray-400 py-8">
+                <div className="text-center text-neutral-400 py-8">
                   {isSearchingApi ? (
                     <div className="flex flex-col items-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mb-2"></div>
@@ -568,7 +568,7 @@ const Inventory = () => {
                     <div>
                       <i className="bx bx-search-alt text-3xl mb-2"></i>
                       <p>No products found for "{searchQuery}"</p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-neutral-500 mt-1">
                         Try a different search term
                       </p>
                     </div>
@@ -586,33 +586,33 @@ const Inventory = () => {
           {selectedProduct ? (
             <>
               {/* Product Info Header */}
-              <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-700">
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-neutral-700">
                 <div>
                   <h2 className="text-2xl font-bold">
                     {selectedProduct.productName}
                   </h2>
-                  <p className="text-gray-400">
+                  <p className="text-neutral-400">
                     Product ID: {selectedProduct.productId}
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2 items-center">
                     {selectedProduct.brand && (
-                      <span className="bg-purple-600/30 text-purple-400 px-2 py-1 rounded text-sm">
+                      <span className="bg-purple-600/30 border border-purple-600/60 text-purple-400 px-2 rounded-full text-sm">
                         {selectedProduct.brand}
                       </span>
                     )}
                     {selectedProduct.category && (
-                      <span className="bg-blue-600/30 text-blue-400 px-2 py-1 rounded text-sm">
+                      <span className="bg-blue-600/30 border border-blue-600/60 text-blue-400 px-2 rounded-full text-sm">
                         {selectedProduct.category}
                       </span>
                     )}
                     {selectedProduct.rackNumber && (
-                      <span className="bg-orange-600/30 text-orange-400 px-2 py-1 rounded text-sm">
+                      <span className="bg-orange-600/30 border border-orange-600/60 text-orange-400 px-2 rounded-full text-sm">
                         Rack: {selectedProduct.rackNumber}
                       </span>
                     )}
                   </div>
                   {selectedProduct.description && (
-                    <p className="text-sm text-gray-400 mt-2">
+                    <p className="text-sm text-neutral-400 mt-2">
                       {selectedProduct.description}
                     </p>
                   )}
@@ -620,9 +620,9 @@ const Inventory = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={openEditProductModal}
-                    className="bg-[#303030] hover:bg-[#404040] text-white px-3 py-2 rounded-lg transition-colors"
+                    className="bg-[#303030] hover:bg-[#404040] text-white px-3 py-2 rounded-full transition-colors flex items-center gap-2 font-semibold"
                   >
-                    <i className="bx bx-edit"></i>
+                    <i className="bx bx-edit text"></i>
                   </button>
                   <button
                     onClick={() => {
@@ -633,7 +633,7 @@ const Inventory = () => {
                       });
                       setShowAddInventoryModal(true);
                     }}
-                    className="bg-white text-[#303030] hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold"
+                    className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
                   >
                     <i className="bx bx-plus"></i>
                     Add Inventory
@@ -644,25 +644,25 @@ const Inventory = () => {
               {/* Inventory Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-[#262626] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm">Total Stock</p>
+                  <p className="text-neutral-400 text-sm">Total Stock</p>
                   <p className="text-2xl font-bold text-green-400">
                     {getTotalStock(selectedProduct.inventories)}
                   </p>
                 </div>
                 <div className="bg-[#262626] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm">Inventory Entries</p>
+                  <p className="text-neutral-400 text-sm">Inventory Entries</p>
                   <p className="text-2xl font-bold text-blue-400">
                     {selectedProduct.inventories.length}
                   </p>
                 </div>
                 <div className="bg-[#262626] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm">Avg. Cost</p>
+                  <p className="text-neutral-400 text-sm">Avg. Cost</p>
                   <p className="text-2xl font-bold text-yellow-400">
                     Rs.{getAverageCost(selectedProduct.inventories).toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-[#262626] rounded-lg p-4 text-center">
-                  <p className="text-gray-400 text-sm">Avg. Selling Price</p>
+                  <p className="text-neutral-400 text-sm">Avg. Selling Price</p>
                   <p className="text-2xl font-bold text-purple-400">
                     Rs.
                     {getAverageSellingPrice(
@@ -681,7 +681,7 @@ const Inventory = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-gray-400 border-b border-gray-700">
+                        <tr className="text-left text-neutral-400 border-b border-neutral-700">
                           <th className="pb-3 px-2">#</th>
                           <th className="pb-3 px-2">Cost</th>
                           <th className="pb-3 px-2">Selling Price</th>
@@ -702,7 +702,7 @@ const Inventory = () => {
                           return (
                             <tr
                               key={inventory._id}
-                              className="border-b border-gray-700 hover:bg-[#262626]/50"
+                              className="border-b border-neutral-700 hover:bg-[#262626]/50"
                             >
                               <td className="py-3 px-2">{index + 1}</td>
                               <td className="py-3 px-2">
@@ -737,7 +737,7 @@ const Inventory = () => {
                                   {profitMargin.toFixed(1)}%
                                 </span>
                               </td>
-                              <td className="py-3 px-2 text-gray-400 text-sm">
+                              <td className="py-3 px-2 text-neutral-400 text-sm">
                                 {inventory.createdAt
                                   ? new Date(
                                       inventory.createdAt
@@ -750,24 +750,20 @@ const Inventory = () => {
                               </td>
                               <td className="py-3 px-2">
                                 <div className="flex gap-2">
-                                  <button
+                                  <i
+                                    className="bx bxs-pencil text-lg cursor-pointer text-neutral-300 hover:text-white transition-colors"
                                     onClick={() =>
                                       openEditInventoryModal(inventory)
                                     }
-                                    className="text-gray-300 hover:text-white transition-colors"
                                     title="Edit"
-                                  >
-                                    <i className="bx bx-edit"></i>
-                                  </button>
-                                  <button
+                                  ></i>
+                                  <i
+                                    className="bx bxs-trash text-lg cursor-pointer text-[#a10000] hover:text-red-500 transition-colors"
                                     onClick={() =>
                                       handleDeleteInventory(inventory)
                                     }
-                                    className="text-[#a10000] hover:text-red-500 transition-colors"
                                     title="Delete"
-                                  >
-                                    <i className="bx bx-trash"></i>
-                                  </button>
+                                  ></i>
                                 </div>
                               </td>
                             </tr>
@@ -777,7 +773,7 @@ const Inventory = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400 py-8 bg-[#262626] rounded-lg">
+                  <div className="text-center text-neutral-400 py-8 bg-[#262626] rounded-lg">
                     <i className="bx bx-package text-4xl mb-2"></i>
                     <p>No inventory entries for this product</p>
                     <p className="text-sm">
@@ -788,7 +784,7 @@ const Inventory = () => {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
+            <div className="flex flex-col items-center justify-center h-full text-neutral-400 py-16">
               <i className="bx bx-select-multiple text-6xl mb-4"></i>
               <p className="text-xl">Select a product to view inventories</p>
               <p className="text-sm">
@@ -817,13 +813,13 @@ const Inventory = () => {
               <h3 className="text-xl font-bold">Add Inventory Entry</h3>
               <button
                 onClick={() => setShowAddInventoryModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
             </div>
 
-            <p className="text-gray-400 mb-4">
+            <p className="text-neutral-400 mb-4">
               Adding inventory for:{" "}
               <span className="text-white font-semibold">
                 {selectedProduct?.productName}
@@ -832,7 +828,7 @@ const Inventory = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Cost Price (Rs)
                 </label>
                 <input
@@ -848,7 +844,7 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Selling Price ($)
                 </label>
                 <input
@@ -866,7 +862,7 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Stock Quantity
                 </label>
                 <input
@@ -884,14 +880,14 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddInventoryModal(false)}
-                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddInventory}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
               >
                 {loading ? "Adding..." : "Add Inventory"}
               </button>
@@ -924,7 +920,7 @@ const Inventory = () => {
                   setEditingInventory(null);
                   setNewInventory({ cost: "", sellingPrice: "", stock: "" });
                 }}
-                className="text-gray-400 hover:text-white"
+                className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -932,7 +928,7 @@ const Inventory = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Cost Price ($)
                 </label>
                 <input
@@ -948,7 +944,7 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Selling Price ($)
                 </label>
                 <input
@@ -966,7 +962,7 @@ const Inventory = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Stock Quantity
                 </label>
                 <input
@@ -987,14 +983,14 @@ const Inventory = () => {
                   setEditingInventory(null);
                   setNewInventory({ cost: "", sellingPrice: "", stock: "" });
                 }}
-                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateInventory}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
               >
                 {loading ? "Updating..." : "Update Inventory"}
               </button>
@@ -1025,7 +1021,7 @@ const Inventory = () => {
               <h3 className="text-xl font-bold">Add New Product</h3>
               <button
                 onClick={() => setShowAddProductModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -1034,7 +1030,7 @@ const Inventory = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Product ID *
                   </label>
                   <input
@@ -1052,7 +1048,7 @@ const Inventory = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Product Name *
                   </label>
                   <input
@@ -1072,7 +1068,7 @@ const Inventory = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Brand
                   </label>
                   <input
@@ -1086,7 +1082,7 @@ const Inventory = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Category
                   </label>
                   <input
@@ -1102,7 +1098,7 @@ const Inventory = () => {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Rack Number
                 </label>
                 <input
@@ -1117,7 +1113,7 @@ const Inventory = () => {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Description
                 </label>
                 <textarea
@@ -1137,14 +1133,14 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddProductModal(false)}
-                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProduct}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
               >
                 {loading ? "Creating..." : "Create Product"}
               </button>
@@ -1175,7 +1171,7 @@ const Inventory = () => {
               <h3 className="text-xl font-bold">Edit Product</h3>
               <button
                 onClick={() => setShowEditProductModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -1183,22 +1179,22 @@ const Inventory = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Product ID
                 </label>
                 <input
                   type="text"
                   value={editProduct.productId}
                   disabled
-                  className="w-full bg-[#303030] text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed"
+                  className="w-full bg-[#303030] text-neutral-400 px-4 py-2 rounded-lg cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-neutral-500 mt-1">
                   Product ID cannot be changed
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Product Name *
                 </label>
                 <input
@@ -1217,7 +1213,7 @@ const Inventory = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Brand
                   </label>
                   <input
@@ -1230,7 +1226,7 @@ const Inventory = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
+                  <label className="block text-sm text-neutral-400 mb-1">
                     Category
                   </label>
                   <input
@@ -1248,7 +1244,7 @@ const Inventory = () => {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Rack Number
                 </label>
                 <input
@@ -1265,7 +1261,7 @@ const Inventory = () => {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-400 mb-1">
                   Description
                 </label>
                 <textarea
@@ -1284,14 +1280,14 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowEditProductModal(false)}
-                className="flex-1 text-gray-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateProduct}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-gray-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
               >
                 {loading ? "Updating..." : "Update Product"}
               </button>

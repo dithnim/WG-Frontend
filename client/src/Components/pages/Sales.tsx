@@ -1,6 +1,31 @@
 import React, { useEffect, useState } from "react";
 import apiService from "../../services/api";
 
+interface InventoryItem {
+  _id: string;
+  stock: number;
+  cost: number;
+  sellingPrice: number;
+}
+
+interface SupplierItem {
+  _id: string;
+  supplierName: string;
+}
+
+interface ProductResponse {
+  product: {
+    _id: string;
+    productId: string;
+    productName: string;
+    sellingPrice: number;
+    costPrice: number;
+    createdAt: string;
+  };
+  inventories: InventoryItem[];
+  suppliers: SupplierItem[];
+}
+
 interface Product {
   _id: string;
   productId: string;
@@ -13,6 +38,7 @@ interface Product {
 }
 
 interface CartItem {
+  _id: string;
   productName: string;
   productId: string;
   sellingPrice: number;
@@ -40,9 +66,11 @@ const Sales = () => {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [newPrice, setNewPrice] = useState("");
-  const [newDiscount, setNewDiscount] = useState("");
+  const [editingField, setEditingField] = useState<{
+    index: number;
+    field: "quantity" | "sellingPrice" | "discount";
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const [showCashInModal, setShowCashInModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -94,7 +122,51 @@ const Sales = () => {
     setLoading(true);
     try {
       const data = await apiService.get("/product", { search: searchQuery });
-      setProducts(Array.isArray(data) ? data : data.products || []);
+      console.log("Product search response:", data);
+
+      // Parse the response - backend returns array of {product, inventories, suppliers}
+      let productList: Product[] = [];
+
+      if (Array.isArray(data)) {
+        productList = data.map((item: ProductResponse | any) => {
+          // Check if it's the new format with product/inventories/suppliers
+          if (item.product && item.inventories !== undefined) {
+            const totalStock = item.inventories.reduce(
+              (sum: number, inv: InventoryItem) => sum + (inv.stock || 0),
+              0
+            );
+            const avgCost =
+              item.inventories.length > 0
+                ? item.inventories.reduce(
+                    (sum: number, inv: InventoryItem) => sum + (inv.cost || 0),
+                    0
+                  ) / item.inventories.length
+                : item.product.costPrice || 0;
+            const supplierName = item.suppliers?.[0]?.supplierName || "Unknown";
+
+            return {
+              _id: item.product._id,
+              productId: item.product.productId,
+              productName: item.product.productName,
+              sellingPrice:
+                item.inventories?.[0]?.sellingPrice ||
+                item.product.sellingPrice ||
+                0,
+              costPrice: avgCost,
+              supplier: supplierName,
+              stock: totalStock,
+              createdAt: item.product.createdAt,
+            };
+          }
+          // Fallback for old format or direct product objects
+          return item;
+        });
+      } else if (data.products) {
+        productList = data.products;
+      }
+
+      console.log("Parsed products:", productList);
+      setProducts(productList);
       setShowSearchResults(true);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -114,17 +186,32 @@ const Sales = () => {
   }, [searchQuery]);
 
   const handleProductClick = (product: Product) => {
+    console.log("Selected product:", product);
+
+    // Check if product has stock
+    if (product.stock <= 0) {
+      alert("This product is out of stock");
+      return;
+    }
+
     // Check if product already exists in cart
     const existingIndex = productList.findIndex(
       (item) => item.productId === product.productId
     );
 
     if (existingIndex !== -1) {
+      // Check if we can add more (current cart quantity < available stock)
+      const currentCartQty = productList[existingIndex].quantity;
+      if (currentCartQty >= product.stock) {
+        alert(`Cannot add more. Only ${product.stock} in stock.`);
+        return;
+      }
       // Increase quantity if already in cart
       increaseQuantity(existingIndex, product.stock);
     } else {
       // Add new product to cart
       const newItem: CartItem = {
+        _id: product._id,
         productName: product.productName,
         productId: product.productId,
         sellingPrice: product.sellingPrice,
@@ -135,6 +222,7 @@ const Sales = () => {
         costPrice: product.costPrice,
         stock: product.stock,
       };
+      console.log("Adding to cart:", newItem);
       setProductList((prev) => [...prev, newItem]);
     }
 
@@ -143,25 +231,29 @@ const Sales = () => {
   };
 
   const increaseQuantity = (index: number, maxStock: number) => {
-    setProductList((prev) =>
-      prev.map((item, idx) => {
-        if (idx === index && item.quantity < maxStock) {
-          return { ...item, quantity: item.quantity + 1 };
-        }
-        return item;
-      })
-    );
+    setProductList((prev) => {
+      const newList = [...prev];
+      if (newList[index] && newList[index].quantity < maxStock) {
+        newList[index] = {
+          ...newList[index],
+          quantity: newList[index].quantity + 1,
+        };
+      }
+      return newList;
+    });
   };
 
   const decreaseQuantity = (index: number) => {
-    setProductList((prev) =>
-      prev.map((item, idx) => {
-        if (idx === index && item.quantity > 1) {
-          return { ...item, quantity: item.quantity - 1 };
-        }
-        return item;
-      })
-    );
+    setProductList((prev) => {
+      const newList = [...prev];
+      if (newList[index] && newList[index].quantity > 1) {
+        newList[index] = {
+          ...newList[index],
+          quantity: newList[index].quantity - 1,
+        };
+      }
+      return newList;
+    });
   };
 
   const deleteProduct = (productId: string) => {
@@ -170,31 +262,61 @@ const Sales = () => {
     );
   };
 
-  const handleEditPrice = (index: number) => {
-    setEditingIndex(index);
-    setNewPrice(productList[index].sellingPrice.toString());
-    setNewDiscount((productList[index].discount || 0).toString());
+  const startEditing = (
+    index: number,
+    field: "quantity" | "sellingPrice" | "discount",
+    currentValue: number
+  ) => {
+    setEditingField({ index, field });
+    setEditValue(currentValue.toString());
   };
 
-  const saveNewPrice = (index: number) => {
+  const saveEdit = () => {
+    if (!editingField) return;
+
+    const { index, field } = editingField;
+    const value = parseFloat(editValue) || 0;
+
     setProductList((prev) =>
       prev.map((item, idx) => {
         if (idx === index) {
-          const updatedPrice = parseFloat(newPrice) || item.sellingPrice;
-          const updatedDiscount = parseFloat(newDiscount) || 0;
-          return {
-            ...item,
-            sellingPrice: updatedPrice,
-            discount: updatedDiscount,
-            discountedPrice: updatedPrice - updatedDiscount,
-          };
+          if (field === "quantity") {
+            const newQuantity = Math.max(1, Math.min(value, item.stock));
+            return { ...item, quantity: Math.floor(newQuantity) };
+          } else if (field === "sellingPrice") {
+            return {
+              ...item,
+              sellingPrice: value,
+              discountedPrice: value - item.discount,
+            };
+          } else if (field === "discount") {
+            return {
+              ...item,
+              discount: value,
+              discountedPrice: item.sellingPrice - value,
+            };
+          }
         }
         return item;
       })
     );
-    setEditingIndex(null);
-    setNewPrice("");
-    setNewDiscount("");
+
+    setEditingField(null);
+    setEditValue("");
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
   };
 
   const handleCheckout = () => {
@@ -223,7 +345,7 @@ const Sales = () => {
     try {
       const saleData = {
         products: productList.map((product) => ({
-          productId: product.productId,
+          productId: product._id || product.productId, // Use MongoDB _id if available, fallback to productId
           productName: product.productName,
           quantity: product.quantity,
           costPrice: product.costPrice,
@@ -239,7 +361,10 @@ const Sales = () => {
         changeAmount: change,
       };
 
-      await apiService.post("/sales", saleData);
+      console.log("Submitting sale data:", JSON.stringify(saleData, null, 2));
+
+      const response = await apiService.post("/sales", saleData);
+      console.log("Sale response:", response);
 
       // Reset the cart after successful sale
       setProductList([]);
@@ -247,9 +372,12 @@ const Sales = () => {
       setCashIn(0);
       setChange(0);
       alert("Sale completed successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating sale:", error);
-      alert("Failed to complete sale. Please try again.");
+      console.error("Error response:", error.response?.data);
+      alert(
+        `Failed to complete sale: ${error.response?.data?.error || error.message}`
+      );
     } finally {
       setSubmitting(false);
     }
@@ -369,22 +497,38 @@ const Sales = () => {
                 products.map((product) => (
                   <div
                     key={product._id}
-                    className="p-3 hover:bg-[#252525] cursor-pointer border-b border-gray-700/50 last:border-0 transition-colors"
-                    onClick={() => handleProductClick(product)}
+                    className={`p-3 border-b border-gray-700/50 last:border-0 transition-colors ${
+                      product.stock > 0
+                        ? "hover:bg-[#252525] cursor-pointer"
+                        : "opacity-50 cursor-not-allowed bg-[#1a1a1a]"
+                    }`}
+                    onClick={() =>
+                      product.stock > 0 && handleProductClick(product)
+                    }
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium">{product.productName}</p>
+                        <p
+                          className={`font-medium ${product.stock <= 0 ? "text-gray-500" : ""}`}
+                        >
+                          {product.productName}
+                        </p>
                         <p className="text-sm text-gray-400">
                           {product.productId} • {product.supplier}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-green-400">
+                        <p
+                          className={`font-bold ${product.stock > 0 ? "text-green-400" : "text-gray-500"}`}
+                        >
                           Rs. {product.sellingPrice}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          Stock: {product.stock}
+                        <p
+                          className={`text-xs ${product.stock > 0 ? "text-gray-500" : "text-red-400 font-medium"}`}
+                        >
+                          {product.stock > 0
+                            ? `Stock: ${product.stock}`
+                            : "Out of Stock"}
                         </p>
                       </div>
                     </div>
@@ -423,7 +567,8 @@ const Sales = () => {
                     <th className="px-4 py-3 text-left">#</th>
                     <th className="px-4 py-3 text-left">Product</th>
                     <th className="px-4 py-3 text-center">Qty</th>
-                    <th className="px-4 py-3 text-right">Price</th>
+                    <th className="px-4 py-3 text-right">Cost</th>
+                    <th className="px-4 py-3 text-right">Selling Price</th>
                     <th className="px-4 py-3 text-right">Discount</th>
                     <th className="px-4 py-3 text-right">Total</th>
                     <th className="px-4 py-3 text-center">Actions</th>
@@ -443,49 +588,112 @@ const Sales = () => {
                         </p>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => decreaseQuantity(index)}
-                            className="w-7 h-7 rounded-full bg-[#252525] hover:bg-[#303030] flex items-center justify-center transition-colors"
-                          >
-                            <i className="bx bx-minus text-sm"></i>
-                          </button>
-                          <span className="w-8 text-center font-medium">
-                            {product.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              increaseQuantity(index, product.stock)
-                            }
-                            className="w-7 h-7 rounded-full bg-[#252525] hover:bg-[#303030] flex items-center justify-center transition-colors"
-                            disabled={product.quantity >= product.stock}
-                          >
-                            <i className="bx bx-plus text-sm"></i>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {editingIndex === index ? (
+                        {editingField?.index === index &&
+                        editingField?.field === "quantity" ? (
                           <input
                             type="number"
-                            value={newPrice}
-                            onChange={(e) => setNewPrice(e.target.value)}
-                            className="w-20 bg-[#252525] border border-gray-600 rounded px-2 py-1 text-right"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            onBlur={saveEdit}
+                            autoFocus
+                            min={1}
+                            max={product.stock}
+                            className="w-16 bg-[#252525] border border-blue-500 rounded px-2 py-1 text-center"
                           />
                         ) : (
-                          `Rs. ${product.sellingPrice.toFixed(2)}`
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => decreaseQuantity(index)}
+                              className="w-7 h-7 rounded-full bg-[#252525] hover:bg-[#303030] flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={product.quantity <= 1}
+                            >
+                              <i className="bx bx-minus text-sm"></i>
+                            </button>
+                            <span
+                              className="w-8 text-center font-medium cursor-pointer hover:text-blue-400 hover:underline"
+                              onClick={() =>
+                                startEditing(
+                                  index,
+                                  "quantity",
+                                  product.quantity
+                                )
+                              }
+                              title="Click to edit"
+                            >
+                              {product.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                increaseQuantity(index, product.stock)
+                              }
+                              className="w-7 h-7 rounded-full bg-[#252525] hover:bg-[#303030] flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={product.quantity >= product.stock}
+                            >
+                              <i className="bx bx-plus text-sm"></i>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-400">
+                        Rs. {product.costPrice.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {editingField?.index === index &&
+                        editingField?.field === "sellingPrice" ? (
+                          <input
+                            type="number"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            onBlur={saveEdit}
+                            autoFocus
+                            step="0.01"
+                            className="w-24 bg-[#252525] border border-blue-500 rounded px-2 py-1 text-right"
+                          />
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-blue-400"
+                            onClick={() =>
+                              startEditing(
+                                index,
+                                "sellingPrice",
+                                product.sellingPrice
+                              )
+                            }
+                            title="Click to edit"
+                          >
+                            Rs. {product.sellingPrice.toFixed(2)}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-red-400">
-                        {editingIndex === index ? (
+                        {editingField?.index === index &&
+                        editingField?.field === "discount" ? (
                           <input
                             type="number"
-                            value={newDiscount}
-                            onChange={(e) => setNewDiscount(e.target.value)}
-                            className="w-20 bg-[#252525] border border-gray-600 rounded px-2 py-1 text-right"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            onBlur={saveEdit}
+                            autoFocus
+                            step="0.01"
+                            min={0}
+                            className="w-24 bg-[#252525] border border-blue-500 rounded px-2 py-1 text-right"
                           />
                         ) : (
-                          `- Rs. ${(product.discount * product.quantity).toFixed(2)}`
+                          <span
+                            className="cursor-pointer hover:text-blue-400"
+                            onClick={() =>
+                              startEditing(index, "discount", product.discount)
+                            }
+                            title="Click to edit"
+                          >
+                            - Rs.{" "}
+                            {(product.discount * product.quantity).toFixed(2)}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-green-400">
@@ -496,37 +704,13 @@ const Sales = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
-                          {editingIndex === index ? (
-                            <>
-                              <button
-                                onClick={() => saveNewPrice(index)}
-                                className="text-green-400 hover:text-green-300"
-                              >
-                                <i className="bx bx-check text-xl"></i>
-                              </button>
-                              <button
-                                onClick={() => setEditingIndex(null)}
-                                className="text-gray-400 hover:text-gray-300"
-                              >
-                                <i className="bx bx-x text-xl"></i>
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleEditPrice(index)}
-                                className="text-blue-400 hover:text-blue-300"
-                              >
-                                <i className="bx bx-edit text-lg"></i>
-                              </button>
-                              <button
-                                onClick={() => deleteProduct(product.productId)}
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                <i className="bx bx-trash text-lg"></i>
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={() => deleteProduct(product.productId)}
+                            className="text-red-400 hover:text-red-300"
+                            title="Remove item"
+                          >
+                            <i className="bx bx-trash text-lg"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>
