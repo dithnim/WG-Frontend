@@ -110,6 +110,7 @@ export const fetchProductsWithInventories = createAsyncThunk(
           cache: true,
           cacheTTL: 30000, // 30 second cache
           dedupe: true,
+          timeout: 60000, // 60 second timeout for heavy product fetch
         }
       );
 

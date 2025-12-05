@@ -152,12 +152,20 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
       {/* Menu Button for Small Screens */}
       <button
         onClick={() => setMenu(!menu)}
-        className={`fixed top-4 left-4 z-50 text-white bg-[#262626] p-1 rounded-full md:hidden w-10 h-10 flex items-center transition-all duration-300 justify-center hover:bg-[#303030] hover:scale-110 hover:shadow-lg ${
+        className={`fixed top-4 left-4 z-50 text-white bg-[#171717] p-1 rounded-full md:hidden w-10 h-10 flex items-center transition-all duration-300 justify-center hover:scale-110 ${
           menu ? "translate-x-[180px] rotate-180" : "translate-x-0"
         }`}
+        style={{
+          boxShadow:
+            "0 0 15px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}
       >
         <i
-          className={`bx ${menu ? "bx-x" : "bx-menu"} text-xl transition-transform duration-300`}
+          className={`bx ${menu ? "bx-x" : "bx-menu"} text-xl text-white transition-transform duration-300`}
+          style={{
+            filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.4))",
+          }}
         ></i>
       </button>
 
@@ -165,37 +173,69 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
       {menu && (
         <div
           onClick={() => setMenu(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 z-40 md:hidden"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
         ></div>
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 transform bg-[#0f0f0f] transition-all duration-500 ease-in-out z-50 border-e border-[#262626] backdrop-blur-sm ${
-          menu ? "translate-x-0 shadow-2xl w-44" : "-translate-x-full w-44"
+        className={`fixed inset-y-0 left-0 transform bg-[#0d0d0d] transition-all duration-500 ease-in-out z-50 backdrop-blur-sm ${
+          menu ? "translate-x-0 w-44" : "-translate-x-full w-44"
         } md:translate-x-0 md:sticky md:top-0 md:h-screen md:flex-shrink-0 ${isCollapsed ? "md:w-20" : "md:w-52 xl:w-64"}`}
         style={{
-          background: "linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%)",
-          boxShadow: menu ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "none",
+          background: "linear-gradient(180deg, #0d0d0d 0%, #171717 100%)",
+          boxShadow: menu
+            ? "0 0 30px rgba(255, 255, 255, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.8)"
+            : "0 0 20px rgba(255, 255, 255, 0.05)",
+          borderRight: "1px solid rgba(255, 255, 255, 0.1)",
         }}
       >
         {/* Desktop Toggle Button */}
         <button
           onClick={onToggleCollapse}
-          className="hidden md:flex absolute -right-6 top-10 z-50 text-white bg-[#262626] px-3 py-1.5 rounded-full items-center justify-center hover:bg-[#303030] hover:scale-110 transition-all duration-300 shadow-lg border border-[#404040]"
+          className="hidden md:flex absolute -right-6 top-10 z-50 text-white bg-[#171717] px-3 py-1.5 rounded-full items-center justify-center hover:scale-110 transition-all duration-300"
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          style={{
+            boxShadow:
+              "0 0 15px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+          }}
         >
           <i
-            className={`bx ${isCollapsed ? "bx-chevron-right" : "bx-chevron-left"} text-lg`}
+            className={`bx ${isCollapsed ? "bx-chevron-right" : "bx-chevron-left"} text-lg text-white`}
           ></i>
         </button>
         <div className="flex flex-col w-full pt-5 pb-4 h-screen justify-between overflow-y-auto">
           <div>
             <div className="flex items-center justify-center mb-5">
               {isCollapsed ? (
-                <div className="text-white text-xl font-bold">WG</div>
+                <div
+                  className="text-xl font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    textShadow: "0 0 20px rgba(255, 255, 255, 0.3)",
+                  }}
+                >
+                  WG
+                </div>
               ) : (
-                <h1 className="text-white text-2xl font-bold hidden xl:flex text-center">
+                <h1
+                  className="text-2xl font-bold hidden xl:flex text-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))",
+                  }}
+                >
                   WIJESINGHE
                   <br />
                   GENUINE
@@ -217,22 +257,39 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     className={classNames(
                       location.pathname === item.href
-                        ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
-                        : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
-                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                        ? "text-white transform scale-105"
+                        : "text-gray-300 hover:text-white hover:transform hover:scale-105",
+                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer"
                     )}
                     style={{
                       background:
                         location.pathname === item.href
-                          ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                          ? "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)"
                           : hoveredItem === item.id
-                            ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                            ? "linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%)"
                             : "transparent",
+                      boxShadow:
+                        location.pathname === item.href
+                          ? "0 0 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
+                          : hoveredItem === item.id
+                            ? "0 0 10px rgba(255, 255, 255, 0.05)"
+                            : "none",
+                      border:
+                        location.pathname === item.href
+                          ? "1px solid rgba(255, 255, 255, 0.2)"
+                          : "1px solid transparent",
                     }}
                   >
                     {/* Active indicator */}
                     {location.pathname === item.href && (
-                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                      <div
+                        className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 rounded-r-full active-indicator"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #ffffff 0%, #d1d5db 100%)",
+                          boxShadow: "0 0 10px rgba(255, 255, 255, 0.4)",
+                        }}
+                      ></div>
                     )}
 
                     {/* Icon with animation */}
@@ -241,7 +298,15 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                         hoveredItem === item.id
                           ? "transform scale-110 rotate-6"
                           : ""
-                      } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                      } ${location.pathname === item.href ? "text-white" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                      style={{
+                        filter:
+                          location.pathname === item.href
+                            ? "drop-shadow(0 0 6px rgba(255, 255, 255, 0.5))"
+                            : hoveredItem === item.id
+                              ? "drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))"
+                              : "none",
+                      }}
                     ></i>
 
                     {/* Text with slide animation */}
@@ -266,7 +331,14 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
               ))}
             </nav>
             <div className="flex justify-center mt-4">
-              <div className="w-[85%] h-[2px] bg-[#292929] rounded-full"></div>
+              <div
+                className="w-[85%] h-[1px] rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.25) 50%, transparent 100%)",
+                  boxShadow: "0 0 8px rgba(255, 255, 255, 0.15)",
+                }}
+              ></div>
             </div>
           </div>
           <div className="px-3 space-y-2 pb-4 relative z-10">
@@ -281,14 +353,22 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                   onMouseEnter={() => setHoveredItem(item.id)}
                   onMouseLeave={() => setHoveredItem(null)}
                   className={classNames(
-                    "text-gray-300 hover:bg-gradient-to-r hover:from-red-900/20 hover:to-red-800/20 hover:text-red-300 hover:transform hover:scale-105",
-                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                    "text-gray-300 hover:text-red-300 hover:transform hover:scale-105",
+                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer"
                   )}
                   style={{
                     background:
                       hoveredItem === item.id
-                        ? "linear-gradient(135deg, rgba(153, 27, 27, 0.2) 0%, rgba(127, 29, 29, 0.2) 100%)"
+                        ? "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%)"
                         : "transparent",
+                    boxShadow:
+                      hoveredItem === item.id
+                        ? "0 0 15px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)"
+                        : "none",
+                    border:
+                      hoveredItem === item.id
+                        ? "1px solid rgba(239, 68, 68, 0.3)"
+                        : "1px solid transparent",
                   }}
                 >
                   <i
@@ -297,6 +377,12 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                         ? "transform scale-110 text-red-400"
                         : ""
                     } ${isCollapsed ? "mx-auto" : ""}`}
+                    style={{
+                      filter:
+                        hoveredItem === item.id
+                          ? "drop-shadow(0 0 6px rgba(248, 113, 113, 0.6))"
+                          : "none",
+                    }}
                   ></i>
                   {!isCollapsed && (
                     <span
@@ -308,7 +394,7 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                     </span>
                   )}
                   {hoveredItem === item.id && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent rounded-xl"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent rounded-xl"></div>
                   )}
                 </button>
               ) : item.id === "notifications" ? (
@@ -322,21 +408,38 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                   onMouseLeave={() => setHoveredItem(null)}
                   className={classNames(
                     location.pathname === item.href
-                      ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
-                      : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
-                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                      ? "text-white transform scale-105"
+                      : "text-gray-300 hover:text-white hover:transform hover:scale-105",
+                    "group flex items-center w-full px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer"
                   )}
                   style={{
                     background:
                       location.pathname === item.href
-                        ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                        ? "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)"
                         : hoveredItem === item.id
-                          ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                          ? "linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%)"
                           : "transparent",
+                    boxShadow:
+                      location.pathname === item.href
+                        ? "0 0 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
+                        : hoveredItem === item.id
+                          ? "0 0 10px rgba(255, 255, 255, 0.05)"
+                          : "none",
+                    border:
+                      location.pathname === item.href
+                        ? "1px solid rgba(255, 255, 255, 0.2)"
+                        : "1px solid transparent",
                   }}
                 >
                   {location.pathname === item.href && (
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                    <div
+                      className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 rounded-r-full active-indicator"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #ffffff 0%, #d1d5db 100%)",
+                        boxShadow: "0 0 10px rgba(255, 255, 255, 0.4)",
+                      }}
+                    ></div>
                   )}
 
                   <i
@@ -344,7 +447,15 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                       hoveredItem === item.id
                         ? "transform scale-110 rotate-6"
                         : ""
-                    } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                    } ${location.pathname === item.href ? "text-white" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                    style={{
+                      filter:
+                        location.pathname === item.href
+                          ? "drop-shadow(0 0 6px rgba(255, 255, 255, 0.5))"
+                          : hoveredItem === item.id
+                            ? "drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))"
+                            : "none",
+                    }}
                   ></i>
 
                   {!isCollapsed && (
@@ -374,21 +485,38 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                     onMouseLeave={() => setHoveredItem(null)}
                     className={classNames(
                       location.pathname === item.href
-                        ? "bg-gradient-to-r from-[#262626] to-[#303030] text-white shadow-lg transform scale-105"
-                        : "text-gray-300 hover:bg-gradient-to-r hover:from-[#1a1a1a] hover:to-[#262626] hover:text-white hover:transform hover:scale-105",
-                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer shadow-sm hover:shadow-lg"
+                        ? "text-white transform scale-105"
+                        : "text-gray-300 hover:text-white hover:transform hover:scale-105",
+                      "group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-in-out relative overflow-hidden cursor-pointer"
                     )}
                     style={{
                       background:
                         location.pathname === item.href
-                          ? "linear-gradient(135deg, #262626 0%, #303030 100%)"
+                          ? "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%)"
                           : hoveredItem === item.id
-                            ? "linear-gradient(135deg, #1a1a1a 0%, #262626 100%)"
+                            ? "linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%)"
                             : "transparent",
+                      boxShadow:
+                        location.pathname === item.href
+                          ? "0 0 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
+                          : hoveredItem === item.id
+                            ? "0 0 10px rgba(255, 255, 255, 0.05)"
+                            : "none",
+                      border:
+                        location.pathname === item.href
+                          ? "1px solid rgba(255, 255, 255, 0.2)"
+                          : "1px solid transparent",
                     }}
                   >
                     {location.pathname === item.href && (
-                      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-r-full shadow-lg active-indicator"></div>
+                      <div
+                        className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 rounded-r-full active-indicator"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #ffffff 0%, #d1d5db 100%)",
+                          boxShadow: "0 0 10px rgba(255, 255, 255, 0.4)",
+                        }}
+                      ></div>
                     )}
 
                     <i
@@ -396,7 +524,15 @@ export default function Sidebar({ onLogout, isCollapsed, onToggleCollapse }) {
                         hoveredItem === item.id
                           ? "transform scale-110 rotate-6"
                           : ""
-                      } ${location.pathname === item.href ? "text-blue-400" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                      } ${location.pathname === item.href ? "text-white" : ""} ${isCollapsed ? "mx-auto" : ""}`}
+                      style={{
+                        filter:
+                          location.pathname === item.href
+                            ? "drop-shadow(0 0 6px rgba(255, 255, 255, 0.5))"
+                            : hoveredItem === item.id
+                              ? "drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))"
+                              : "none",
+                      }}
                     ></i>
 
                     {!isCollapsed && (

@@ -206,7 +206,15 @@ const SalesReport: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))",
+            }}
+          >
             Supplier Sales Report
           </h1>
           <p className="text-gray-400">
@@ -215,7 +223,15 @@ const SalesReport: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-[#171717] rounded-xl p-6 mb-6">
+        <div
+          className="rounded-xl p-6 mb-6"
+          style={{
+            background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow:
+              "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+          }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Supplier Selection */}
             <div>
@@ -230,7 +246,13 @@ const SalesReport: React.FC = () => {
                 <select
                   value={selectedSupplier}
                   onChange={(e) => setSelectedSupplier(e.target.value)}
-                  className="w-full bg-[#252525] text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:border-blue-500 focus:outline-none"
+                  className="w-full text-white rounded-lg px-4 py-2.5 focus:outline-none transition-all duration-300"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 >
                   <option value="">-- Select Supplier --</option>
                   {suppliers.map((supplier) => (
@@ -251,7 +273,13 @@ const SalesReport: React.FC = () => {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-[#252525] text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:border-blue-500 focus:outline-none"
+                className="w-full text-white rounded-lg px-4 py-2.5 focus:outline-none transition-all duration-300"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                }}
               />
             </div>
 
@@ -264,7 +292,13 @@ const SalesReport: React.FC = () => {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-[#252525] text-white rounded-lg px-4 py-2.5 border border-gray-700 focus:border-blue-500 focus:outline-none"
+                className="w-full text-white rounded-lg px-4 py-2.5 focus:outline-none transition-all duration-300"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                }}
               />
             </div>
 
@@ -273,7 +307,13 @@ const SalesReport: React.FC = () => {
               <button
                 onClick={fetchReport}
                 disabled={loading || !selectedSupplier}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium rounded-lg px-4 py-2.5 transition-colors"
+                className="w-full text-white font-medium rounded-lg px-4 py-2.5 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                }}
               >
                 {loading ? "Loading..." : "Generate Report"}
               </button>
@@ -283,14 +323,30 @@ const SalesReport: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-400 rounded-lg p-4 mb-6">
+          <div
+            className="rounded-lg p-4 mb-6"
+            style={{
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              color: "#f87171",
+              boxShadow: "0 0 15px rgba(239, 68, 68, 0.1)",
+            }}
+          >
             {error}
           </div>
         )}
 
         {/* Report Section */}
         {reportData && (
-          <div className="bg-[#171717] rounded-xl p-6">
+          <div
+            className="rounded-xl p-6"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow:
+                "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+            }}
+          >
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-4 mb-6">
               <button
@@ -300,14 +356,28 @@ const SalesReport: React.FC = () => {
                   setCompanyName("WG Shop");
                   setAdditionalNotes("");
                 }}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg px-4 py-2 transition-colors"
+                className="text-white font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(234, 179, 8, 0.2) 0%, rgba(202, 138, 4, 0.2) 100%)",
+                  border: "1px solid rgba(234, 179, 8, 0.4)",
+                  boxShadow: "0 0 10px rgba(234, 179, 8, 0.15)",
+                  color: "#fbbf24",
+                }}
               >
                 Reset Changes
               </button>
               <button
                 onClick={handleDownloadPDF}
                 disabled={downloading}
-                className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium rounded-lg px-4 py-2 transition-colors flex items-center gap-2"
+                className="font-medium rounded-lg px-4 py-2 transition-all duration-300 flex items-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(126, 34, 206, 0.2) 100%)",
+                  border: "1px solid rgba(147, 51, 234, 0.4)",
+                  boxShadow: "0 0 10px rgba(147, 51, 234, 0.15)",
+                  color: "#a78bfa",
+                }}
               >
                 {downloading ? (
                   <Spinner />
@@ -569,7 +639,15 @@ const SalesReport: React.FC = () => {
 
         {/* Empty State */}
         {!reportData && !loading && (
-          <div className="bg-[#171717] rounded-xl p-12 text-center">
+          <div
+            className="rounded-xl p-12 text-center"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow:
+                "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+            }}
+          >
             <svg
               className="w-16 h-16 mx-auto text-gray-500 mb-4"
               fill="none"

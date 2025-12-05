@@ -622,20 +622,55 @@ const Product: React.FC = () => {
   return (
     <div className="product h-auto xl:px-12 px-8 py-2 ">
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
-          <div className="bg-[#171717] rounded-lg p-6 w-1/3">
-            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
-            <p>Are you sure you want to delete this product?</p>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            className="bg-[#0d0d0d] rounded-xl p-6 w-1/3"
+            style={{
+              boxShadow:
+                "0 0 30px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            <h2
+              className="text-lg font-semibold mb-4"
+              style={{
+                color: "#f87171",
+                textShadow: "0 0 10px rgba(248, 113, 113, 0.4)",
+              }}
+            >
+              Confirm Deletion
+            </h2>
+            <p className="text-gray-300">
+              Are you sure you want to delete this product?
+            </p>
             <div className="mt-6 flex justify-end">
               <button
-                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-[#5f5f5f] transition-colors border border-neutral-500/50 font-semibold"
+                className="text-white px-4 py-2 rounded-lg mr-2 transition-all duration-300 font-semibold hover:scale-105"
                 onClick={closeDeleteModal}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(75, 85, 99, 0.3) 0%, rgba(75, 85, 99, 0.1) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
-                className="bg-[#a10000] text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-semibold"
+                className="text-white px-4 py-2 rounded-lg transition-all duration-300 font-semibold hover:scale-105"
                 onClick={confirmDeleteProduct}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(185, 28, 28, 0.4) 100%)",
+                  border: "1px solid rgba(239, 68, 68, 0.5)",
+                  boxShadow: "0 0 15px rgba(239, 68, 68, 0.3)",
+                }}
               >
                 Delete
               </button>
@@ -660,21 +695,37 @@ const Product: React.FC = () => {
 
       <div className="flex items-center justify-end md:justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold hidden md:flex xl:flex">
+          <h1
+            className="text-3xl font-bold hidden md:flex xl:flex"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))",
+            }}
+          >
             Products Browser{" "}
           </h1>
           <i
             className="bx bxs-fire-alt text-2xl"
-            style={{ color: "#ff6300" }}
+            style={{
+              color: "#ff6300",
+              filter: "drop-shadow(0 0 8px rgba(255, 99, 0, 0.6))",
+            }}
           ></i>
         </div>
         <div className="flex flex-col md:flex-row justify-end items-end md:items-center gap-2 mt-5">
           <select
-            className="rounded-lg px-2 py-1 font-semibold bg-[#303030] text-white"
+            className="rounded-lg px-2 py-1 font-semibold text-white transition-all duration-300"
             value={selectedSupplier}
             onChange={(e) => {
               setSelectedSupplier(e.target.value);
               setSelectedSupplier(e.target.value);
+            }}
+            style={{
+              background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
             }}
           >
             <option value="">All Suppliers</option>
@@ -688,15 +739,34 @@ const Product: React.FC = () => {
             <input
               type="text"
               placeholder="Search products..."
-              className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold"
+              className="rounded-s-xl px-4 py-1 lg:px-6 lg:py-2 font-semibold text-white"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
+              style={{
+                background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRight: "none",
+                boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+              }}
             />
-            <button className="hidden lg:flex items-center justify-center px-4 bg-transparent text-white rounded-e-xl py-[6px]">
+            <button
+              className="hidden lg:flex items-center justify-center px-4 text-white rounded-e-xl py-[6px]"
+              style={{
+                background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderLeft: "none",
+                boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+              }}
+            >
               {localSearch !== searchQuery || loading ? (
                 <Spinner size="sm" color="text-white" />
               ) : (
-                <i className="bx bx-search-alt-2 text-xl"></i>
+                <i
+                  className="bx bx-search-alt-2 text-xl"
+                  style={{
+                    filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.4))",
+                  }}
+                ></i>
               )}
             </button>
           </div>
@@ -704,8 +774,14 @@ const Product: React.FC = () => {
       </div>
 
       <div
-        className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto"
+        className="mt-10 h-[35vh] overflow-y-auto overflow-x-auto rounded-xl"
         onScroll={handleScroll}
+        style={{
+          background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow:
+            "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+        }}
       >
         {loading && products.length === 0 ? (
           <div className="w-full">
@@ -1069,11 +1145,17 @@ const Product: React.FC = () => {
                 <div>
                   <select
                     id="categories"
-                    className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
+                    className="text-sm rounded-lg block w-full p-2.5 placeholder-gray-400 text-white mb-2 transition-all duration-300"
                     value={formData.category}
                     onChange={(e) =>
                       handleSelectChange("category", e.target.value)
                     }
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   >
                     <option value="">Select Category</option>
                     <option value="Genuine">Genuine</option>
@@ -1084,13 +1166,21 @@ const Product: React.FC = () => {
                 <div>
                   <select
                     id="suppliers"
-                    className={`text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2
-                              ${supplierValidationError ? "border border-red-500" : ""}
-                              `}
+                    className="text-sm rounded-lg block w-full p-2.5 placeholder-gray-400 text-white mb-2 transition-all duration-300"
                     value={formData.supplier}
                     onChange={(e) =>
                       handleSelectChange("supplier", e.target.value)
                     }
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: supplierValidationError
+                        ? "1px solid rgba(239, 68, 68, 0.5)"
+                        : "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: supplierValidationError
+                        ? "0 0 10px rgba(239, 68, 68, 0.2)"
+                        : "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   >
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier: Supplier) => (
@@ -1133,9 +1223,15 @@ const Product: React.FC = () => {
                 <select
                   id="rackNumbers"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 placeholder-gray-400 text-white mb-2 transition-all duration-300"
                   value={rack}
                   onChange={handleRackChange}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 >
                   <option value="">Select Rack</option>
                   <option value="R1">Rack 1</option>
@@ -1150,9 +1246,15 @@ const Product: React.FC = () => {
                 <select
                   id="rows"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 placeholder-gray-400 text-white mb-2 transition-all duration-300"
                   value={row}
                   onChange={handleRowChange}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 >
                   <option value="">Select Bank</option>
                   <option value="A">Bank A</option>
@@ -1169,9 +1271,15 @@ const Product: React.FC = () => {
                 <select
                   id="columns"
                   name="rackNumber"
-                  className="text-sm rounded-lg block w-full p-2.5 bg-[#303030] placeholder-gray-400 text-white mb-2"
+                  className="text-sm rounded-lg block w-full p-2.5 placeholder-gray-400 text-white mb-2 transition-all duration-300"
                   value={column}
                   onChange={handleColumnChange}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 >
                   <option value="">Select Location</option>
                   {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
@@ -1187,7 +1295,7 @@ const Product: React.FC = () => {
           <div className="grid md:grid-cols-2 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800"
+              className="w-full text-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 transition-all duration-300 hover:scale-[1.02]"
               onClick={() => {
                 setEdittingProduct(null);
                 dispatch(resetFormData());
@@ -1201,6 +1309,12 @@ const Product: React.FC = () => {
                 setStockValidationError("");
                 setSupplierValidationError("");
               }}
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                border: "1px solid rgba(156, 163, 175, 0.3)",
+                boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+              }}
             >
               Cancel
             </button>
@@ -1208,7 +1322,7 @@ const Product: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               disabled={
                 !!nameValidationError ||
                 !!productIdValidationError ||
@@ -1217,6 +1331,13 @@ const Product: React.FC = () => {
                 !!stockValidationError ||
                 !!supplierValidationError
               }
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                color: "#fff",
+              }}
             >
               {edittingProduct ? "Update Product" : "Add Product"}
             </button>

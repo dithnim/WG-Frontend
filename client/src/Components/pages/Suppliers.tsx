@@ -268,12 +268,23 @@ const Suppliers: React.FC = () => {
       {/* Search input */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+          <h1
+            className="text-xl sm:text-2xl md:text-3xl font-bold"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))",
+            }}
+          >
             Supplier Browser
           </h1>
           <i
             className="bx bxs-fire-alt text-xl sm:text-2xl"
-            style={{ color: "#ff6300" }}
+            style={{
+              color: "#ff6300",
+              filter: "drop-shadow(0 0 8px rgba(255, 99, 0, 0.6))",
+            }}
           ></i>
         </div>
 
@@ -282,26 +293,66 @@ const Suppliers: React.FC = () => {
           placeholder="Search Anything..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-64 md:w-72 lg:w-80 p-2 border rounded-lg bg-[#171717] border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+          className="w-full sm:w-64 md:w-72 lg:w-80 p-2 rounded-lg text-white focus:outline-none transition-all duration-300"
+          style={{
+            background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+          }}
         />
       </div>
 
       {/* Delete confirmation popup */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-4">
-          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
-            <p>Are you sure you want to delete this Supplier?</p>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 px-4"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            className="bg-[#0d0d0d] rounded-xl p-6 w-full max-w-md"
+            style={{
+              boxShadow:
+                "0 0 30px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            <h2
+              className="text-lg font-semibold mb-4"
+              style={{
+                color: "#f87171",
+                textShadow: "0 0 10px rgba(248, 113, 113, 0.4)",
+              }}
+            >
+              Confirm Deletion
+            </h2>
+            <p className="text-gray-300">
+              Are you sure you want to delete this Supplier?
+            </p>
             <div className="mt-6 flex justify-end">
               <button
-                className="text-white px-4 py-2 rounded-lg mr-2 hover:bg-[#5f5f5f] transition-colors border border-neutral-500/50 font-semibold"
+                className="text-white px-4 py-2 rounded-lg mr-2 transition-all duration-300 font-semibold hover:scale-105"
                 onClick={closeDeleteModal}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(75, 85, 99, 0.3) 0%, rgba(75, 85, 99, 0.1) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
-                className="bg-[#a10000] text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-semibold"
+                className="text-white px-4 py-2 rounded-lg transition-all duration-300 font-semibold hover:scale-105"
                 onClick={confirmDeleteProduct}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(185, 28, 28, 0.4) 100%)",
+                  border: "1px solid rgba(239, 68, 68, 0.5)",
+                  boxShadow: "0 0 15px rgba(239, 68, 68, 0.3)",
+                }}
               >
                 Delete
               </button>
@@ -310,7 +361,16 @@ const Suppliers: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-5 h-[40vh] overflow-y-auto " onScroll={handleScroll}>
+      <div
+        className="mt-5 h-[40vh] overflow-y-auto rounded-xl"
+        onScroll={handleScroll}
+        style={{
+          background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow:
+            "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+        }}
+      >
         {loading ? (
           // Skeleton table while loading
           <div className="w-full">
@@ -440,7 +500,7 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="supplierName"
                 id="floating-supplier-name"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-white focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.supplierName}
@@ -448,7 +508,7 @@ const Suppliers: React.FC = () => {
               />
               <label
                 htmlFor="floating-supplier-name"
-                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Supplier name
               </label>
@@ -458,14 +518,14 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="description"
                 id="floating-description"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-white focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.description}
               />
               <label
                 htmlFor="floating-description"
-                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Description
               </label>
@@ -478,14 +538,14 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="contact"
                 id="floating-contact-numbers"
-                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 peer"
+                className="block py-2.5 px-0 w-full text-sm bg-transparent border-0 border-b-2 appearance-none text-white border-gray-600 focus:border-white focus:outline-none focus:ring-0 peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.contact}
               />
               <label
                 htmlFor="floating-contact-numbers"
-                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 Contact number
               </label>
@@ -495,14 +555,14 @@ const Suppliers: React.FC = () => {
                 type="text"
                 name="contactPerson"
                 id="floating-contactPerson"
-                className="block py-2.5 px-0 w-full text-sm  bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0  peer"
+                className="block py-2.5 px-0 w-full text-sm  bg-transparent border-0 border-b-2  appearance-none text-white border-gray-600 focus:border-white focus:outline-none focus:ring-0  peer"
                 placeholder=" "
                 onChange={handleInputChange}
                 value={formData.contactPerson}
               />
               <label
                 htmlFor="floating-contactPerson"
-                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+                className="peer-focus:font-medium absolute text-sm  text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4  peer-focus:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
               >
                 contact Person
               </label>
@@ -512,12 +572,18 @@ const Suppliers: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <button
               type="button"
-              className="w-full text-gray-300 bg-[#262626] focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 mb-2 focus:outline-none focus:ring-blue-800"
+              className="w-full text-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 transition-all duration-300 hover:scale-[1.02]"
               onClick={() => {
                 setEdittingSupplier(null);
                 dispatch(resetFormData());
               }}
               disabled={submitting}
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                border: "1px solid rgba(156, 163, 175, 0.3)",
+                boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+              }}
             >
               Cancel
             </button>
@@ -525,8 +591,15 @@ const Suppliers: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="w-full text-[#303030] bg-white focus:ring-2  font-medium rounded-lg text-sm px-5 py-2.5 mb-2 focus:outline-none focus:ring-blue-800"
+              className="w-full font-medium rounded-lg text-sm px-5 py-2.5 mb-2 transition-all duration-300 hover:scale-[1.02]"
               disabled={submitting}
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                color: "#fff",
+              }}
             >
               {submitting
                 ? "Processing..."

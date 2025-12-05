@@ -424,17 +424,35 @@ const Inventory = () => {
       <div className="head py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold hidden md:flex xl:flex">
+            <h1
+              className="text-3xl font-bold hidden md:flex xl:flex"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))",
+              }}
+            >
               Inventory Manager
             </h1>
             <i
               className="bx bxs-package text-2xl"
-              style={{ color: "#ff6300" }}
+              style={{
+                color: "#ff6300",
+                filter: "drop-shadow(0 0 8px rgba(255, 99, 0, 0.6))",
+              }}
             ></i>
           </div>
           <button
             onClick={() => dispatch(setShowAddProductModal(true))}
-            className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
+            className="px-4 py-2 rounded-full flex items-center gap-2 transition-all duration-300 font-semibold hover:scale-[1.02]"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+              color: "#fff",
+            }}
           >
             <i className="bx bx-plus"></i>
             Add Product
@@ -444,7 +462,15 @@ const Inventory = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg mt-4">
+        <div
+          className="px-4 py-3 rounded-lg mt-4"
+          style={{
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            color: "#f87171",
+            boxShadow: "0 0 15px rgba(239, 68, 68, 0.1)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -452,9 +478,26 @@ const Inventory = () => {
       {/* Main Content */}
       <div className="body mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Products List */}
-        <div className="lg:col-span-1 bg-[#171717] rounded-lg p-4">
+        <div
+          className="lg:col-span-1 rounded-xl p-4"
+          style={{
+            background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow:
+              "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+          }}
+        >
           <div className="mb-4">
-            <h2 className="text-xl font-semibold mb-3">Products</h2>
+            <h2
+              className="text-xl font-semibold mb-3"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Products
+            </h2>
             <div className="relative">
               <input
                 ref={searchInputRef}
@@ -462,9 +505,20 @@ const Inventory = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-                className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                }}
               />
-              <i className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400"></i>
+              <i
+                className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400"
+                style={{
+                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.3))",
+                }}
+              ></i>
             </div>
           </div>
 
@@ -539,13 +593,32 @@ const Inventory = () => {
         </div>
 
         {/* Product Details & Inventories */}
-        <div className="lg:col-span-2 bg-[#171717] rounded-lg p-4">
+        <div
+          className="lg:col-span-2 rounded-xl p-4"
+          style={{
+            background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow:
+              "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+          }}
+        >
           {selectedProduct ? (
             <>
               {/* Product Info Header */}
-              <div className="flex justify-between items-start mb-6 pb-4 border-b border-neutral-700">
+              <div
+                className="flex justify-between items-start mb-6 pb-4"
+                style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}
+              >
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2
+                    className="text-2xl font-bold"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
                     {selectedProduct.productName}
                   </h2>
                   <p className="text-neutral-400">
@@ -577,7 +650,13 @@ const Inventory = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={openEditProductModal}
-                    className="bg-[#303030] hover:bg-[#404040] text-white px-3 py-2 rounded-full transition-colors flex items-center gap-2 font-semibold"
+                    className="text-white px-3 py-2 rounded-full transition-all duration-300 flex items-center gap-2 font-semibold hover:scale-105"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(75, 85, 99, 0.3) 0%, rgba(75, 85, 99, 0.1) 100%)",
+                      border: "1px solid rgba(156, 163, 175, 0.3)",
+                      boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                    }}
                   >
                     <i className="bx bx-edit text"></i>
                   </button>
@@ -586,7 +665,14 @@ const Inventory = () => {
                       dispatch(resetNewInventory());
                       dispatch(setShowAddInventoryModal(true));
                     }}
-                    className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
+                    className="px-4 py-2 rounded-full flex items-center gap-2 transition-all duration-300 font-semibold hover:scale-[1.02]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.3)",
+                      boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                      color: "#fff",
+                    }}
                   >
                     <i className="bx bx-plus"></i>
                     Add Inventory
@@ -596,27 +682,83 @@ const Inventory = () => {
 
               {/* Inventory Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(34, 197, 94, 0.2)",
+                    boxShadow: "0 0 15px rgba(34, 197, 94, 0.1)",
+                  }}
+                >
                   <p className="text-neutral-400 text-sm">Total Stock</p>
-                  <p className="text-2xl font-bold text-green-400">
+                  <p
+                    className="text-2xl font-bold"
+                    style={{
+                      color: "#4ade80",
+                      textShadow: "0 0 10px rgba(74, 222, 128, 0.4)",
+                    }}
+                  >
                     {getTotalStock(selectedProduct.inventories)}
                   </p>
                 </div>
-                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(59, 130, 246, 0.2)",
+                    boxShadow: "0 0 15px rgba(59, 130, 246, 0.1)",
+                  }}
+                >
                   <p className="text-neutral-400 text-sm">Inventory Entries</p>
-                  <p className="text-2xl font-bold text-blue-400">
+                  <p
+                    className="text-2xl font-bold"
+                    style={{
+                      color: "#60a5fa",
+                      textShadow: "0 0 10px rgba(96, 165, 250, 0.4)",
+                    }}
+                  >
                     {selectedProduct.inventories.length}
                   </p>
                 </div>
-                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(234, 179, 8, 0.2)",
+                    boxShadow: "0 0 15px rgba(234, 179, 8, 0.1)",
+                  }}
+                >
                   <p className="text-neutral-400 text-sm">Avg. Cost</p>
-                  <p className="text-2xl font-bold text-yellow-400">
+                  <p
+                    className="text-2xl font-bold"
+                    style={{
+                      color: "#facc15",
+                      textShadow: "0 0 10px rgba(250, 204, 21, 0.4)",
+                    }}
+                  >
                     Rs.{getAverageCost(selectedProduct.inventories).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-[#262626] rounded-lg p-4 text-center">
+                <div
+                  className="rounded-xl p-4 text-center"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(168, 85, 247, 0.2)",
+                    boxShadow: "0 0 15px rgba(168, 85, 247, 0.1)",
+                  }}
+                >
                   <p className="text-neutral-400 text-sm">Avg. Selling Price</p>
-                  <p className="text-2xl font-bold text-purple-400">
+                  <p
+                    className="text-2xl font-bold"
+                    style={{
+                      color: "#c084fc",
+                      textShadow: "0 0 10px rgba(192, 132, 252, 0.4)",
+                    }}
+                  >
                     Rs.
                     {getAverageSellingPrice(
                       selectedProduct.inventories
@@ -751,7 +893,7 @@ const Inventory = () => {
       {/* Add Inventory Modal */}
       {showAddInventoryModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") dispatch(setShowAddInventoryModal(false));
@@ -760,13 +902,35 @@ const Inventory = () => {
               handleAddInventory();
             }
           }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
         >
-          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
+          <div
+            className="rounded-xl p-6 w-full max-w-md mx-4"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              boxShadow:
+                "0 0 30px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Add Inventory Entry</h3>
+              <h3
+                className="text-xl font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Add Inventory Entry
+              </h3>
               <button
                 onClick={() => dispatch(setShowAddInventoryModal(false))}
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white transition-colors"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -797,8 +961,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0.00"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
               <div>
@@ -817,8 +987,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0.00"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
               <div>
@@ -836,8 +1012,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
             </div>
@@ -845,14 +1027,27 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => dispatch(setShowAddInventoryModal(false))}
-                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddInventory}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                  color: "#fff",
+                }}
               >
                 {loading ? "Adding..." : "Add Inventory"}
               </button>
@@ -864,7 +1059,7 @@ const Inventory = () => {
       {/* Edit Inventory Modal */}
       {editingInventory && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
@@ -876,16 +1071,38 @@ const Inventory = () => {
               handleUpdateInventory();
             }
           }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
         >
-          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-md mx-4">
+          <div
+            className="rounded-xl p-6 w-full max-w-md mx-4"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              boxShadow:
+                "0 0 30px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Edit Inventory Entry</h3>
+              <h3
+                className="text-xl font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Edit Inventory Entry
+              </h3>
               <button
                 onClick={() => {
                   dispatch(setEditingInventory(null));
                   dispatch(resetNewInventory());
                 }}
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white transition-colors"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -909,8 +1126,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0.00"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
               <div>
@@ -929,8 +1152,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0.00"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
               <div>
@@ -948,8 +1177,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
             </div>
@@ -960,14 +1195,27 @@ const Inventory = () => {
                   dispatch(setEditingInventory(null));
                   dispatch(resetNewInventory());
                 }}
-                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateInventory}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                  color: "#fff",
+                }}
               >
                 {loading ? "Updating..." : "Update Inventory"}
               </button>
@@ -979,7 +1227,7 @@ const Inventory = () => {
       {/* Add Product Modal */}
       {showAddProductModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") dispatch(setShowAddProductModal(false));
@@ -992,13 +1240,35 @@ const Inventory = () => {
               handleAddProduct();
             }
           }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
         >
-          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+          <div
+            className="rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              boxShadow:
+                "0 0 30px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Add New Product</h3>
+              <h3
+                className="text-xl font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Add New Product
+              </h3>
               <button
                 onClick={() => dispatch(setShowAddProductModal(false))}
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white transition-colors"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -1022,8 +1292,14 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                     placeholder="SKU-001"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
                 <div>
@@ -1041,8 +1317,14 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                     placeholder="Product Name"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
               </div>
@@ -1063,8 +1345,14 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                     placeholder="Brand Name"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
                 <div>
@@ -1082,8 +1370,14 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                     placeholder="Category"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
               </div>
@@ -1103,8 +1397,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
                   placeholder="A-01"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
 
@@ -1122,8 +1422,14 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300 min-h-[80px]"
                   placeholder="Product description..."
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
             </div>
@@ -1131,14 +1437,27 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => dispatch(setShowAddProductModal(false))}
-                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProduct}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                  color: "#fff",
+                }}
               >
                 {loading ? "Creating..." : "Create Product"}
               </button>
@@ -1150,7 +1469,7 @@ const Inventory = () => {
       {/* Edit Product Modal */}
       {showEditProductModal && selectedProduct && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") dispatch(setShowEditProductModal(false));
@@ -1163,13 +1482,35 @@ const Inventory = () => {
               handleUpdateProduct();
             }
           }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
         >
-          <div className="bg-[#171717] rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+          <div
+            className="rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              boxShadow:
+                "0 0 30px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Edit Product</h3>
+              <h3
+                className="text-xl font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Edit Product
+              </h3>
               <button
                 onClick={() => dispatch(setShowEditProductModal(false))}
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white transition-colors"
               >
                 <i className="bx bx-x text-2xl"></i>
               </button>
@@ -1184,7 +1525,12 @@ const Inventory = () => {
                   type="text"
                   value={editProduct.productId}
                   disabled
-                  className="w-full bg-[#303030] text-neutral-400 px-4 py-2 rounded-lg cursor-not-allowed"
+                  className="w-full text-neutral-400 px-4 py-2 rounded-lg cursor-not-allowed"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #252525 0%, #1a1a1a 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }}
                 />
                 <p className="text-xs text-neutral-500 mt-1">
                   Product ID cannot be changed
@@ -1207,7 +1553,13 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
 
@@ -1227,7 +1579,13 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
                 <div>
@@ -1245,7 +1603,13 @@ const Inventory = () => {
                         })
                       )
                     }
-                    className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                    }}
                   />
                 </div>
               </div>
@@ -1265,7 +1629,13 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
 
@@ -1283,7 +1653,13 @@ const Inventory = () => {
                       })
                     )
                   }
-                  className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                  className="w-full text-white px-4 py-2 rounded-lg focus:outline-none transition-all duration-300 min-h-[80px]"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                  }}
                 />
               </div>
             </div>
@@ -1291,14 +1667,27 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => dispatch(setShowEditProductModal(false))}
-                className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 text-neutral-300 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(38, 38, 38, 0.8) 0%, rgba(23, 23, 23, 0.8) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateProduct}
                 disabled={loading}
-                className="flex-1 text-[#303030] bg-white hover:bg-neutral-200 font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-50"
+                className="flex-1 font-medium rounded-lg px-4 py-2 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+                  color: "#fff",
+                }}
               >
                 {loading ? "Updating..." : "Update Product"}
               </button>

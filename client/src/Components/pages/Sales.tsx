@@ -404,9 +404,32 @@ const Sales = () => {
     <div className="sales min-h-screen flex flex-col lg:flex-row gap-4 p-4 md:p-6">
       {/* Cash In Modal */}
       {showCashInModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-          <div className="bg-[#171717] rounded-xl p-6 w-full max-w-md mx-4 border border-neutral-700">
-            <h2 className="text-xl font-bold mb-6">Complete Payment</h2>
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            className="rounded-xl p-6 w-full max-w-md mx-4"
+            style={{
+              background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+              boxShadow:
+                "0 0 30px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            <h2
+              className="text-xl font-bold mb-6"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Complete Payment
+            </h2>
 
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-neutral-400">
@@ -419,7 +442,10 @@ const Sales = () => {
                   - Rs. {totalDiscount.toFixed(2)}
                 </span>
               </div>
-              <div className="h-px bg-neutral-700"></div>
+              <div
+                className="h-px bg-neutral-700"
+                style={{ background: "rgba(255, 255, 255, 0.1)" }}
+              ></div>
               <div className="flex justify-between text-xl font-bold">
                 <span>Grand Total:</span>
                 <span className="text-green-400">
@@ -434,13 +460,19 @@ const Sales = () => {
               </label>
               <input
                 type="number"
-                className="w-full bg-[#252525] border border-neutral-600 text-white text-lg rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full text-white text-lg rounded-lg p-3 focus:outline-none transition-all duration-300"
                 placeholder="Enter amount..."
                 value={cashIn || ""}
                 onChange={(e) =>
                   handleCashInChange(parseFloat(e.target.value) || 0)
                 }
                 autoFocus
+                style={{
+                  background:
+                    "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+                }}
               />
             </div>
 
@@ -461,15 +493,28 @@ const Sales = () => {
 
             <div className="flex gap-3">
               <button
-                className="flex-1 px-4 py-3 rounded-full border border-neutral-600 hover:bg-neutral-700 transition-colors font-medium"
+                className="flex-1 px-4 py-3 rounded-full transition-all duration-300 font-medium hover:scale-[1.02]"
                 onClick={() => setShowCashInModal(false)}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(75, 85, 99, 0.3) 0%, rgba(75, 85, 99, 0.1) 100%)",
+                  border: "1px solid rgba(156, 163, 175, 0.3)",
+                  boxShadow: "0 0 10px rgba(156, 163, 175, 0.1)",
+                }}
               >
                 Cancel
               </button>
               <button
-                className="flex-1 px-4 py-3 rounded-full bg-white hover:bg-white/70 text-[#171717] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 rounded-full transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
                 onClick={submitSale}
                 disabled={submitting || cashIn < grandTotal}
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.3) 100%)",
+                  border: "1px solid rgba(34, 197, 94, 0.5)",
+                  boxShadow: "0 0 15px rgba(34, 197, 94, 0.2)",
+                  color: "#4ade80",
+                }}
               >
                 {submitting ? "Processing..." : "Complete Sale"}
               </button>
@@ -486,21 +531,45 @@ const Sales = () => {
             <input
               type="text"
               placeholder="Search products by name or ID..."
-              className="flex-1 bg-[#171717] text-white rounded-l-xl px-5 py-3 border border-neutral-700 focus:border-blue-500 focus:outline-none"
+              className="flex-1 text-white rounded-l-xl px-5 py-3 focus:outline-none transition-all duration-300"
               value={searchQuery}
               onChange={handleSearchChange}
+              style={{
+                background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRight: "none",
+                boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+              }}
             />
             <button
-              className="bg-[#252525] hover:bg-[#303030] text-white px-5 rounded-r-xl border border-l-0 border-neutral-700 transition-colors"
+              className="text-white px-5 rounded-r-xl transition-all duration-300 hover:scale-105"
               onClick={fetchProducts}
+              style={{
+                background: "linear-gradient(135deg, #171717 0%, #0d0d0d 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderLeft: "none",
+                boxShadow: "0 0 10px rgba(255, 255, 255, 0.05)",
+              }}
             >
-              <i className="bx bx-search-alt-2 text-xl"></i>
+              <i
+                className="bx bx-search-alt-2 text-xl"
+                style={{
+                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.4))",
+                }}
+              ></i>
             </button>
           </div>
 
           {/* Search Results Dropdown */}
           {showSearchResults && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-[#171717] border border-neutral-700 rounded-xl shadow-2xl z-40 max-h-80 overflow-y-auto">
+            <div
+              className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-40 max-h-80 overflow-y-auto"
+              style={{
+                background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: "0 0 20px rgba(255, 255, 255, 0.1)",
+              }}
+            >
               {loading ? (
                 <div className="p-4 text-center text-neutral-400">
                   <i className="bx bx-loader-alt bx-spin text-2xl"></i>
@@ -557,15 +626,37 @@ const Sales = () => {
         </div>
 
         {/* Product Table */}
-        <div className="flex-1 bg-[#171717] rounded-md border border-neutral-700 overflow-hidden">
-          <div className="p-4 border-b border-neutral-700 flex justify-between items-center">
-            <h2 className="text-lg font-bold">
+        <div
+          className="flex-1 rounded-xl overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow:
+              "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+          }}
+        >
+          <div
+            className="p-4 flex justify-between items-center"
+            style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}
+          >
+            <h2
+              className="text-lg font-bold"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               Products in Cart ({productList.length})
             </h2>
             {productList.length > 0 && (
               <button
                 onClick={clearCart}
-                className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1"
+                className="text-sm flex items-center gap-1 transition-all duration-300 hover:scale-105"
+                style={{
+                  color: "#f87171",
+                  filter: "drop-shadow(0 0 4px rgba(248, 113, 113, 0.4))",
+                }}
               >
                 <i className="bx bx-trash"></i> Clear All
               </button>
@@ -746,15 +837,43 @@ const Sales = () => {
       </div>
 
       {/* Right Side - Cart Summary */}
-      <div className="w-full lg:w-80 bg-[#171717] rounded-md border border-neutral-700 p-5 flex flex-col">
+      <div
+        className="w-full lg:w-80 rounded-xl p-5 flex flex-col"
+        style={{
+          background: "linear-gradient(135deg, #0d0d0d 0%, #171717 100%)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow:
+            "0 0 20px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255,255,255,0.02)",
+        }}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Order Summary</h2>
-          <span className="text-xs border border-orange-600/70 bg-orange-600/20 px-2 py-1 rounded-full font-semibold">
+          <h2
+            className="text-xl font-bold"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #d1d5db 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Order Summary
+          </h2>
+          <span
+            className="text-xs px-2 py-1 rounded-full font-semibold"
+            style={{
+              background: "rgba(255, 99, 0, 0.2)",
+              border: "1px solid rgba(255, 99, 0, 0.5)",
+              color: "#ff9500",
+              boxShadow: "0 0 8px rgba(255, 99, 0, 0.2)",
+            }}
+          >
             {productList.length} items
           </span>
         </div>
 
-        <div className="h-px bg-neutral-700 mb-4"></div>
+        <div
+          className="h-px mb-4"
+          style={{ background: "rgba(255, 255, 255, 0.1)" }}
+        ></div>
 
         {/* Quick Stats */}
         <div className="space-y-3 flex-1">
@@ -780,7 +899,10 @@ const Sales = () => {
           </div>
         </div>
 
-        <div className="h-px bg-neutral-700 my-4"></div>
+        <div
+          className="h-px my-4"
+          style={{ background: "rgba(255, 255, 255, 0.1)" }}
+        ></div>
 
         {/* Grand Total */}
         <div className="flex justify-between text-xl font-bold mb-6">
@@ -792,7 +914,14 @@ const Sales = () => {
         <button
           onClick={handleCheckout}
           disabled={productList.length === 0}
-          className="w-full py-3 bg-white hover:bg-white/70 disabled:bg-neutral-600 disabled:cursor-not-allowed text-[#171717] font-bold rounded-full transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 font-bold rounded-full transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            boxShadow: "0 0 15px rgba(255, 255, 255, 0.1)",
+            color: "#fff",
+          }}
         >
           <i className="bx bx-credit-card text-xl"></i>
           Checkout

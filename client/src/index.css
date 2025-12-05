@@ -221,3 +221,35 @@
 ::-webkit-scrollbar-thumb:hover {
   cursor: pointer;
 }
+
+/* Dark theme for dropdown options */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #171717;
+  color: #ffffff;
+  padding: 8px 12px;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #252525;
+  background: linear-gradient(135deg, #252525 0%, #1f1f1f 100%);
+}
+
+/* Date input dark theme */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}

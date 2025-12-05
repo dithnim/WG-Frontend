@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import Smalltile from "../Charts/Smalltile";
 import TopProductsChart from "../Charts/TopProductsChart";
-import PaymentMethodChart from "../Charts/PaymentMethodChart";
+import BrandsChart from "../Charts/BrandsChart";
 import StatCard from "../Charts/StatCard";
 import ProfitChart from "../Charts/ProfitChart";
 import { useDispatch, useSelector } from "react-redux";
@@ -223,8 +223,8 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Performance Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+      {/* Performance Stats Row 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mt-6">
         <StatCard
           title="Monthly Profit"
           value={`Rs. ${formatCurrency(storePerformance.totalProfit)}`}
@@ -288,6 +288,69 @@ const Dashboard: React.FC = () => {
             </svg>
           }
         />
+        <StatCard
+          title="Items Sold"
+          value={storePerformance.totalItemsSold.toLocaleString()}
+          color="#ff5e00"
+          subtitle="Total units sold"
+          icon={
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Unique Products"
+          value={storePerformance.uniqueProductsSold.toLocaleString()}
+          color="#29eaff"
+          subtitle="Different items"
+          icon={
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Active Brands"
+          value={storePerformance.brandsSold.length.toLocaleString()}
+          color="#bbff00"
+          subtitle="Brands selling"
+          icon={
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
+            </svg>
+          }
+        />
       </div>
 
       {/* Charts Row */}
@@ -296,9 +359,7 @@ const Dashboard: React.FC = () => {
           <ProfitChart profitData={storePerformance.profit30Days} />
         </div>
         <div>
-          <PaymentMethodChart
-            paymentMethods={storePerformance.paymentMethodBreakdown}
-          />
+          <BrandsChart brands={storePerformance.brandsSold} />
         </div>
       </div>
 

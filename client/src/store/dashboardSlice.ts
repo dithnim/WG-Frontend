@@ -21,19 +21,32 @@ interface TopSellingProduct {
   totalRevenue: number;
 }
 
-interface PaymentMethodBreakdown {
-  method: string;
+interface BrandSold {
+  brand: string;
   count: number;
-  total: number;
+  revenue: number;
+}
+
+interface CategorySold {
+  category: string;
+  count: number;
+  revenue: number;
 }
 
 interface StorePerformance {
   totalProfit: number;
   profitMargin: number;
   averageOrderValue: number;
+  totalItemsSold: number;
+  uniqueProductsSold: number;
   topSellingProducts: TopSellingProduct[];
-  paymentMethodBreakdown: PaymentMethodBreakdown[];
+  brandsSold: BrandSold[];
+  categoriesSold: CategorySold[];
   profit30Days: number[];
+  revenue30Days: number[];
+  dailySalesAverage: number;
+  bestSellingDay: string;
+  peakHour: number;
 }
 
 interface DashboardState {
@@ -86,9 +99,16 @@ const initialStorePerformance: StorePerformance = {
   totalProfit: 0,
   profitMargin: 0,
   averageOrderValue: 0,
+  totalItemsSold: 0,
+  uniqueProductsSold: 0,
   topSellingProducts: [],
-  paymentMethodBreakdown: [],
+  brandsSold: [],
+  categoriesSold: [],
   profit30Days: [],
+  revenue30Days: [],
+  dailySalesAverage: 0,
+  bestSellingDay: "N/A",
+  peakHour: 0,
 };
 
 const initialState: DashboardState = {
@@ -311,13 +331,22 @@ export const fetchStorePerformance = createAsyncThunk(
         totalProfit: data.totalProfit || 0,
         profitMargin: data.profitMargin || 0,
         averageOrderValue: data.averageOrderValue || 0,
+        totalItemsSold: data.totalItemsSold || 0,
+        uniqueProductsSold: data.uniqueProductsSold || 0,
         topSellingProducts: Array.isArray(data.topSellingProducts)
           ? data.topSellingProducts
           : [],
-        paymentMethodBreakdown: Array.isArray(data.paymentMethodBreakdown)
-          ? data.paymentMethodBreakdown
+        brandsSold: Array.isArray(data.brandsSold) ? data.brandsSold : [],
+        categoriesSold: Array.isArray(data.categoriesSold)
+          ? data.categoriesSold
           : [],
         profit30Days: Array.isArray(data.profit30Days) ? data.profit30Days : [],
+        revenue30Days: Array.isArray(data.revenue30Days)
+          ? data.revenue30Days
+          : [],
+        dailySalesAverage: data.dailySalesAverage || 0,
+        bestSellingDay: data.bestSellingDay || "N/A",
+        peakHour: data.peakHour || 0,
       };
     } catch (error: any) {
       return rejectWithValue(
@@ -548,9 +577,16 @@ const dashboardSlice = createSlice({
           totalProfit: 0,
           profitMargin: 0,
           averageOrderValue: 0,
+          totalItemsSold: 0,
+          uniqueProductsSold: 0,
           topSellingProducts: [],
-          paymentMethodBreakdown: [],
+          brandsSold: [],
+          categoriesSold: [],
           profit30Days: [],
+          revenue30Days: [],
+          dailySalesAverage: 0,
+          bestSellingDay: "N/A",
+          peakHour: 0,
         };
       });
 

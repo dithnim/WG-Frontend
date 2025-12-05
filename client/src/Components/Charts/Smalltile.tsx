@@ -27,10 +27,18 @@ const Smalltile: React.FC<SmallTileProps> = ({
       type: "area",
       fontFamily: "Inter, sans-serif",
       dropShadow: {
-        enabled: false,
+        enabled: true,
+        top: 0,
+        left: 0,
+        blur: 10,
+        opacity: 0.3,
+        color: color,
       },
       toolbar: {
         show: false,
+      },
+      sparkline: {
+        enabled: true,
       },
     },
     tooltip: {
@@ -43,10 +51,10 @@ const Smalltile: React.FC<SmallTileProps> = ({
     fill: {
       type: "gradient",
       gradient: {
-        opacityFrom: 0.55,
-        opacityTo: 0,
-        shade: "#1C64F2",
-        gradientToColors: ["#1C64F2"],
+        shadeIntensity: 1,
+        opacityFrom: 0.6,
+        opacityTo: 0.1,
+        stops: [0, 90, 100],
       },
     },
     dataLabels: {
@@ -54,14 +62,15 @@ const Smalltile: React.FC<SmallTileProps> = ({
     },
     stroke: {
       width: 2,
+      curve: "smooth",
     },
     grid: {
       show: false,
-      strokeDashArray: 4,
       padding: {
         left: 0,
         right: 0,
         top: 0,
+        bottom: 0,
       },
     },
     series: [
@@ -104,41 +113,52 @@ const Smalltile: React.FC<SmallTileProps> = ({
   const growthNum = parseFloat(growth);
 
   return (
-    <div className="rounded-xl bg-[#171717] p-3 w-full h-[120px] mb-4">
-      <div className="flex justify-between">
-        <div className="p-1">
-          <h1 className="font-semibold text-sm">{Title}</h1>
-          <div className="mt-1 text-xl md:text-2xl" style={{ color: color }}>
-            {prefix && <span className="text-sm mr-1">{prefix}</span>}
+    <div
+      className="relative rounded-xl bg-[#0d0d0d] p-4 w-full h-[130px] border border-[#222] overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
+      style={{ borderColor: `${color}20` }}
+    >
+      {/* Neon glow effect */}
+      <div
+        className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-15 blur-3xl"
+        style={{ backgroundColor: color }}
+      ></div>
+
+      <div className="flex justify-between h-full relative z-10">
+        <div className="flex flex-col justify-between py-1">
+          <h1 className="font-medium text-sm text-gray-400">{Title}</h1>
+          <div
+            className="text-2xl md:text-3xl font-bold"
+            style={{ color: color, textShadow: `0 0 30px ${color}50` }}
+          >
+            {prefix && (
+              <span className="text-base mr-1 opacity-70">{prefix}</span>
+            )}
             {displayValue}
           </div>
           <div
-            className={
+            className={`flex items-center text-xs font-medium ${
               growthNum > 0
-                ? `text-[#00f271] mt-2 flex items-center percentage-sign text-xs md:text-sm`
+                ? "text-[#00ff88]"
                 : growthNum !== 0
-                  ? `text-[#f33b3b] mt-2 flex items-center percentage-sign text-xs md:text-sm`
-                  : `text-white mt-2 flex items-center percentage-sign text-xs md:text-sm`
-            }
-          >
-            <i
-              className={
+                  ? "text-[#ff3366]"
+                  : "text-gray-500"
+            }`}
+            style={{
+              textShadow:
                 growthNum > 0
-                  ? `bx bx-up-arrow-alt me-1 up-arrow`
+                  ? "0 0 10px #00ff8850"
                   : growthNum !== 0
-                    ? `bx bx-down-arrow-alt me-1 down-arrow`
-                    : "bx bx-up-arrow-alt me-1 up-arrow"
-              }
-            ></i>
-            {growthNum > 0 ? growth : (growthNum * -1).toFixed(2)}
-            {"%"}
+                    ? "0 0 10px #ff336650"
+                    : "none",
+            }}
+          >
+            <span className="text-lg mr-1">
+              {growthNum > 0 ? "↑" : growthNum !== 0 ? "↓" : "→"}
+            </span>
+            {growthNum > 0 ? growth : (growthNum * -1).toFixed(2)}%
           </div>
         </div>
-        <div
-          ref={chartRef}
-          id="area-chart"
-          className="h-20 w-[50%] flex items-center text-black"
-        ></div>
+        <div ref={chartRef} className="h-full w-[45%] flex items-end"></div>
       </div>
     </div>
   );
