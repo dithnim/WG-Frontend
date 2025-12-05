@@ -15,6 +15,27 @@ interface DashboardCounts {
   countList: CountListItem[];
 }
 
+interface TopSellingProduct {
+  productName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+interface PaymentMethodBreakdown {
+  method: string;
+  count: number;
+  total: number;
+}
+
+interface StorePerformance {
+  totalProfit: number;
+  profitMargin: number;
+  averageOrderValue: number;
+  topSellingProducts: TopSellingProduct[];
+  paymentMethodBreakdown: PaymentMethodBreakdown[];
+  profit30Days: number[];
+}
+
 interface DashboardState {
   products: DashboardCounts;
   sales: DashboardCounts;
@@ -34,12 +55,14 @@ interface DashboardState {
     counts: number[];
     currentCount: number;
   };
+  storePerformance: StorePerformance;
   timeframe: string;
   loading: boolean;
   loadingProduct30Day: boolean;
   loadingSupplier30Day: boolean;
   loadingSalesRevenue30Day: boolean;
   loadingSalesCount30Day: boolean;
+  loadingStorePerformance: boolean;
   loadingProductCount: boolean;
   loadingSaleCount: boolean;
   error: string | null;
@@ -47,8 +70,9 @@ interface DashboardState {
   lastFetchedSupplier30Day: number | null;
   lastFetchedSalesRevenue30Day: number | null;
   lastFetchedSalesCount30Day: number | null;
+  lastFetchedStorePerformance: number | null;
   lastFetchedProductCount: number | null;
-  lastFetchedSaleCount: null;
+  lastFetchedSaleCount: number | null;
 }
 
 const initialCounts: DashboardCounts = {
@@ -56,6 +80,15 @@ const initialCounts: DashboardCounts = {
   previous: 0,
   percentage: "0.00",
   countList: [],
+};
+
+const initialStorePerformance: StorePerformance = {
+  totalProfit: 0,
+  profitMargin: 0,
+  averageOrderValue: 0,
+  topSellingProducts: [],
+  paymentMethodBreakdown: [],
+  profit30Days: [],
 };
 
 const initialState: DashboardState = {
@@ -77,12 +110,14 @@ const initialState: DashboardState = {
     counts: [],
     currentCount: 0,
   },
+  storePerformance: initialStorePerformance,
   timeframe: "month",
   loading: false,
   loadingProduct30Day: false,
   loadingSupplier30Day: false,
   loadingSalesRevenue30Day: false,
   loadingSalesCount30Day: false,
+  loadingStorePerformance: false,
   loadingProductCount: false,
   loadingSaleCount: false,
   error: null,
@@ -90,6 +125,7 @@ const initialState: DashboardState = {
   lastFetchedSupplier30Day: null,
   lastFetchedSalesRevenue30Day: null,
   lastFetchedSalesCount30Day: null,
+  lastFetchedStorePerformance: null,
   lastFetchedProductCount: null,
   lastFetchedSaleCount: null,
 };
@@ -249,6 +285,54 @@ export const fetchSalesCount30DayData = createAsyncThunk(
       if (
         lastFetchedSalesCount30Day &&
         Date.now() - lastFetchedSalesCount30Day < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
+  }
+);
+
+// Fetch store performance metrics
+export const fetchStorePerformance = createAsyncThunk(
+  "dashboard/fetchStorePerformance",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await apiService.get(
+        "/sales/performance",
+        {},
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
+      return {
+        totalProfit: data.totalProfit || 0,
+        profitMargin: data.profitMargin || 0,
+        averageOrderValue: data.averageOrderValue || 0,
+        topSellingProducts: Array.isArray(data.topSellingProducts)
+          ? data.topSellingProducts
+          : [],
+        paymentMethodBreakdown: Array.isArray(data.paymentMethodBreakdown)
+          ? data.paymentMethodBreakdown
+          : [],
+        profit30Days: Array.isArray(data.profit30Days) ? data.profit30Days : [],
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Failed to fetch store performance metrics"
+      );
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedStorePerformance } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedStorePerformance &&
+        Date.now() - lastFetchedStorePerformance < CACHE_DURATION
       ) {
         return false;
       }
@@ -446,6 +530,30 @@ const dashboardSlice = createSlice({
         };
       });
 
+    // Store Performance
+    builder
+      .addCase(fetchStorePerformance.pending, (state) => {
+        state.loadingStorePerformance = true;
+        state.error = null;
+      })
+      .addCase(fetchStorePerformance.fulfilled, (state, action) => {
+        state.loadingStorePerformance = false;
+        state.storePerformance = action.payload;
+        state.lastFetchedStorePerformance = Date.now();
+      })
+      .addCase(fetchStorePerformance.rejected, (state, action) => {
+        state.loadingStorePerformance = false;
+        state.error = action.payload as string;
+        state.storePerformance = {
+          totalProfit: 0,
+          profitMargin: 0,
+          averageOrderValue: 0,
+          topSellingProducts: [],
+          paymentMethodBreakdown: [],
+          profit30Days: [],
+        };
+      });
+
     // Product Count
     builder
       .addCase(fetchProductCount.pending, (state) => {
@@ -522,6 +630,7 @@ export const selectDashboardLoading = (state: { dashboard: DashboardState }) =>
   state.dashboard.loadingSupplier30Day ||
   state.dashboard.loadingSalesRevenue30Day ||
   state.dashboard.loadingSalesCount30Day ||
+  state.dashboard.loadingStorePerformance ||
   state.dashboard.loadingProductCount ||
   state.dashboard.loadingSaleCount;
 export const selectLoadingProduct30Day = (state: {
@@ -536,6 +645,9 @@ export const selectLoadingSalesRevenue30Day = (state: {
 export const selectLoadingSalesCount30Day = (state: {
   dashboard: DashboardState;
 }) => state.dashboard.loadingSalesCount30Day;
+export const selectLoadingStorePerformance = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.loadingStorePerformance;
 export const selectDashboardError = (state: { dashboard: DashboardState }) =>
   state.dashboard.error;
 export const selectTimeframe = (state: { dashboard: DashboardState }) =>
@@ -554,3 +666,5 @@ export const selectSalesRevenue30DayData = (state: {
 export const selectSalesCount30DayData = (state: {
   dashboard: DashboardState;
 }) => state.dashboard.salesCount30DayData;
+export const selectStorePerformance = (state: { dashboard: DashboardState }) =>
+  state.dashboard.storePerformance;
