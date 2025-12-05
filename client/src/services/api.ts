@@ -428,7 +428,13 @@ const apiService = {
       timeout?: number; // Custom timeout in ms
     } = {}
   ): Promise<T> => {
-    const { cache = true, cacheTTL, dedupe = true, cancelKey, timeout } = options;
+    const {
+      cache = true,
+      cacheTTL,
+      dedupe = true,
+      cancelKey,
+      timeout,
+    } = options;
     const cacheKey = getCacheKey(url, params);
 
     // Determine cache TTL based on request type
