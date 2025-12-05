@@ -26,17 +26,29 @@ interface DashboardState {
     counts: number[];
     currentCount: number;
   };
+  salesRevenue30DayData: {
+    revenues: number[];
+    currentRevenue: number;
+  };
+  salesCount30DayData: {
+    counts: number[];
+    currentCount: number;
+  };
   timeframe: string;
   loading: boolean;
   loadingProduct30Day: boolean;
   loadingSupplier30Day: boolean;
+  loadingSalesRevenue30Day: boolean;
+  loadingSalesCount30Day: boolean;
   loadingProductCount: boolean;
   loadingSaleCount: boolean;
   error: string | null;
   lastFetchedProduct30Day: number | null;
   lastFetchedSupplier30Day: number | null;
+  lastFetchedSalesRevenue30Day: number | null;
+  lastFetchedSalesCount30Day: number | null;
   lastFetchedProductCount: number | null;
-  lastFetchedSaleCount: number | null;
+  lastFetchedSaleCount: null;
 }
 
 const initialCounts: DashboardCounts = {
@@ -57,15 +69,27 @@ const initialState: DashboardState = {
     counts: [],
     currentCount: 0,
   },
+  salesRevenue30DayData: {
+    revenues: [],
+    currentRevenue: 0,
+  },
+  salesCount30DayData: {
+    counts: [],
+    currentCount: 0,
+  },
   timeframe: "month",
   loading: false,
   loadingProduct30Day: false,
   loadingSupplier30Day: false,
+  loadingSalesRevenue30Day: false,
+  loadingSalesCount30Day: false,
   loadingProductCount: false,
   loadingSaleCount: false,
   error: null,
   lastFetchedProduct30Day: null,
   lastFetchedSupplier30Day: null,
+  lastFetchedSalesRevenue30Day: null,
+  lastFetchedSalesCount30Day: null,
   lastFetchedProductCount: null,
   lastFetchedSaleCount: null,
 };
@@ -75,7 +99,16 @@ export const fetchProduct30DayData = createAsyncThunk(
   "dashboard/fetchProduct30DayData",
   async (_, { rejectWithValue }) => {
     try {
-      const data = await apiService.get("/products/count/30days");
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        "/products/count/30days",
+        {},
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
       return {
         counts: Array.isArray(data.counts) ? data.counts : [],
         currentCount: data.currentCount || 0,
@@ -106,7 +139,16 @@ export const fetchSupplier30DayData = createAsyncThunk(
   "dashboard/fetchSupplier30DayData",
   async (_, { rejectWithValue }) => {
     try {
-      const data = await apiService.get("/supplier/count/30days");
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        "/supplier/count/30days",
+        {},
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
       return {
         counts: Array.isArray(data.counts) ? data.counts : [],
         currentCount: data.currentCount || 0,
@@ -133,13 +175,104 @@ export const fetchSupplier30DayData = createAsyncThunk(
   }
 );
 
+// Fetch 30-day sales revenue data
+export const fetchSalesRevenue30DayData = createAsyncThunk(
+  "dashboard/fetchSalesRevenue30DayData",
+  async (_, { rejectWithValue }) => {
+    try {
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        "/sales/revenue/30days",
+        {},
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
+      return {
+        revenues: Array.isArray(data.revenues) ? data.revenues : [],
+        currentRevenue: data.currentRevenue || 0,
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Failed to fetch 30-day sales revenue data"
+      );
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedSalesRevenue30Day } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedSalesRevenue30Day &&
+        Date.now() - lastFetchedSalesRevenue30Day < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
+  }
+);
+
+// Fetch 30-day sales count data
+export const fetchSalesCount30DayData = createAsyncThunk(
+  "dashboard/fetchSalesCount30DayData",
+  async (_, { rejectWithValue }) => {
+    try {
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        "/sales/count/30days",
+        {},
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
+      return {
+        counts: Array.isArray(data.counts) ? data.counts : [],
+        currentCount: data.currentCount || 0,
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Failed to fetch 30-day sales count data"
+      );
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { dashboard: DashboardState };
+      const { lastFetchedSalesCount30Day } = state.dashboard;
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (
+        lastFetchedSalesCount30Day &&
+        Date.now() - lastFetchedSalesCount30Day < CACHE_DURATION
+      ) {
+        return false;
+      }
+      return true;
+    },
+  }
+);
+
 export const fetchProductCount = createAsyncThunk(
   "dashboard/fetchProductCount",
   async (timeframe: string, { rejectWithValue }) => {
     try {
-      const data = await apiService.get(`/products/count`, {
-        search: timeframe,
-      });
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        `/products/count`,
+        {
+          search: timeframe,
+        },
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
 
       const today = new Date().toISOString().split("T")[0];
       const newCount: CountListItem = {
@@ -176,9 +309,18 @@ export const fetchSaleCount = createAsyncThunk(
   "dashboard/fetchSaleCount",
   async (timeframe: string, { rejectWithValue }) => {
     try {
-      const data = await apiService.get(`/sales/count`, {
-        search: timeframe,
-      });
+      // Use API-level caching with 5 minute TTL
+      const data = await apiService.get(
+        `/sales/count`,
+        {
+          search: timeframe,
+        },
+        {
+          cache: true,
+          cacheTTL: 5 * 60 * 1000, // 5 minutes
+          dedupe: true,
+        }
+      );
 
       return {
         current: data.count || 0,
@@ -264,6 +406,46 @@ const dashboardSlice = createSlice({
         };
       });
 
+    // Sales Revenue 30-day data
+    builder
+      .addCase(fetchSalesRevenue30DayData.pending, (state) => {
+        state.loadingSalesRevenue30Day = true;
+        state.error = null;
+      })
+      .addCase(fetchSalesRevenue30DayData.fulfilled, (state, action) => {
+        state.loadingSalesRevenue30Day = false;
+        state.salesRevenue30DayData = action.payload;
+        state.lastFetchedSalesRevenue30Day = Date.now();
+      })
+      .addCase(fetchSalesRevenue30DayData.rejected, (state, action) => {
+        state.loadingSalesRevenue30Day = false;
+        state.error = action.payload as string;
+        state.salesRevenue30DayData = {
+          revenues: [],
+          currentRevenue: 0,
+        };
+      });
+
+    // Sales Count 30-day data
+    builder
+      .addCase(fetchSalesCount30DayData.pending, (state) => {
+        state.loadingSalesCount30Day = true;
+        state.error = null;
+      })
+      .addCase(fetchSalesCount30DayData.fulfilled, (state, action) => {
+        state.loadingSalesCount30Day = false;
+        state.salesCount30DayData = action.payload;
+        state.lastFetchedSalesCount30Day = Date.now();
+      })
+      .addCase(fetchSalesCount30DayData.rejected, (state, action) => {
+        state.loadingSalesCount30Day = false;
+        state.error = action.payload as string;
+        state.salesCount30DayData = {
+          counts: [],
+          currentCount: 0,
+        };
+      });
+
     // Product Count
     builder
       .addCase(fetchProductCount.pending, (state) => {
@@ -338,6 +520,8 @@ export default dashboardSlice.reducer;
 export const selectDashboardLoading = (state: { dashboard: DashboardState }) =>
   state.dashboard.loadingProduct30Day ||
   state.dashboard.loadingSupplier30Day ||
+  state.dashboard.loadingSalesRevenue30Day ||
+  state.dashboard.loadingSalesCount30Day ||
   state.dashboard.loadingProductCount ||
   state.dashboard.loadingSaleCount;
 export const selectLoadingProduct30Day = (state: {
@@ -346,6 +530,12 @@ export const selectLoadingProduct30Day = (state: {
 export const selectLoadingSupplier30Day = (state: {
   dashboard: DashboardState;
 }) => state.dashboard.loadingSupplier30Day;
+export const selectLoadingSalesRevenue30Day = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.loadingSalesRevenue30Day;
+export const selectLoadingSalesCount30Day = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.loadingSalesCount30Day;
 export const selectDashboardError = (state: { dashboard: DashboardState }) =>
   state.dashboard.error;
 export const selectTimeframe = (state: { dashboard: DashboardState }) =>
@@ -358,3 +548,9 @@ export const selectProduct30DayData = (state: { dashboard: DashboardState }) =>
   state.dashboard.product30DayData;
 export const selectSupplier30DayData = (state: { dashboard: DashboardState }) =>
   state.dashboard.supplier30DayData;
+export const selectSalesRevenue30DayData = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.salesRevenue30DayData;
+export const selectSalesCount30DayData = (state: {
+  dashboard: DashboardState;
+}) => state.dashboard.salesCount30DayData;

@@ -8,6 +8,8 @@ import {
   fetchSaleCount,
   fetchProduct30DayData,
   fetchSupplier30DayData,
+  fetchSalesRevenue30DayData,
+  fetchSalesCount30DayData,
   setTimeframe,
   selectProducts,
   selectSales,
@@ -15,7 +17,8 @@ import {
   selectDashboardLoading,
   selectProduct30DayData,
   selectSupplier30DayData,
-  CountListItem,
+  selectSalesRevenue30DayData,
+  selectSalesCount30DayData,
 } from "../../store/dashboardSlice";
 
 const Dashboard: React.FC = () => {
@@ -28,6 +31,8 @@ const Dashboard: React.FC = () => {
   const loading = useSelector(selectDashboardLoading);
   const product30DayData = useSelector(selectProduct30DayData);
   const supplier30DayData = useSelector(selectSupplier30DayData);
+  const salesRevenue30DayData = useSelector(selectSalesRevenue30DayData);
+  const salesCount30DayData = useSelector(selectSalesCount30DayData);
 
   // Helper functions to format data for charts
   const getProductChartData = (): number[] => {
@@ -80,10 +85,56 @@ const Dashboard: React.FC = () => {
     return "0.00";
   };
 
+  // Helper functions for sales revenue chart data
+  const getSalesRevenueChartData = (): number[] => {
+    // Use the 30-day API data from Redux
+    if (
+      salesRevenue30DayData.revenues &&
+      salesRevenue30DayData.revenues.length > 0
+    ) {
+      return salesRevenue30DayData.revenues;
+    }
+
+    // Fallback to default
+    return [0, 0, 0, 0, 0];
+  };
+
+  const getSalesRevenueGrowthPercentage = (): string => {
+    if (
+      salesRevenue30DayData.revenues &&
+      salesRevenue30DayData.revenues.length > 0
+    ) {
+      // Compare first revenue (30 days ago) with last revenue (most recent)
+      const firstRevenue = salesRevenue30DayData.revenues[0];
+      const lastRevenue =
+        salesRevenue30DayData.revenues[
+          salesRevenue30DayData.revenues.length - 1
+        ];
+
+      if (firstRevenue === 0) return "0.00";
+
+      const percentage = ((lastRevenue - firstRevenue) / firstRevenue) * 100;
+      return percentage.toFixed(2);
+    }
+    return "0.00";
+  };
+
+  // Format currency for display
+  const formatCurrency = (value: number): string => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K`;
+    }
+    return value.toFixed(0);
+  };
+
   // Fetch 30-day data on mount
   useEffect(() => {
     dispatch(fetchProduct30DayData());
     dispatch(fetchSupplier30DayData());
+    dispatch(fetchSalesRevenue30DayData());
+    dispatch(fetchSalesCount30DayData());
   }, [dispatch]);
 
   // Fetch dashboard data on mount and when timeframe changes
@@ -96,13 +147,29 @@ const Dashboard: React.FC = () => {
 
   // Helper function to get sales chart data
   const getSalesChartData = (): number[] => {
-    if (!sales.countList || sales.countList.length === 0) {
-      return [5, 4, 6, 7, 9, 6]; // Default placeholder data
-    } else if (sales.countList.length === 1) {
-      return [0, sales.countList[0].count];
-    } else {
-      return sales.countList.map((item: CountListItem) => item.count);
+    // Use the 30-day API data from Redux
+    if (salesCount30DayData.counts && salesCount30DayData.counts.length > 0) {
+      return salesCount30DayData.counts;
     }
+
+    // Fallback to default
+    return [0, 0, 0, 0, 0, 0];
+  };
+
+  // Helper function to get sales growth percentage
+  const getSalesGrowthPercentage = (): string => {
+    if (salesCount30DayData.counts && salesCount30DayData.counts.length > 0) {
+      // Compare first count (30 days ago) with last count (most recent)
+      const firstCount = salesCount30DayData.counts[0];
+      const lastCount =
+        salesCount30DayData.counts[salesCount30DayData.counts.length - 1];
+
+      if (firstCount === 0) return "0.00";
+
+      const percentage = ((lastCount - firstCount) / firstCount) * 100;
+      return percentage.toFixed(2);
+    }
+    return "0.00";
   };
 
   // Handle timeframe change
@@ -115,13 +182,22 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 lg:p-12">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
         <Smalltile
           color={"#f7005f"}
+          chart_data={getSalesRevenueChartData()}
+          Title={"Monthly Revenue"}
+          count={salesRevenue30DayData.currentRevenue}
+          growth={getSalesRevenueGrowthPercentage()}
+          prefix="Rs."
+          formatValue={formatCurrency}
+        />
+        <Smalltile
+          color={"#22c55e"}
           chart_data={getSalesChartData()}
-          Title={"Sales"}
-          count={sales.current}
-          growth={sales.percentage}
+          Title={"Sales Count"}
+          count={salesCount30DayData.currentCount}
+          growth={getSalesGrowthPercentage()}
         />
         <Smalltile
           color={"#ff5e00"}

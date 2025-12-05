@@ -1,6 +1,23 @@
 import axios from "axios";
 import type { RootState } from "../store/store";
 
+// Simple in-memory cache for GET requests
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  expiresAt: number;
+}
+
+const requestCache = new Map<string, CacheEntry>();
+const DEFAULT_CACHE_TTL = 30000; // 30 seconds default cache TTL
+const SEARCH_CACHE_TTL = 10000; // 10 seconds for search results
+
+// Request deduplication - prevent duplicate concurrent requests
+const pendingRequests = new Map<string, Promise<any>>();
+
+// AbortController map for cancellable requests
+const abortControllers = new Map<string, AbortController>();
+
 // Token validation callback - will be set by the app
 let tokenInvalidCallback: ((reason: string) => void) | null = null;
 
@@ -88,16 +105,70 @@ const refreshAccessToken = async (): Promise<string | null> => {
   }
 };
 
-// Create axios instance with default config
+// Create axios instance with optimized config
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000, // Increased to 30 seconds to prevent premature cancellation
+  timeout: 15000, // 15 seconds - optimized timeout
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
   },
   // Enable credentials for CORS
   withCredentials: false,
 });
+
+// Cache helper functions
+const getCacheKey = (url: string, params?: any): string => {
+  const paramStr = params ? JSON.stringify(params) : "";
+  return `${url}:${paramStr}`;
+};
+
+const getCachedData = (key: string): any | null => {
+  const entry = requestCache.get(key);
+  if (entry && Date.now() < entry.expiresAt) {
+    return entry.data;
+  }
+  // Remove expired entry
+  if (entry) {
+    requestCache.delete(key);
+  }
+  return null;
+};
+
+const setCachedData = (
+  key: string,
+  data: any,
+  ttl: number = DEFAULT_CACHE_TTL
+): void => {
+  const now = Date.now();
+  requestCache.set(key, {
+    data,
+    timestamp: now,
+    expiresAt: now + ttl,
+  });
+};
+
+// Clear cache for specific patterns (useful after mutations)
+const invalidateCache = (pattern?: string): void => {
+  if (!pattern) {
+    requestCache.clear();
+    return;
+  }
+  for (const key of requestCache.keys()) {
+    if (key.includes(pattern)) {
+      requestCache.delete(key);
+    }
+  }
+};
+
+// Cancel pending request by key
+const cancelRequest = (key: string): void => {
+  const controller = abortControllers.get(key);
+  if (controller) {
+    controller.abort();
+    abortControllers.delete(key);
+  }
+};
 
 // Request interceptor
 api.interceptors.request.use(
@@ -345,29 +416,117 @@ const retryRequest = async <T = any>(
 
 // API methods
 const apiService = {
-  // GET request
-  get: async <T = any>(url: string, params: any = {}): Promise<T> => {
-    return retryRequest(() => api.get(url, { params }));
+  // GET request with caching and deduplication
+  get: async <T = any>(
+    url: string,
+    params: any = {},
+    options: {
+      cache?: boolean;
+      cacheTTL?: number;
+      dedupe?: boolean;
+      cancelKey?: string;
+    } = {}
+  ): Promise<T> => {
+    const { cache = true, cacheTTL, dedupe = true, cancelKey } = options;
+    const cacheKey = getCacheKey(url, params);
+
+    // Determine cache TTL based on request type
+    const isSearchRequest = params.search !== undefined;
+    const effectiveTTL =
+      cacheTTL ?? (isSearchRequest ? SEARCH_CACHE_TTL : DEFAULT_CACHE_TTL);
+
+    // Check cache first (for GET requests)
+    if (cache) {
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData !== null) {
+        return cachedData;
+      }
+    }
+
+    // Check for pending duplicate request
+    if (dedupe && pendingRequests.has(cacheKey)) {
+      return pendingRequests.get(cacheKey)!;
+    }
+
+    // Cancel previous request with same cancelKey
+    if (cancelKey) {
+      cancelRequest(cancelKey);
+      const controller = new AbortController();
+      abortControllers.set(cancelKey, controller);
+    }
+
+    // Create the request promise
+    const requestPromise = retryRequest<T>(() =>
+      api.get(url, {
+        params,
+        signal: cancelKey ? abortControllers.get(cancelKey)?.signal : undefined,
+      })
+    )
+      .then((data) => {
+        // Cache successful response
+        if (cache) {
+          setCachedData(cacheKey, data, effectiveTTL);
+        }
+        return data;
+      })
+      .finally(() => {
+        // Clean up pending request
+        pendingRequests.delete(cacheKey);
+        if (cancelKey) {
+          abortControllers.delete(cancelKey);
+        }
+      });
+
+    // Store pending request for deduplication
+    if (dedupe) {
+      pendingRequests.set(cacheKey, requestPromise);
+    }
+
+    return requestPromise;
   },
 
-  // POST request
+  // POST request (invalidates related cache)
   post: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    return retryRequest(() => api.post(url, data));
+    const result = await retryRequest<T>(() => api.post(url, data));
+    // Invalidate cache for the resource type
+    const resourceType = url.split("/")[1]; // e.g., '/product' -> 'product'
+    if (resourceType) {
+      invalidateCache(resourceType);
+    }
+    return result;
   },
 
-  // PUT request
+  // PUT request (invalidates related cache)
   put: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    return retryRequest(() => api.put(url, data));
+    const result = await retryRequest<T>(() => api.put(url, data));
+    // Invalidate cache for the resource type
+    const resourceType = url.split("/")[1];
+    if (resourceType) {
+      invalidateCache(resourceType);
+    }
+    return result;
   },
 
-  // DELETE request
+  // DELETE request (invalidates related cache)
   delete: async <T = any>(url: string): Promise<T> => {
-    return retryRequest(() => api.delete(url));
+    const result = await retryRequest<T>(() => api.delete(url));
+    // Invalidate cache for the resource type
+    const resourceType = url.split("/")[1];
+    if (resourceType) {
+      invalidateCache(resourceType);
+    }
+    return result;
   },
 
-  // PATCH request (for partial updates)
+  // PATCH request (invalidates related cache)
   patch: async <T = any>(url: string, data: any = {}): Promise<T> => {
-    return retryRequest(() => api.patch(url, data));
+    const result = await retryRequest<T>(() => api.patch(url, data));
+    // Invalidate cache for the resource type
+    const resourceType = url.split("/")[1];
+    if (resourceType) {
+      invalidateCache(resourceType);
+    }
+    return result;
   },
 
   // Validate token - check if current token is valid
@@ -386,6 +545,11 @@ const apiService = {
       return false;
     }
   },
+
+  // Utility methods for cache management
+  invalidateCache,
+  cancelRequest,
+  clearAllCache: () => requestCache.clear(),
 };
 
 export default apiService;

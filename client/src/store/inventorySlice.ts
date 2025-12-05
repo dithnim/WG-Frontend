@@ -28,18 +28,72 @@ export interface ProductWithInventories extends Product {
   suppliers?: any[];
 }
 
+export interface NewInventoryForm {
+  cost: string;
+  sellingPrice: string;
+  stock: string;
+}
+
+export interface NewProductForm {
+  productId: string;
+  productName: string;
+  brand: string;
+  category: string;
+  rackNumber: string;
+  description: string;
+}
+
 interface InventoryState {
   productsWithInventories: ProductWithInventories[];
   loading: boolean;
   error: string | null;
   selectedProduct: ProductWithInventories | null;
+  // UI States
+  searchQuery: string;
+  isSearchingApi: boolean;
+  apiSearchDone: boolean;
+  showAddInventoryModal: boolean;
+  showAddProductModal: boolean;
+  showEditProductModal: boolean;
+  editingInventory: Inventory | null;
+  // Form States
+  newInventory: NewInventoryForm;
+  newProduct: NewProductForm;
+  editProduct: NewProductForm;
 }
+
+const initialInventoryForm: NewInventoryForm = {
+  cost: "",
+  sellingPrice: "",
+  stock: "",
+};
+
+const initialProductForm: NewProductForm = {
+  productId: "",
+  productName: "",
+  brand: "",
+  category: "",
+  rackNumber: "",
+  description: "",
+};
 
 const initialState: InventoryState = {
   productsWithInventories: [],
   loading: false,
   error: null,
   selectedProduct: null,
+  // UI States
+  searchQuery: "",
+  isSearchingApi: false,
+  apiSearchDone: false,
+  showAddInventoryModal: false,
+  showAddProductModal: false,
+  showEditProductModal: false,
+  editingInventory: null,
+  // Form States
+  newInventory: initialInventoryForm,
+  newProduct: initialProductForm,
+  editProduct: initialProductForm,
 };
 
 // Fetch all products with their inventories (single API call)
@@ -48,7 +102,16 @@ export const fetchProductsWithInventories = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Use chunkSize=1000 to get all products in one call
-      const response = await apiService.get("/product", { chunkSize: 1000 });
+      // Cache for 30 seconds to avoid repeated fetches
+      const response = await apiService.get(
+        "/product",
+        { chunkSize: 1000 },
+        {
+          cache: true,
+          cacheTTL: 30000, // 30 second cache
+          dedupe: true,
+        }
+      );
 
       // Backend returns { products: [...], pagination: {...} }
       // Each product has inventories array embedded
@@ -73,7 +136,16 @@ export const searchProductByProductId = createAsyncThunk(
   "inventory/searchProductByProductId",
   async (productId: string, { rejectWithValue }) => {
     try {
-      const response = await apiService.get("/product", { search: productId });
+      // Cancel previous search and use short cache for search results
+      const response = await apiService.get(
+        "/product",
+        { search: productId },
+        {
+          cancelKey: "inventory-product-search",
+          cache: true,
+          cacheTTL: 10000, // 10 second cache for search
+        }
+      );
 
       // Backend returns { products: [...], pagination: {...} }
       if (response.products && Array.isArray(response.products)) {
@@ -87,6 +159,10 @@ export const searchProductByProductId = createAsyncThunk(
 
       return [];
     } catch (error: any) {
+      // Don't treat cancellation as an error
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
+        return [];
+      }
       return rejectWithValue(error.message || "Failed to search product");
     }
   }
@@ -240,6 +316,97 @@ const inventorySlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    // UI State actions
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+    },
+    setIsSearchingApi: (state, action: PayloadAction<boolean>) => {
+      state.isSearchingApi = action.payload;
+    },
+    setApiSearchDone: (state, action: PayloadAction<boolean>) => {
+      state.apiSearchDone = action.payload;
+    },
+    setShowAddInventoryModal: (state, action: PayloadAction<boolean>) => {
+      state.showAddInventoryModal = action.payload;
+      if (!action.payload) {
+        // Reset form when closing modal
+        state.newInventory = initialInventoryForm;
+      }
+    },
+    setShowAddProductModal: (state, action: PayloadAction<boolean>) => {
+      state.showAddProductModal = action.payload;
+      if (!action.payload) {
+        // Reset form when closing modal
+        state.newProduct = initialProductForm;
+      }
+    },
+    setShowEditProductModal: (state, action: PayloadAction<boolean>) => {
+      state.showEditProductModal = action.payload;
+    },
+    setEditingInventory: (state, action: PayloadAction<Inventory | null>) => {
+      state.editingInventory = action.payload;
+      if (action.payload) {
+        // Populate form with inventory data
+        state.newInventory = {
+          cost: action.payload.cost.toString(),
+          sellingPrice: action.payload.sellingPrice.toString(),
+          stock: action.payload.stock.toString(),
+        };
+      } else {
+        // Reset form when clearing
+        state.newInventory = initialInventoryForm;
+      }
+    },
+    // Form State actions
+    setNewInventory: (state, action: PayloadAction<NewInventoryForm>) => {
+      state.newInventory = action.payload;
+    },
+    updateNewInventoryField: (
+      state,
+      action: PayloadAction<{ field: keyof NewInventoryForm; value: string }>
+    ) => {
+      state.newInventory[action.payload.field] = action.payload.value;
+    },
+    resetNewInventory: (state) => {
+      state.newInventory = initialInventoryForm;
+    },
+    setNewProduct: (state, action: PayloadAction<NewProductForm>) => {
+      state.newProduct = action.payload;
+    },
+    updateNewProductField: (
+      state,
+      action: PayloadAction<{ field: keyof NewProductForm; value: string }>
+    ) => {
+      state.newProduct[action.payload.field] = action.payload.value;
+    },
+    resetNewProduct: (state) => {
+      state.newProduct = initialProductForm;
+    },
+    setEditProduct: (state, action: PayloadAction<NewProductForm>) => {
+      state.editProduct = action.payload;
+    },
+    updateEditProductField: (
+      state,
+      action: PayloadAction<{ field: keyof NewProductForm; value: string }>
+    ) => {
+      state.editProduct[action.payload.field] = action.payload.value;
+    },
+    resetEditProduct: (state) => {
+      state.editProduct = initialProductForm;
+    },
+    // Initialize edit product form from selected product
+    initEditProductFromSelected: (state) => {
+      if (state.selectedProduct) {
+        state.editProduct = {
+          productId: state.selectedProduct.productId,
+          productName: state.selectedProduct.productName,
+          brand: state.selectedProduct.brand || "",
+          category: state.selectedProduct.category || "",
+          rackNumber: state.selectedProduct.rackNumber || "",
+          description: state.selectedProduct.description || "",
+        };
+      }
     },
     // Optimistic update for inventory
     optimisticUpdateInventory: (
@@ -474,6 +641,23 @@ const inventorySlice = createSlice({
 export const {
   setSelectedProduct,
   clearError,
+  setSearchQuery,
+  setIsSearchingApi,
+  setApiSearchDone,
+  setShowAddInventoryModal,
+  setShowAddProductModal,
+  setShowEditProductModal,
+  setEditingInventory,
+  setNewInventory,
+  updateNewInventoryField,
+  resetNewInventory,
+  setNewProduct,
+  updateNewProductField,
+  resetNewProduct,
+  setEditProduct,
+  updateEditProductField,
+  resetEditProduct,
+  initEditProductFromSelected,
   optimisticUpdateInventory,
   optimisticAddInventory,
   optimisticDeleteInventory,

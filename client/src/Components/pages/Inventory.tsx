@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchProductsWithInventories,
@@ -14,65 +14,45 @@ import {
   replaceTempInventory,
   revertInventoryState,
   optimisticUpdateProduct,
+  setSelectedProduct,
+  setSearchQuery,
+  setIsSearchingApi,
+  setApiSearchDone,
+  setShowAddInventoryModal,
+  setShowAddProductModal,
+  setShowEditProductModal,
+  setEditingInventory,
+  setNewInventory,
+  updateNewInventoryField,
+  resetNewInventory,
+  setNewProduct,
+  updateNewProductField,
+  resetNewProduct,
+  setEditProduct,
+  updateEditProductField,
+  initEditProductFromSelected,
   Inventory as InventoryType,
   ProductWithInventories,
 } from "../../store/inventorySlice";
 
-interface NewInventoryForm {
-  cost: string;
-  sellingPrice: string;
-  stock: string;
-}
-
-interface NewProductForm {
-  productId: string;
-  productName: string;
-  brand: string;
-  category: string;
-  rackNumber: string;
-  description: string;
-}
-
 const Inventory = () => {
   const dispatch = useAppDispatch();
-  const { productsWithInventories, loading, error } = useAppSelector(
-    (state) => state.inventory
-  );
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchingApi, setIsSearchingApi] = useState(false);
-  const [apiSearchDone, setApiSearchDone] = useState(false);
-  const [selectedProduct, setSelectedProduct] =
-    useState<ProductWithInventories | null>(null);
-  const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showEditProductModal, setShowEditProductModal] = useState(false);
-  const [editingInventory, setEditingInventory] =
-    useState<InventoryType | null>(null);
-
-  const [newInventory, setNewInventory] = useState<NewInventoryForm>({
-    cost: "",
-    sellingPrice: "",
-    stock: "",
-  });
-
-  const [newProduct, setNewProduct] = useState<NewProductForm>({
-    productId: "",
-    productName: "",
-    brand: "",
-    category: "",
-    rackNumber: "",
-    description: "",
-  });
-
-  const [editProduct, setEditProduct] = useState<NewProductForm>({
-    productId: "",
-    productName: "",
-    brand: "",
-    category: "",
-    rackNumber: "",
-    description: "",
-  });
+  const {
+    productsWithInventories,
+    loading,
+    error,
+    selectedProduct,
+    searchQuery,
+    isSearchingApi,
+    apiSearchDone,
+    showAddInventoryModal,
+    showAddProductModal,
+    showEditProductModal,
+    editingInventory,
+    newInventory,
+    newProduct,
+    editProduct,
+  } = useAppSelector((state) => state.inventory);
 
   // Ref for search input
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -88,14 +68,14 @@ const Inventory = () => {
       // Ctrl+P: Open Add Product modal
       if (e.ctrlKey && e.key === "p") {
         e.preventDefault();
-        setShowAddProductModal(true);
+        dispatch(setShowAddProductModal(true));
       }
       // Ctrl+I: Open Add Inventory modal (only if a product is selected)
       if (e.ctrlKey && e.key === "i") {
         e.preventDefault();
         if (selectedProduct) {
-          setNewInventory({ cost: "", sellingPrice: "", stock: "" });
-          setShowAddInventoryModal(true);
+          dispatch(resetNewInventory());
+          dispatch(setShowAddInventoryModal(true));
         }
       }
       // Ctrl+S: Focus search box
@@ -108,7 +88,7 @@ const Inventory = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedProduct]);
+  }, [selectedProduct, dispatch]);
 
   // Update selected product when productsWithInventories changes
   useEffect(() => {
@@ -117,10 +97,10 @@ const Inventory = () => {
         (p) => p._id === selectedProduct._id
       );
       if (updated) {
-        setSelectedProduct(updated);
+        dispatch(setSelectedProduct(updated));
       }
     }
-  }, [productsWithInventories]);
+  }, [productsWithInventories, dispatch]);
 
   const filteredProducts = productsWithInventories.filter((product) => {
     const query = searchQuery.toLowerCase().trim();
@@ -144,11 +124,11 @@ const Inventory = () => {
     const query = searchQuery.trim();
 
     // Reset API search state when query changes
-    setApiSearchDone(false);
+    dispatch(setApiSearchDone(false));
 
     // Don't search if query is empty or too short
     if (!query || query.length < 2) {
-      setIsSearchingApi(false);
+      dispatch(setIsSearchingApi(false));
       return;
     }
 
@@ -170,20 +150,20 @@ const Inventory = () => {
 
     // If we have local results, don't search API
     if (hasLocalResults) {
-      setIsSearchingApi(false);
+      dispatch(setIsSearchingApi(false));
       return;
     }
 
     // Debounce the API call
     const timeoutId = setTimeout(async () => {
-      setIsSearchingApi(true);
+      dispatch(setIsSearchingApi(true));
       try {
         await dispatch(searchProductByProductId(query)).unwrap();
       } catch (err) {
         // Error is handled by the slice
       } finally {
-        setIsSearchingApi(false);
-        setApiSearchDone(true);
+        dispatch(setIsSearchingApi(false));
+        dispatch(setApiSearchDone(true));
       }
     }, 500); // 500ms debounce
 
@@ -224,8 +204,7 @@ const Inventory = () => {
     );
 
     // Close modal immediately
-    setNewInventory({ cost: "", sellingPrice: "", stock: "" });
-    setShowAddInventoryModal(false);
+    dispatch(setShowAddInventoryModal(false));
 
     // Perform API call in background
     try {
@@ -293,8 +272,7 @@ const Inventory = () => {
     );
 
     // Close modal immediately
-    setNewInventory({ cost: "", sellingPrice: "", stock: "" });
-    setEditingInventory(null);
+    dispatch(setEditingInventory(null));
 
     // Perform API call in background
     try {
@@ -363,15 +341,7 @@ const Inventory = () => {
     // Refresh data
     await dispatch(fetchProductsWithInventories());
 
-    setNewProduct({
-      productId: "",
-      productName: "",
-      brand: "",
-      category: "",
-      rackNumber: "",
-      description: "",
-    });
-    setShowAddProductModal(false);
+    dispatch(setShowAddProductModal(false));
   };
 
   const handleUpdateProduct = async () => {
@@ -398,7 +368,7 @@ const Inventory = () => {
     );
 
     // Close modal immediately
-    setShowEditProductModal(false);
+    dispatch(setShowEditProductModal(false));
 
     // Perform API call in background
     try {
@@ -421,25 +391,12 @@ const Inventory = () => {
 
   const openEditProductModal = () => {
     if (!selectedProduct) return;
-
-    setEditProduct({
-      productId: selectedProduct.productId,
-      productName: selectedProduct.productName,
-      brand: selectedProduct.brand || "",
-      category: selectedProduct.category || "",
-      rackNumber: selectedProduct.rackNumber || "",
-      description: selectedProduct.description || "",
-    });
-    setShowEditProductModal(true);
+    dispatch(initEditProductFromSelected());
+    dispatch(setShowEditProductModal(true));
   };
 
   const openEditInventoryModal = (inventory: InventoryType) => {
-    setEditingInventory(inventory);
-    setNewInventory({
-      cost: inventory.cost.toString(),
-      sellingPrice: inventory.sellingPrice.toString(),
-      stock: inventory.stock.toString(),
-    });
+    dispatch(setEditingInventory(inventory));
   };
 
   const getTotalStock = (inventories: InventoryType[]) => {
@@ -476,7 +433,7 @@ const Inventory = () => {
             ></i>
           </div>
           <button
-            onClick={() => setShowAddProductModal(true)}
+            onClick={() => dispatch(setShowAddProductModal(true))}
             className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
           >
             <i className="bx bx-plus"></i>
@@ -504,7 +461,7 @@ const Inventory = () => {
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => dispatch(setSearchQuery(e.target.value))}
                 className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <i className="bx bx-search absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400"></i>
@@ -520,7 +477,7 @@ const Inventory = () => {
               {filteredProducts.map((product) => (
                 <div
                   key={product._id}
-                  onClick={() => setSelectedProduct(product)}
+                  onClick={() => dispatch(setSelectedProduct(product))}
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedProduct?._id === product._id
                       ? "bg-[#303030] border border-neutral-500"
@@ -626,12 +583,8 @@ const Inventory = () => {
                   </button>
                   <button
                     onClick={() => {
-                      setNewInventory({
-                        cost: "",
-                        sellingPrice: "",
-                        stock: "",
-                      });
-                      setShowAddInventoryModal(true);
+                      dispatch(resetNewInventory());
+                      dispatch(setShowAddInventoryModal(true));
                     }}
                     className="bg-white text-[#303030] hover:bg-neutral-200 px-4 py-2 rounded-full flex items-center gap-2 transition-colors font-semibold"
                   >
@@ -801,7 +754,7 @@ const Inventory = () => {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setShowAddInventoryModal(false);
+            if (e.key === "Escape") dispatch(setShowAddInventoryModal(false));
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleAddInventory();
@@ -812,7 +765,7 @@ const Inventory = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Add Inventory Entry</h3>
               <button
-                onClick={() => setShowAddInventoryModal(false)}
+                onClick={() => dispatch(setShowAddInventoryModal(false))}
                 className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
@@ -837,7 +790,12 @@ const Inventory = () => {
                   autoFocus
                   value={newInventory.cost}
                   onChange={(e) =>
-                    setNewInventory({ ...newInventory, cost: e.target.value })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "cost",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0.00"
@@ -852,10 +810,12 @@ const Inventory = () => {
                   step="0.01"
                   value={newInventory.sellingPrice}
                   onChange={(e) =>
-                    setNewInventory({
-                      ...newInventory,
-                      sellingPrice: e.target.value,
-                    })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "sellingPrice",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0.00"
@@ -869,7 +829,12 @@ const Inventory = () => {
                   type="number"
                   value={newInventory.stock}
                   onChange={(e) =>
-                    setNewInventory({ ...newInventory, stock: e.target.value })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "stock",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
@@ -879,7 +844,7 @@ const Inventory = () => {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowAddInventoryModal(false)}
+                onClick={() => dispatch(setShowAddInventoryModal(false))}
                 className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
@@ -903,8 +868,8 @@ const Inventory = () => {
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
-              setEditingInventory(null);
-              setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+              dispatch(setEditingInventory(null));
+              dispatch(resetNewInventory());
             }
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -917,8 +882,8 @@ const Inventory = () => {
               <h3 className="text-xl font-bold">Edit Inventory Entry</h3>
               <button
                 onClick={() => {
-                  setEditingInventory(null);
-                  setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+                  dispatch(setEditingInventory(null));
+                  dispatch(resetNewInventory());
                 }}
                 className="text-neutral-400 hover:text-white"
               >
@@ -937,7 +902,12 @@ const Inventory = () => {
                   autoFocus
                   value={newInventory.cost}
                   onChange={(e) =>
-                    setNewInventory({ ...newInventory, cost: e.target.value })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "cost",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0.00"
@@ -952,10 +922,12 @@ const Inventory = () => {
                   step="0.01"
                   value={newInventory.sellingPrice}
                   onChange={(e) =>
-                    setNewInventory({
-                      ...newInventory,
-                      sellingPrice: e.target.value,
-                    })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "sellingPrice",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0.00"
@@ -969,7 +941,12 @@ const Inventory = () => {
                   type="number"
                   value={newInventory.stock}
                   onChange={(e) =>
-                    setNewInventory({ ...newInventory, stock: e.target.value })
+                    dispatch(
+                      updateNewInventoryField({
+                        field: "stock",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
@@ -980,8 +957,8 @@ const Inventory = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
-                  setEditingInventory(null);
-                  setNewInventory({ cost: "", sellingPrice: "", stock: "" });
+                  dispatch(setEditingInventory(null));
+                  dispatch(resetNewInventory());
                 }}
                 className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
@@ -1005,7 +982,7 @@ const Inventory = () => {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setShowAddProductModal(false);
+            if (e.key === "Escape") dispatch(setShowAddProductModal(false));
             if (
               e.key === "Enter" &&
               !e.shiftKey &&
@@ -1020,7 +997,7 @@ const Inventory = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Add New Product</h3>
               <button
-                onClick={() => setShowAddProductModal(false)}
+                onClick={() => dispatch(setShowAddProductModal(false))}
                 className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
@@ -1038,10 +1015,12 @@ const Inventory = () => {
                     autoFocus
                     value={newProduct.productId}
                     onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        productId: e.target.value,
-                      })
+                      dispatch(
+                        updateNewProductField({
+                          field: "productId",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="SKU-001"
@@ -1055,10 +1034,12 @@ const Inventory = () => {
                     type="text"
                     value={newProduct.productName}
                     onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        productName: e.target.value,
-                      })
+                      dispatch(
+                        updateNewProductField({
+                          field: "productName",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Product Name"
@@ -1075,7 +1056,12 @@ const Inventory = () => {
                     type="text"
                     value={newProduct.brand}
                     onChange={(e) =>
-                      setNewProduct({ ...newProduct, brand: e.target.value })
+                      dispatch(
+                        updateNewProductField({
+                          field: "brand",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Brand Name"
@@ -1089,7 +1075,12 @@ const Inventory = () => {
                     type="text"
                     value={newProduct.category}
                     onChange={(e) =>
-                      setNewProduct({ ...newProduct, category: e.target.value })
+                      dispatch(
+                        updateNewProductField({
+                          field: "category",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Category"
@@ -1105,7 +1096,12 @@ const Inventory = () => {
                   type="text"
                   value={newProduct.rackNumber}
                   onChange={(e) =>
-                    setNewProduct({ ...newProduct, rackNumber: e.target.value })
+                    dispatch(
+                      updateNewProductField({
+                        field: "rackNumber",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="A-01"
@@ -1119,10 +1115,12 @@ const Inventory = () => {
                 <textarea
                   value={newProduct.description}
                   onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      description: e.target.value,
-                    })
+                    dispatch(
+                      updateNewProductField({
+                        field: "description",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
                   placeholder="Product description..."
@@ -1132,7 +1130,7 @@ const Inventory = () => {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowAddProductModal(false)}
+                onClick={() => dispatch(setShowAddProductModal(false))}
                 className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel
@@ -1155,7 +1153,7 @@ const Inventory = () => {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           tabIndex={-1}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setShowEditProductModal(false);
+            if (e.key === "Escape") dispatch(setShowEditProductModal(false));
             if (
               e.key === "Enter" &&
               !e.shiftKey &&
@@ -1170,7 +1168,7 @@ const Inventory = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Edit Product</h3>
               <button
-                onClick={() => setShowEditProductModal(false)}
+                onClick={() => dispatch(setShowEditProductModal(false))}
                 className="text-neutral-400 hover:text-white"
               >
                 <i className="bx bx-x text-2xl"></i>
@@ -1202,10 +1200,12 @@ const Inventory = () => {
                   autoFocus
                   value={editProduct.productName}
                   onChange={(e) =>
-                    setEditProduct({
-                      ...editProduct,
-                      productName: e.target.value,
-                    })
+                    dispatch(
+                      updateEditProductField({
+                        field: "productName",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -1220,7 +1220,12 @@ const Inventory = () => {
                     type="text"
                     value={editProduct.brand}
                     onChange={(e) =>
-                      setEditProduct({ ...editProduct, brand: e.target.value })
+                      dispatch(
+                        updateEditProductField({
+                          field: "brand",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -1233,10 +1238,12 @@ const Inventory = () => {
                     type="text"
                     value={editProduct.category}
                     onChange={(e) =>
-                      setEditProduct({
-                        ...editProduct,
-                        category: e.target.value,
-                      })
+                      dispatch(
+                        updateEditProductField({
+                          field: "category",
+                          value: e.target.value,
+                        })
+                      )
                     }
                     className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -1251,10 +1258,12 @@ const Inventory = () => {
                   type="text"
                   value={editProduct.rackNumber}
                   onChange={(e) =>
-                    setEditProduct({
-                      ...editProduct,
-                      rackNumber: e.target.value,
-                    })
+                    dispatch(
+                      updateEditProductField({
+                        field: "rackNumber",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -1267,10 +1276,12 @@ const Inventory = () => {
                 <textarea
                   value={editProduct.description}
                   onChange={(e) =>
-                    setEditProduct({
-                      ...editProduct,
-                      description: e.target.value,
-                    })
+                    dispatch(
+                      updateEditProductField({
+                        field: "description",
+                        value: e.target.value,
+                      })
+                    )
                   }
                   className="w-full bg-[#262626] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
                 />
@@ -1279,7 +1290,7 @@ const Inventory = () => {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowEditProductModal(false)}
+                onClick={() => dispatch(setShowEditProductModal(false))}
                 className="flex-1 text-neutral-300 bg-[#262626] hover:bg-[#303030] font-medium rounded-lg px-4 py-2 transition-colors"
               >
                 Cancel

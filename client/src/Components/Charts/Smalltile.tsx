@@ -1,7 +1,25 @@
 import React, { useEffect, useRef } from "react";
 import ApexCharts from "apexcharts";
 
-const Smalltile = ({ color, chart_data, Title, count, growth }) => {
+interface SmallTileProps {
+  color: string;
+  chart_data: number[];
+  Title: string;
+  count: number;
+  growth: string;
+  prefix?: string;
+  formatValue?: (value: number) => string;
+}
+
+const Smalltile: React.FC<SmallTileProps> = ({
+  color,
+  chart_data,
+  Title,
+  count,
+  growth,
+  prefix = "",
+  formatValue,
+}) => {
   const chartRef = useRef(null);
   const options = {
     chart: {
@@ -81,33 +99,38 @@ const Smalltile = ({ color, chart_data, Title, count, growth }) => {
     }
   }, [chart_data, color, Title]);
 
+  // Format the display value
+  const displayValue = formatValue ? formatValue(count) : count;
+  const growthNum = parseFloat(growth);
+
   return (
     <div className="rounded-xl bg-[#171717] p-3 w-full h-[120px] mb-4">
       <div className="flex justify-between">
         <div className="p-1">
-          <h1 className="font-semibold">{Title}</h1>
-          <div className="mt-1 text-2xl md:text-3xl" style={{ color: color }}>
-            {count}
+          <h1 className="font-semibold text-sm">{Title}</h1>
+          <div className="mt-1 text-xl md:text-2xl" style={{ color: color }}>
+            {prefix && <span className="text-sm mr-1">{prefix}</span>}
+            {displayValue}
           </div>
           <div
             className={
-              growth > 0
-                ? `text-[#00f271] mt-2 flex items-center percentage-sign text-sm md:text-base`
-                : growth != 0
-                  ? `text-[#f33b3b] mt-2 flex items-center percentage-sign text-sm md:text-base`
-                  : `text-white mt-2 flex items-center percentage-sign text-sm md:text-base`
+              growthNum > 0
+                ? `text-[#00f271] mt-2 flex items-center percentage-sign text-xs md:text-sm`
+                : growthNum !== 0
+                  ? `text-[#f33b3b] mt-2 flex items-center percentage-sign text-xs md:text-sm`
+                  : `text-white mt-2 flex items-center percentage-sign text-xs md:text-sm`
             }
           >
             <i
               className={
-                growth > 0
+                growthNum > 0
                   ? `bx bx-up-arrow-alt me-1 up-arrow`
-                  : growth != 0
+                  : growthNum !== 0
                     ? `bx bx-down-arrow-alt me-1 down-arrow`
                     : "bx bx-up-arrow-alt me-1 up-arrow"
               }
             ></i>
-            {growth > 0 ? growth : growth * -1}
+            {growthNum > 0 ? growth : (growthNum * -1).toFixed(2)}
             {"%"}
           </div>
         </div>
